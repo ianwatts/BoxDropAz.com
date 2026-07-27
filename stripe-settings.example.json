@@ -1,0 +1,10 @@
+{
+  "Stripe": {
+    "SecretKey": "sk_test_... or sk_live_... for prod",
+    "PublishableKey": "pk_test_... or pk_live_... for prod",
+    "WebhookSecret": "whsec_...",
+    "RealtorStarterMonthlyPriceId": "price_...",
+    "RealtorProfessionalMonthlyPriceId": "price_...",
+    "RealtorBrokerageMonthlyPriceId": "price_..."
+  }
+}

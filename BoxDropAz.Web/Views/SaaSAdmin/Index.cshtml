@@ -1,0 +1,177 @@
+@model BoxDropAz.Web.Models.SaaSAdmin.PlatformDashboardViewModel
+@{
+    ViewData["Title"] = "Platform overview";
+    var change = Model.RevenueChangePercent;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>Platform overview</h1>
+        <p class="text-muted mb-0">
+            @Model.Regions.Count region@(Model.Regions.Count == 1 ? "" : "s") &middot;
+            @Model.UserCount account@(Model.UserCount == 1 ? "" : "s") &middot;
+            @DateTime.Now.ToString("MMMM yyyy")
+        </p>
+        @await Html.PartialAsync("_PlatformNav")
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Rental revenue, this month</div>
+                <div class="bd-metric-value">@Money.Format(Model.TotalRevenueThisMonthCents)</div>
+                @if (change is not null)
+                {
+                    var up = change > 0;
+                    <div class="small @(up ? "text-success" : "text-danger")">
+                        <i class="bi @(up ? "bi-arrow-up-right" : "bi-arrow-down-right")"></i>
+                        @Math.Abs(change.Value).ToString("0.#")% vs last month
+                    </div>
+                }
+                else
+                {
+                    <div class="small text-muted">@Model.TotalOrdersThisMonth orders</div>
+                }
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Agent subscriptions</div>
+                <div class="bd-metric-value">@Model.ActiveSubscriptions</div>
+                <div class="small text-muted">@Money.Format(Model.MonthlyRecurringCents) recurring per month</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Unspent gift credit</div>
+                <div class="bd-metric-value">@Money.Format(Model.OutstandingCreditCents)</div>
+                <div class="small text-muted">Liability against future bookings</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Active rentals</div>
+                <div class="bd-metric-value">@Model.TotalActiveRentals</div>
+                <div class="small text-muted">Across every region</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bd-panel mb-4">
+        <div class="bd-panel-title">Rental revenue by region, last 12 months</div>
+        <div class="bd-chart-wrap"><canvas id="regionChart"></canvas></div>
+    </div>
+
+    <div class="bd-table">
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+            <strong class="small text-uppercase text-muted">Regions</strong>
+            <a class="btn btn-sm btn-primary" asp-action="NewRegion">
+                <i class="bi bi-plus-lg me-1"></i>New region
+            </a>
+        </div>
+        @if (Model.Regions.Count == 0)
+        {
+            <div class="bd-empty">
+                <i class="bi bi-geo-alt"></i>
+                <p class="mb-0">No regions yet. Create one to start taking bookings.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th class="text-end">Revenue MTD</th>
+                        <th class="text-end">Orders MTD</th>
+                        <th class="text-end">Gifts MTD</th>
+                        <th class="text-end">Active</th>
+                        <th class="text-end">Zones</th>
+                        <th class="text-end">Packages</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in Model.Regions.OrderByDescending(r => r.RevenueThisMonthCents))
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="EditRegion" asp-route-id="@row.Region.Id" class="fw-semibold">@row.Region.Name</a>
+                                <div class="small text-muted">/@row.Region.Slug</div>
+                                @if (!row.Region.IsActive)
+                                {
+                                    <span class="bd-status bd-status-cancelled">Not booking</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @Money.Format(row.RevenueThisMonthCents)
+                                <div class="small text-muted">was @Money.Format(row.RevenueLastMonthCents)</div>
+                            </td>
+                            <td class="text-end">@row.OrdersThisMonth</td>
+                            <td class="text-end">@row.GiftOrdersThisMonth</td>
+                            <td class="text-end">@row.ActiveRentals</td>
+                            <td class="text-end">@row.ZoneCount</td>
+                            <td class="text-end">
+                                <a asp-action="Packages" asp-route-regionId="@row.Region.Id">@row.PackageCount</a>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Index"
+                                   asp-route-region="@row.Region.Id">Ops</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const canvas = document.getElementById('regionChart');
+            if (!canvas) { return; }
+
+            const labels = @Html.Raw(Json.Serialize(Model.MonthlyRevenue.Select(p => p.Label)));
+            const series = @Html.Raw(Json.Serialize(Model.RevenueByRegion.Select(kv => new
+                          {
+                              name = kv.Key,
+                              dollars = kv.Value.Select(p => p.RevenueCents / 100.0)
+                          })));
+
+            const palette = ['#0f766e', '#14b8a6', '#f59e0b', '#6366f1', '#ec4899', '#0ea5e9'];
+            const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: series.map((s, i) => ({
+                        label: s.name,
+                        data: s.dollars,
+                        backgroundColor: palette[i % palette.length],
+                        borderRadius: 4,
+                        maxBarThickness: 28
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${money.format(ctx.parsed.y)}` } }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: { stacked: true, beginAtZero: true, ticks: { callback: v => money.format(v) } }
+                    }
+                }
+            });
+        })();
+    </script>
+}

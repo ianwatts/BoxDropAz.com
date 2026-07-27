@@ -1,0 +1,364 @@
+@model BoxDropAz.Web.Models.Public.LandingViewModel
+@{
+    ViewData["Title"] = null;
+    ViewData["Description"] = "Rent stackable, reusable moving crates in the Phoenix East Valley, Pinal County, and Tucson. We deliver, you pack, we pick up. From $89 for a full week.";
+}
+
+<!-- Hero Section -->
+<section class="bd-hero">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="bd-eyebrow"><i class="bi bi-recycle"></i> ZERO CARDBOARD MOVING</span>
+                <h1 class="mt-4 mb-3 fw-black text-ink" style="font-size: clamp(2.5rem, 5vw, 3.8rem); line-height: 1.15;">
+                    Moving crates,<br />dropped at your door.
+                </h1>
+                <p class="lead mb-4 text-secondary" style="font-size: 1.15rem; line-height: 1.6; max-width: 32rem;">
+                    Say goodbye to flimsy cardboard boxes. Our heavy-duty, waterproof plastic crates are strong, secure, and reusable, delivered with dollies.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <a class="btn btn-primary btn-lg px-4 py-3 rounded-3 shadow-sm fw-bold" asp-controller="Booking" asp-action="Index">
+                        Book your crates
+                    </a>
+                    <a class="btn btn-outline-primary btn-lg px-4 py-3 rounded-3 fw-bold" asp-action="HowItWorks">
+                        See how it works
+                    </a>
+                </div>
+
+                <form asp-action="ServiceAreas" method="get" class="d-flex align-items-center bg-white border border-light-subtle rounded-3 p-1 shadow-sm" style="max-width:28rem;">
+                    <div class="flex-grow-1">
+                        <label for="zipCheck" class="visually-hidden">Enter your ZIP code</label>
+                        <input type="text" id="zipCheck" name="zip" class="form-control border-0 bg-transparent px-3 py-2 shadow-none"
+                               inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter your ZIP code" />
+                    </div>
+                    <button type="submit" class="btn btn-accent px-4 py-2 rounded-2 fw-semibold">Check delivery</button>
+                </form>
+            </div>
+
+            <div class="col-lg-6 position-relative text-center d-flex justify-content-center align-items-center">
+                <div class="position-relative p-2" style="max-width: 540px; width: 100%;">
+                    <img src="~/images/hero_right.webp" alt="Built for Moving" class="img-fluid rounded-4 shadow-lg position-relative" style="z-index: 2; width: 100%; border: 1px solid var(--bd-line);" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Crates Section -->
+<section class="bd-section bg-white">
+    <div class="container">
+        <div class="text-center mb-5 max-w-2xl mx-auto">
+            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Why renters keep choosing crates</h2>
+            <p class="text-muted" style="font-size: 1.05rem;">
+                Cardboard is cheap right up until you count the tape, the time, and the trips to the recycling center.
+            </p>
+        </div>
+
+        <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-4">
+            <!-- Card 1 -->
+            <div class="col">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
+                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
+                        <div>
+                            <div class="bd-icon-badge mb-3">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <h3 class="h5 fw-bold mb-2">No assembly, ever</h3>
+                            <p class="text-muted small mb-4" style="line-height: 1.5;">
+                                Crates arrive ready to pack. Drop the lid and it stays closed, no tape required, no bottom falling out on the stairs.
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-2">
+                            <img src="~/images/why_no_assembly.webp" alt="No assembly, ever" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="col">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
+                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
+                        <div>
+                            <div class="bd-icon-badge mb-3">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <h3 class="h5 fw-bold mb-2">Delivered and collected</h3>
+                            <p class="text-muted small mb-4" style="line-height: 1.5;">
+                                We bring everything to your door and pick it up when your week is done. Free in Zone A, flat rate everywhere else.
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-2">
+                            <img src="~/images/why_delivered.webp" alt="Delivered and collected" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="col">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
+                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
+                        <div>
+                            <div class="bd-icon-badge mb-3">
+                                <i class="bi bi-layers"></i>
+                            </div>
+                            <h3 class="h5 fw-bold mb-2">Stack without crushing</h3>
+                            <p class="text-muted small mb-4" style="line-height: 1.5;">
+                                Uniform, interlocking crates load a truck tighter than mismatched boxes and won't collapse under the weight of the stack above.
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-2">
+                            <img src="~/images/why_stacking.webp" alt="Stack without crushing" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="col">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
+                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
+                        <div>
+                            <div class="bd-icon-badge mb-3">
+                                <i class="bi bi-tree"></i>
+                            </div>
+                            <h3 class="h5 fw-bold mb-2">Reused, not recycled</h3>
+                            <p class="text-muted small mb-4" style="line-height: 1.5;">
+                                Every crate makes hundreds of moves before retirement. Nothing to break down, nothing to haul to the dump.
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-2">
+                            <img src="~/images/why_reused.webp" alt="Reused, not recycled" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Three Steps Section -->
+<section class="bd-section bd-section-alt">
+    <div class="container">
+        <div class="text-center mb-5 max-w-2xl mx-auto">
+            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Three steps, one week</h2>
+            <p class="text-muted" style="font-size: 1.05rem;">
+                Most moves take a week end to end. Need longer? Extend by the week from your dashboard.
+            </p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <!-- Step 1 -->
+            <div class="col-md-4">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-4 text-center bd-hover-card">
+                    <div class="card-body p-1">
+                        <div class="bd-step-number mx-auto mb-3 shadow">1</div>
+                        <h3 class="h5 fw-bold mb-2">Book your bundle</h3>
+                        <p class="text-muted small mb-0" style="line-height: 1.5;">
+                            Pick the size that matches your home, choose delivery and pickup dates, and check out in a couple of minutes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="col-md-4">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-4 text-center bd-hover-card">
+                    <div class="card-body p-1 d-flex flex-column h-100 justify-content-between">
+                        <div>
+                            <div class="bd-step-number mx-auto mb-3 shadow">2</div>
+                            <h3 class="h5 fw-bold mb-2">We drop off</h3>
+                            <p class="text-muted small mb-3" style="line-height: 1.5;">
+                                Crates, dollies, and reusable labels arrive in your delivery window for 7 full days.
+                            </p>
+                        </div>
+                        <div class="mt-auto">
+                            <img src="~/images/step2_truck.webp" alt="We drop off" class="img-fluid rounded-3 mx-auto d-block shadow-sm" style="max-height: 90px; object-fit: contain; width: auto;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="col-md-4">
+                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-4 text-center bd-hover-card">
+                    <div class="card-body p-1">
+                        <div class="bd-step-number mx-auto mb-3 shadow">3</div>
+                        <h3 class="h5 fw-bold mb-2">We pick up</h3>
+                        <p class="text-muted small mb-0" style="line-height: 1.5;">
+                            Leave the empties by the door of your new place. We collect them and you're done, with nothing to store or throw away.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Packages Section -->
+<section class="bd-section" id="packages">
+    <div class="container">
+        <div class="text-center mb-4 max-w-2xl mx-auto">
+            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Pick the bundle that fits your home</h2>
+            <p class="text-muted">
+                Every bundle includes crates, dollies, reusable labels, and a full seven day rental.
+                @if (Model.Region is not null)
+                {
+                    <text>Prices shown for <strong>@Model.Region.Name</strong>.</text>
+                }
+            </p>
+        </div>
+
+        @if (Model.AllRegions.Count > 1)
+        {
+            <div class="d-flex justify-content-center mb-5">
+                <div class="btn-group rounded-pill p-1 bg-light border" role="group" aria-label="Choose a region">
+                    @foreach (var region in Model.AllRegions)
+                    {
+                        var isActive = Model.Region?.Id == region.Id;
+                        <a class="btn rounded-pill px-4 py-2 @(isActive ? "btn-primary shadow-sm" : "btn-light text-muted border-0")"
+                           asp-action="Index" asp-route-region="@region.Slug" asp-fragment="packages">@region.Name</a>
+                    }
+                </div>
+            </div>
+        }
+
+        <partial name="_PackageCards" model="Model.Packages" />
+
+        <p class="text-center text-muted small mt-5 mb-0">
+            Not sure which size? <a asp-action="Pricing">Compare bundles side by side</a> or
+            <a asp-action="Contact">ask us</a>. Sizing up mid-move costs more than starting one size bigger.
+        </p>
+    </div>
+</section>
+
+<!-- Realtor Gifting Section -->
+<section class="bd-section bd-section-alt">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="bd-eyebrow"><i class="bi bi-house-heart"></i> FOR REAL ESTATE AGENTS</span>
+                <h2 class="mt-3 mb-3 text-ink">The closing gift your clients actually use</h2>
+                <p class="text-muted mb-4">
+                    A bottle of wine gets finished the first night. Crates show up the week your client is
+                    most stressed, with your name on the delivery. Subscribe monthly, gift in two clicks,
+                    and we handle everything from the claim link to the pickup.
+                </p>
+
+                <div class="bd-check-row">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <strong>Monthly credit, not per gift billing.</strong>
+                        <div class="text-muted small">Unused credit rolls over up to three months.</div>
+                    </div>
+                </div>
+                <div class="bd-check-row">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <strong>Your client picks their own dates.</strong>
+                        <div class="text-muted small">They get a claim link and upgrade at their own cost if they want more crates.</div>
+                    </div>
+                </div>
+                <div class="bd-check-row">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <strong>Co-branded insert in every delivery.</strong>
+                        <div class="text-muted small">Your name and contact details land in their kitchen for a week.</div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    <a class="btn btn-primary btn-lg" asp-controller="Realtors" asp-action="Index">Explore the program</a>
+                    <a class="btn btn-outline-primary btn-lg" asp-controller="Realtors" asp-action="Plans">See plans</a>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="bd-card">
+                    <div class="bd-card-body p-4 p-md-5">
+                        <p class="text-muted small text-uppercase fw-bold mb-3" style="letter-spacing:.06em;">What your client sees</p>
+                        <div class="border rounded-3 p-4" style="background:var(--bd-teal-50);">
+                            <p class="mb-2 fw-semibold">Congratulations on your new home!</p>
+                            <p class="text-muted small mb-3">
+                                Your agent has covered <strong>$175</strong> toward reusable moving crates
+                                delivered to your door. Choose your dates and we'll handle the rest.
+                            </p>
+                            <span class="btn btn-primary btn-sm disabled">Claim your crates</span>
+                        </div>
+                        <p class="text-muted small mt-3 mb-0">
+                            If they want a bigger bundle than the credit covers, they pay the difference at
+                            checkout &mdash; which is where a meaningful share of gifts turn into upsells.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="bd-section">
+    <div class="container">
+        <div class="bd-section-head">
+            <h2>What movers tell us</h2>
+            <p>A few notes from recent Phoenix and Tucson moves.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="bd-card">
+                    <div class="bd-card-body">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="mb-3">
+                            "We packed our whole three bedroom in Gilbert in two evenings. Not having to build
+                            boxes first is a bigger deal than I expected."
+                        </p>
+                        <p class="text-muted small mb-0 fw-semibold">Dana R. &middot; Gilbert</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bd-card">
+                    <div class="bd-card-body">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="mb-3">
+                            "Delivery hit the window, pickup hit the window. After the week we had, that
+                            predictability was worth the whole rental."
+                        </p>
+                        <p class="text-muted small mb-0 fw-semibold">Marcus T. &middot; Chandler</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bd-card">
+                    <div class="bd-card-body">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="mb-3">
+                            "My agent gifted the crates at closing. I upgraded to the bigger bundle for
+                            forty dollars and it still felt like a steal."
+                        </p>
+                        <p class="text-muted small mb-0 fw-semibold">Priya S. &middot; Queen Creek</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="bd-section-tight" style="background:var(--bd-teal);">
+    <div class="container text-center text-white py-3">
+        <h2 class="text-white mb-3">Ready to move without the cardboard?</h2>
+        <p class="mb-4 opacity-75">Book in two minutes. Change your dates free up to 48 hours before delivery.</p>
+        <a class="btn btn-light btn-lg fw-semibold" asp-controller="Booking" asp-action="Index">Book your crates</a>
+    </div>
+</section>
+

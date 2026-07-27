@@ -1,0 +1,67 @@
+@model BoxDropAz.Web.Models.Agent.SubscribeCheckoutViewModel
+@{
+    ViewData["Title"] = $"Subscribe to {Model.Plan.Name}";
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>@Model.Plan.Name plan</h1>
+        <p class="text-muted mb-0">
+            @Money.FormatCompact(Model.Plan.MonthlyPriceCents) per month for
+            @Money.FormatCompact(Model.Plan.MonthlyCreditCents) in gift credit.
+        </p>
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="bd-card">
+                    <div class="bd-card-body">
+                        <div id="checkout"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bd-card bd-summary-card">
+                    <div class="bd-card-body">
+                        <h2 class="h6 fw-bold mb-3">What you get</h2>
+                        <ul class="bd-feature-list">
+                            @foreach (var feature in Model.Plan.Features)
+                            {
+                                <li>@feature</li>
+                            }
+                        </ul>
+                        <hr />
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Billed monthly</span>
+                            <span class="fw-bold">@Money.Format(Model.Plan.MonthlyPriceCents)</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="bd-credit">Credit you receive</span>
+                            <span class="bd-credit">@Money.Format(Model.Plan.MonthlyCreditCents)</span>
+                        </div>
+                        <p class="text-muted small mt-3 mb-0">
+                            Cancel any time from your dashboard. Credit already earned stays usable.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        (async function () {
+            var stripe = Stripe('@Model.PublishableKey');
+            var checkout = await stripe.initEmbeddedCheckout({
+                clientSecret: '@Model.ClientSecret'
+            });
+            checkout.mount('#checkout');
+        })();
+    </script>
+}

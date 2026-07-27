@@ -1,0 +1,88 @@
+@model BoxDropAz.Web.Models.Public.ContactViewModel
+@inject IConfiguration Configuration
+@{
+    var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 555-0142";
+    var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+}
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-5 justify-content-center">
+            <div class="col-lg-5">
+                <span class="bd-eyebrow"><i class="bi bi-chat-dots"></i> Contact</span>
+                <h1 class="h2 fw-bold mt-3 mb-3">Talk to a human</h1>
+                <p class="text-muted mb-4">
+                    Questions about crate counts, a commercial move, or an area we don't list yet?
+                    Send a note and we'll reply within one business day.
+                </p>
+
+                <div class="bd-check-row">
+                    <i class="bi bi-telephone-fill"></i>
+                    <div>
+                        <strong>@supportPhone</strong>
+                        <div class="text-muted small">Monday to Saturday, 8am&ndash;6pm Arizona time</div>
+                    </div>
+                </div>
+                <div class="bd-check-row">
+                    <i class="bi bi-envelope-fill"></i>
+                    <div>
+                        <strong>@supportEmail</strong>
+                        <div class="text-muted small">Replies within one business day</div>
+                    </div>
+                </div>
+                <div class="bd-check-row">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <div>
+                        <strong>Phoenix East Valley &amp; Tucson</strong>
+                        <div class="text-muted small">
+                            <a asp-action="ServiceAreas">Check whether we cover your ZIP</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="bd-card">
+                    <div class="bd-card-body p-4 p-md-5">
+                        <form asp-action="Contact" method="post">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="Name" class="form-label"></label>
+                                <input asp-for="Name" class="form-control" autocomplete="name" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-sm-6">
+                                    <label asp-for="Email" class="form-label"></label>
+                                    <input asp-for="Email" class="form-control" autocomplete="email" />
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label asp-for="Phone" class="form-label"></label>
+                                    <input asp-for="Phone" class="form-control" autocomplete="tel" />
+                                    <span asp-validation-for="Phone" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label asp-for="Message" class="form-label"></label>
+                                <textarea asp-for="Message" class="form-control" rows="5"
+                                          placeholder="Tell us about your move, your dates, and your ZIP code."></textarea>
+                                <span asp-validation-for="Message" class="text-danger small"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100">Send message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

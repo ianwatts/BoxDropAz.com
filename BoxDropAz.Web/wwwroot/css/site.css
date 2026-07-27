@@ -1,0 +1,916 @@
+:root {
+    --bd-teal: #0f766e;
+    --bd-teal-dark: #115e59;
+    --bd-teal-light: #14b8a6;
+    --bd-teal-50: #f0fdfa;
+    --bd-teal-100: #ccfbf1;
+    --bd-amber: #f59e0b;
+    --bd-amber-50: #fffbeb;
+    --bd-ink: #0f172a;
+    --bd-slate: #475569;
+    --bd-muted: #64748b;
+    --bd-line: #e2e8f0;
+    --bd-surface: #f8fafc;
+    --bd-radius: 14px;
+    --bd-shadow-sm: 0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .1);
+    --bd-shadow: 0 4px 6px -1px rgba(15, 23, 42, .07), 0 10px 24px -8px rgba(15, 23, 42, .18);
+    --bd-shadow-lg: 0 20px 48px -16px rgba(15, 23, 42, .28);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--bd-ink);
+    background: #ffffff;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, .fw-display {
+    letter-spacing: -0.022em;
+    font-weight: 700;
+}
+
+.text-muted {
+    color: var(--bd-muted) !important;
+}
+
+a {
+    color: var(--bd-teal);
+}
+
+a:hover {
+    color: var(--bd-teal-dark);
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: .55rem 1.15rem;
+}
+
+.btn-lg {
+    padding: .8rem 1.7rem;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: var(--bd-teal);
+    border-color: var(--bd-teal);
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background: var(--bd-teal-dark) !important;
+    border-color: var(--bd-teal-dark) !important;
+}
+
+.btn-outline-primary {
+    color: var(--bd-teal);
+    border-color: var(--bd-teal);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:active {
+    background: var(--bd-teal) !important;
+    border-color: var(--bd-teal) !important;
+}
+
+.btn-accent {
+    background: var(--bd-amber);
+    border-color: var(--bd-amber);
+    color: #422006;
+}
+
+.btn-accent:hover {
+    background: #d97706;
+    border-color: #d97706;
+    color: #ffffff;
+}
+
+/* ---------- Navbar ---------- */
+
+.bd-topbar {
+    background: var(--bd-teal-dark);
+    color: #ccfbf1;
+    font-size: .8rem;
+    letter-spacing: .02em;
+}
+
+.bd-topbar a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.navbar {
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: saturate(150%) blur(10px);
+    border-bottom: 1px solid var(--bd-line);
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -.03em;
+    color: var(--bd-ink) !important;
+}
+
+.navbar-brand .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--bd-teal);
+    color: #fff;
+    font-size: 1rem;
+    margin-right: .55rem;
+}
+
+.navbar .nav-link {
+    color: var(--bd-slate);
+    font-weight: 500;
+    padding: .5rem .85rem !important;
+}
+
+.navbar .nav-link:hover, .navbar .nav-link.active {
+    color: var(--bd-teal);
+}
+
+/* ---------- Hero ---------- */
+
+.bd-hero {
+    background: linear-gradient(160deg, var(--bd-teal-50) 0%, #ffffff 55%);
+    padding: 4.5rem 0 4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.bd-hero h1 {
+    font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+    line-height: 1.08;
+}
+
+.bd-hero .lead {
+    font-size: 1.14rem;
+    color: var(--bd-slate);
+    max-width: 34rem;
+}
+
+.bd-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    background: var(--bd-teal-100);
+    color: var(--bd-teal-dark);
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .35rem .8rem;
+    border-radius: 999px;
+}
+
+.bd-hero-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: var(--bd-shadow-lg);
+    border: 1px solid var(--bd-line);
+}
+
+/* Stacked crates illustration, drawn in CSS so there is no image to ship */
+.bd-crate-stack {
+    display: grid;
+    gap: .5rem;
+}
+
+.bd-crate {
+    border-radius: 10px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .13);
+}
+
+.bd-crate-1 { background: var(--bd-teal); }
+.bd-crate-2 { background: var(--bd-teal-light); }
+.bd-crate-3 { background: #0d9488; }
+
+/* ---------- Sections ---------- */
+
+.bd-section {
+    padding: 4.5rem 0;
+}
+
+.bd-section-tight {
+    padding: 3rem 0;
+}
+
+.bd-section-alt {
+    background: var(--bd-surface);
+}
+
+.bd-section-head {
+    max-width: 44rem;
+    margin: 0 auto 3rem;
+    text-align: center;
+}
+
+.bd-section-head h2 {
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    margin-bottom: .9rem;
+}
+
+.bd-section-head p {
+    color: var(--bd-slate);
+    font-size: 1.05rem;
+    margin-bottom: 0;
+}
+
+/* ---------- Cards ---------- */
+
+.bd-card {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    box-shadow: var(--bd-shadow-sm);
+    height: 100%;
+}
+
+.bd-card-body {
+    padding: 1.6rem;
+}
+
+.bd-icon-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--bd-teal-50);
+    color: var(--bd-teal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    margin-bottom: 1rem;
+}
+
+.bd-step-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--bd-teal);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+}
+
+/* ---------- Pricing ---------- */
+
+.bd-price-card {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    padding: 1.75rem 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    position: relative;
+}
+
+.bd-price-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--bd-shadow);
+    border-color: var(--bd-teal-light);
+}
+
+.bd-price-card.featured {
+    border: 2px solid var(--bd-teal);
+    box-shadow: var(--bd-shadow);
+}
+
+.bd-price-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bd-teal);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .28rem .8rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.bd-price {
+    font-size: 2.45rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1;
+}
+
+.bd-price-suffix {
+    font-size: .9rem;
+    color: var(--bd-muted);
+    font-weight: 500;
+}
+
+.bd-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0;
+    flex-grow: 1;
+}
+
+.bd-feature-list li {
+    position: relative;
+    padding-left: 1.6rem;
+    margin-bottom: .6rem;
+    font-size: .93rem;
+    color: var(--bd-slate);
+}
+
+.bd-feature-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--bd-teal);
+    font-weight: 700;
+}
+
+/* ---------- Utility ---------- */
+
+.bd-stat {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--bd-teal);
+    line-height: 1;
+}
+
+.bd-divider-note {
+    border-left: 3px solid var(--bd-amber);
+    background: var(--bd-amber-50);
+    padding: 1rem 1.25rem;
+    border-radius: 0 10px 10px 0;
+}
+
+.bd-check-row {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.bd-check-row .bi {
+    color: var(--bd-teal);
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    margin-top: .1rem;
+}
+
+.auth-card {
+    border: 1px solid var(--bd-line);
+    border-radius: 16px;
+}
+
+.account-type-toggle .nav-link {
+    border-radius: 10px;
+    color: var(--bd-slate);
+    font-weight: 600;
+    background: var(--bd-surface);
+    border: 1px solid var(--bd-line);
+    margin: 0 .2rem;
+}
+
+.account-type-toggle .nav-link.active {
+    background: var(--bd-teal);
+    border-color: var(--bd-teal);
+    color: #fff;
+}
+
+/* ---------- Forms ---------- */
+
+.form-control, .form-select {
+    border-radius: 10px;
+    border-color: #cbd5e1;
+    padding: .6rem .85rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bd-teal-light);
+    box-shadow: 0 0 0 .2rem rgba(20, 184, 166, .18);
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--bd-slate);
+    margin-bottom: .35rem;
+}
+
+/* Selectable option tiles used by the booking wizard */
+.bd-option-tile {
+    display: block;
+    cursor: pointer;
+    border: 2px solid var(--bd-line);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    transition: border-color .15s ease, background .15s ease;
+    height: 100%;
+    margin: 0;
+}
+
+.bd-option-tile:hover {
+    border-color: var(--bd-teal-light);
+}
+
+.bd-option-tile input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.bd-option-tile:has(input:checked) {
+    border-color: var(--bd-teal);
+    background: var(--bd-teal-50);
+}
+
+.bd-option-tile {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.bd-option-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.bd-option-title {
+    font-weight: 600;
+}
+
+.bd-option-meta {
+    font-size: .85rem;
+    color: var(--bd-muted);
+}
+
+.bd-option-price {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Sticky order summary alongside the booking form */
+.bd-summary-card {
+    position: sticky;
+    top: 5.5rem;
+}
+
+.bd-credit {
+    color: var(--bd-teal);
+    font-weight: 600;
+}
+
+.bd-review-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--bd-line);
+}
+
+.bd-review-row:last-child {
+    border-bottom: none;
+}
+
+.bd-review-label {
+    color: var(--bd-muted);
+    flex: 0 0 40%;
+}
+
+.bd-review-value {
+    font-weight: 500;
+    text-align: right;
+}
+
+.bd-success-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--bd-teal-50);
+    color: var(--bd-teal);
+    font-size: 2.25rem;
+}
+
+.bd-numbered-list {
+    counter-reset: bd-step;
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.bd-numbered-list li {
+    counter-increment: bd-step;
+    position: relative;
+    padding-left: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.bd-numbered-list li:last-child {
+    margin-bottom: 0;
+}
+
+.bd-numbered-list li::before {
+    content: counter(bd-step);
+    position: absolute;
+    left: 0;
+    top: -.1rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--bd-teal);
+    color: #fff;
+    font-size: .85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---------- App shell (dashboards) ---------- */
+
+.bd-app-header {
+    background: #fff;
+    border-bottom: 1px solid var(--bd-line);
+    padding: 1.75rem 0 1.5rem;
+}
+
+.bd-app-header h1 {
+    font-size: 1.6rem;
+    margin-bottom: .25rem;
+}
+
+.bd-metric-card {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    padding: 1.25rem 1.4rem;
+    height: 100%;
+}
+
+.bd-metric-label {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--bd-muted);
+    font-weight: 700;
+    margin-bottom: .4rem;
+}
+
+.bd-metric-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+}
+
+/* Numbered step marker used on marketing and claim pages */
+.bd-step-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--bd-teal-50);
+    color: var(--bd-teal);
+    font-weight: 800;
+    font-size: 1.15rem;
+}
+
+.bd-gift-note {
+    background: #fff;
+    border-left: 3px solid var(--bd-teal);
+    border-radius: 8px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem auto 0;
+    max-width: 34rem;
+    text-align: left;
+    font-size: 1.02rem;
+    color: var(--bd-slate);
+}
+
+.bd-gift-note footer {
+    margin-top: .6rem;
+    font-size: .88rem;
+    color: var(--bd-muted);
+}
+
+/* Section tabs inside a portal */
+.bd-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: 1.1rem;
+}
+
+.bd-tab {
+    padding: .5rem .95rem;
+    border-radius: 8px;
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--bd-muted);
+    text-decoration: none;
+}
+
+.bd-tab:hover {
+    background: var(--bd-surface);
+    color: var(--bd-slate);
+}
+
+.bd-tab.active {
+    background: var(--bd-teal-50);
+    color: var(--bd-teal);
+}
+
+/* Credit balance callout on the agent dashboard */
+.bd-balance-card {
+    background: linear-gradient(135deg, var(--bd-teal) 0%, #115e59 100%);
+    color: #fff;
+    border-radius: var(--bd-radius);
+    padding: 1.6rem 1.75rem;
+    height: 100%;
+}
+
+.bd-balance-card .bd-metric-label {
+    color: #99f6e4;
+}
+
+.bd-balance-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.05;
+}
+
+/* A completed manifest stop recedes without disappearing */
+.bd-stop-done {
+    opacity: .62;
+}
+
+.bd-stop-done:hover {
+    opacity: 1;
+}
+
+.bd-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--bd-muted);
+}
+
+.bd-empty i {
+    font-size: 2.5rem;
+    color: var(--bd-line);
+    display: block;
+    margin-bottom: .75rem;
+}
+
+.bd-impersonation-banner {
+    background: #7c2d12;
+    color: #fed7aa;
+    font-size: .88rem;
+    font-weight: 600;
+}
+
+.bd-impersonation-banner a, .bd-impersonation-banner button {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* ---------- Tables ---------- */
+
+.bd-table {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    overflow: hidden;
+}
+
+.bd-table table {
+    margin-bottom: 0;
+}
+
+.bd-table thead th {
+    background: var(--bd-surface);
+    border-bottom: 1px solid var(--bd-line);
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--bd-muted);
+    font-weight: 700;
+    padding: .8rem 1rem;
+    white-space: nowrap;
+}
+
+.bd-table tbody td {
+    padding: .85rem 1rem;
+    vertical-align: middle;
+    border-color: #f1f5f9;
+}
+
+/* ---------- Badges ---------- */
+
+.bd-status {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: .28rem .6rem;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.bd-status-pending { background: #fef3c7; color: #92400e; }
+.bd-status-confirmed { background: #dbeafe; color: #1e40af; }
+.bd-status-transit { background: #ede9fe; color: #5b21b6; }
+.bd-status-delivered { background: #d1fae5; color: #065f46; }
+.bd-status-complete { background: #e2e8f0; color: #334155; }
+.bd-status-cancelled { background: #fee2e2; color: #991b1b; }
+.bd-status-claimed { background: #d1fae5; color: #065f46; }
+.bd-status-sent { background: #dbeafe; color: #1e40af; }
+.bd-status-expired { background: #e2e8f0; color: #334155; }
+
+.bd-badge-soft {
+    background: var(--bd-teal-50);
+    color: var(--bd-teal);
+    font-weight: 600;
+    font-size: .82rem;
+    padding: .35rem .7rem;
+}
+
+/* Panel used for admin charts and grouped forms */
+.bd-panel {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    padding: 1.4rem 1.5rem;
+}
+
+.bd-panel-title {
+    font-size: .95rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.bd-chart-wrap {
+    position: relative;
+    height: 280px;
+}
+
+/* Vertical audit trail for notes and history */
+.bd-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 1.1rem;
+    border-left: 2px solid var(--bd-line);
+}
+
+.bd-timeline li {
+    position: relative;
+    padding-bottom: 1.1rem;
+    font-size: .93rem;
+    color: var(--bd-slate);
+}
+
+.bd-timeline li::before {
+    content: "";
+    position: absolute;
+    left: -1.55rem;
+    top: .4rem;
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    background: var(--bd-teal-light);
+}
+
+.bd-timeline li:last-child {
+    padding-bottom: 0;
+}
+
+.bd-timeline time {
+    display: block;
+    font-size: .78rem;
+    color: var(--bd-muted);
+    margin-top: .15rem;
+}
+
+/* ---------- Footer ---------- */
+
+.bd-footer {
+    background: var(--bd-ink);
+    color: #94a3b8;
+    padding: 3.5rem 0 2rem;
+}
+
+.bd-footer h5 {
+    color: #fff;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 1.1rem;
+    font-weight: 700;
+}
+
+.bd-footer a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: .93rem;
+    display: block;
+    margin-bottom: .55rem;
+}
+
+.bd-footer a:hover {
+    color: #fff;
+}
+
+.bd-footer-bottom {
+    border-top: 1px solid #1e293b;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    font-size: .85rem;
+}
+
+/* ---------- Legal / long-form copy ---------- */
+
+.bd-legal {
+    max-width: 52rem;
+}
+
+.bd-legal h2 {
+    font-size: 1.3rem;
+    margin-top: 2.4rem;
+    margin-bottom: .85rem;
+}
+
+.bd-legal p, .bd-legal li {
+    color: var(--bd-slate);
+    line-height: 1.75;
+}
+
+@media (max-width: 767.98px) {
+    .bd-section { padding: 3rem 0; }
+    .bd-hero { padding: 3rem 0 2.5rem; }
+}
+
+@media print {
+    .navbar, .bd-topbar, .bd-footer, .btn, .bd-no-print { display: none !important; }
+}
+
+/* ---------- Modern Gemini Home Page Enhancements ---------- */
+.bd-hover-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.bd-hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08) !important;
+    border-color: var(--bd-teal-light) !important;
+}
+.rotate-3 {
+    transform: rotate(3deg);
+}
+.rotate-negative-3 {
+    transform: rotate(-3deg);
+}
+.rounded-4 {
+    border-radius: 1.25rem !important;
+}
+.rounded-5 {
+    border-radius: 1.75rem !important;
+}
+.bg-teal-50 {
+    background-color: var(--bd-teal-50) !important;
+}
+.border-light-subtle {
+    border-color: #f1f5f9 !important;
+}
+

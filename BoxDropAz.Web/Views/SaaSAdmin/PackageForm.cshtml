@@ -1,0 +1,166 @@
+@model BoxDropAz.Web.Models.SaaSAdmin.PackageEditModel
+@{
+    var region = (Region)ViewData["Region"]!;
+    var isNew = ViewData["IsNew"] as bool? ?? string.IsNullOrWhiteSpace(Model.PackageId);
+    ViewData["Title"] = isNew ? "New package" : Model.Name;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <a class="small text-muted" asp-action="Packages" asp-route-regionId="@region.Id">
+            <i class="bi bi-arrow-left"></i> Back to @region.Name packages
+        </a>
+        <h1 class="mt-1">@(isNew ? "New package" : Model.Name)</h1>
+        <p class="text-muted mb-0">@region.Name</p>
+        @await Html.PartialAsync("_PlatformNav")
+    </div>
+</div>
+
+<div class="container py-4">
+    <form asp-action="SavePackage" method="post" data-submit-once>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="RegionId" />
+        <input type="hidden" asp-for="PackageId" />
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="bd-panel mb-4">
+                    <div class="bd-panel-title">What it is</div>
+                    <div class="row g-3">
+                        <div class="col-sm-8">
+                            <label class="form-label" asp-for="Name"></label>
+                            <input class="form-control" asp-for="Name" placeholder="2 bedroom" />
+                            <span class="text-danger small" asp-validation-for="Name"></span>
+                            @if (isNew)
+                            {
+                                <div class="form-text">The name sets the permanent id, so pick it deliberately.</div>
+                            }
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label" asp-for="Badge"></label>
+                            <input class="form-control" asp-for="Badge" placeholder="Most popular" />
+                            <div class="form-text">Optional ribbon on the card.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" asp-for="Subtitle"></label>
+                            <input class="form-control" asp-for="Subtitle" placeholder="Apartments and condos up to 1,100 sq ft" />
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label" asp-for="CrateCount"></label>
+                            <input class="form-control" type="number" min="1" asp-for="CrateCount" />
+                            <span class="text-danger small" asp-validation-for="CrateCount"></span>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label" asp-for="DollyCount"></label>
+                            <input class="form-control" type="number" min="0" asp-for="DollyCount" />
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label" asp-for="SortOrder"></label>
+                            <input class="form-control" type="number" asp-for="SortOrder" />
+                            <div class="form-text">Lower shows first.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" asp-for="IncludedItems"></label>
+                            <textarea class="form-control" rows="6" asp-for="IncludedItems"></textarea>
+                            <div class="form-text">One bullet per line. These are the ticks on the pricing card.</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" />
+                                <label class="form-check-label" asp-for="IsActive"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bd-panel mb-4">
+                    <div class="bd-panel-title">Pricing</div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" asp-for="BasePriceCents"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">&cent;</span>
+                                <input class="form-control" type="number" min="0" step="100" asp-for="BasePriceCents" />
+                            </div>
+                            <div class="form-text" id="basePreview">@Money.Format(Model.BasePriceCents)</div>
+                            <span class="text-danger small" asp-validation-for="BasePriceCents"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" asp-for="ExtraWeekPriceCents"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">&cent;</span>
+                                <input class="form-control" type="number" min="0" step="100" asp-for="ExtraWeekPriceCents" />
+                            </div>
+                            <div class="form-text" id="extraPreview">@Money.Format(Model.ExtraWeekPriceCents)</div>
+                            <span class="text-danger small" asp-validation-for="ExtraWeekPriceCents"></span>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <div class="small">
+                        <div class="text-muted mb-1">A 3-week rental in Zone A would cost</div>
+                        <div class="fs-5 fw-bold" id="threeWeekPreview">
+                            @Money.Format(Model.BasePriceCents + Model.ExtraWeekPriceCents * 2)
+                        </div>
+                        <div class="text-muted mt-2">
+                            The extra-week price is also what an extension charges mid-rental.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bd-panel mb-4">
+                    <div class="bd-panel-title">Zone surcharges in @region.Name</div>
+                    <ul class="list-unstyled small mb-0">
+                        @foreach (var zone in region.DeliveryZones)
+                        {
+                            <li class="d-flex justify-content-between border-bottom py-1">
+                                <span>@zone.Name</span>
+                                <span class="text-muted">
+                                    @(zone.SurchargeCents == 0 ? "Free" : "+" + Money.Format(zone.SurchargeCents))
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                    <div class="form-text">Set on the region, added on top of every package.</div>
+                </div>
+
+                <div class="bd-panel">
+                    <button type="submit" class="btn btn-primary w-100">
+                        @(isNew ? "Create package" : "Save changes")
+                    </button>
+                    <a class="btn btn-link w-100 mt-1" asp-action="Packages" asp-route-regionId="@region.Id">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const base = document.getElementById('BasePriceCents');
+            const extra = document.getElementById('ExtraWeekPriceCents');
+            if (!base || !extra) { return; }
+
+            const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+            const basePreview = document.getElementById('basePreview');
+            const extraPreview = document.getElementById('extraPreview');
+            const threeWeek = document.getElementById('threeWeekPreview');
+
+            function update() {
+                const b = parseInt(base.value, 10) || 0;
+                const e = parseInt(extra.value, 10) || 0;
+                basePreview.textContent = money.format(b / 100);
+                extraPreview.textContent = money.format(e / 100);
+                threeWeek.textContent = money.format((b + e * 2) / 100);
+            }
+
+            base.addEventListener('input', update);
+            extra.addEventListener('input', update);
+            update();
+        })();
+    </script>
+}

@@ -1,0 +1,169 @@
+@model BoxDropAz.Web.Models.Public.PricingViewModel
+
+<section class="bd-hero">
+    <div class="container text-center">
+        <span class="bd-eyebrow"><i class="bi bi-tag"></i> Pricing</span>
+        <h1 class="mt-3 mb-3">Flat rates. No deposit.</h1>
+        <p class="lead mx-auto">
+            One price covers the crates, the dollies, the delivery, and the pickup for a full seven days.
+        </p>
+    </div>
+</section>
+
+<section class="bd-section">
+    <div class="container">
+        @if (Model.AllRegions.Count > 1)
+        {
+            <div class="d-flex justify-content-center mb-4">
+                <div class="btn-group" role="group" aria-label="Choose a region">
+                    @foreach (var region in Model.AllRegions)
+                    {
+                        var isActive = Model.Region?.Id == region.Id;
+                        <a class="btn @(isActive ? "btn-primary" : "btn-outline-primary")"
+                           asp-action="Pricing" asp-route-region="@region.Slug">@region.Name</a>
+                    }
+                </div>
+            </div>
+        }
+
+        <partial name="_PackageCards" model="Model.Packages" />
+    </div>
+</section>
+
+<section class="bd-section bd-section-alt">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h2 class="h4 fw-bold mb-3">Delivery zones</h2>
+                <p class="text-muted">
+                    Zone A is included in every bundle price. Zones further out carry a flat surcharge that
+                    covers both the drop off and the collection.
+                </p>
+
+                <div class="bd-table">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Zone</th>
+                            <th>Areas</th>
+                            <th class="text-end">Round trip</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.Region is not null)
+                        {
+                            @foreach (var zone in Model.Region.DeliveryZones)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@zone.Name</td>
+                                    <td class="small text-muted">@zone.Cities</td>
+                                    <td class="text-end fw-semibold">
+                                        @(zone.SurchargeCents == 0 ? "Free" : Money.FormatCompact(zone.SurchargeCents))
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="small text-muted mt-2">
+                    <a asp-action="ServiceAreas">Check your ZIP code</a> to see which zone you're in.
+                </p>
+            </div>
+
+            <div class="col-lg-6">
+                <h2 class="h4 fw-bold mb-3">Optional extras</h2>
+                <p class="text-muted">Add these at checkout, or skip them entirely.</p>
+
+                <div class="bd-table">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Add-on</th>
+                            <th class="text-end">Price</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var addOn in Model.AddOns)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@addOn.Name</div>
+                                    <div class="small text-muted">@addOn.Description</div>
+                                </td>
+                                <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(addOn.UnitAmountCents) ea</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-6">
+                <h2 class="h4 fw-bold mb-3">If something doesn't come back</h2>
+                <p class="text-muted">
+                    We keep a card on file so a missing crate never turns into a debt collection call.
+                    These are the only charges that can hit it after your rental, and you see this exact
+                    schedule before you check out.
+                </p>
+
+                <div class="bd-table">
+                    <table class="table">
+                        <tbody>
+                        <tr>
+                            <td>Crate not returned or damaged beyond reuse</td>
+                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.CrateReplacementCents) each</td>
+                        </tr>
+                        <tr>
+                            <td>Dolly not returned or damaged</td>
+                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.DollyReplacementCents) each</td>
+                        </tr>
+                        <tr>
+                            <td>Crates need a deep clean</td>
+                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.DeepCleanPerCrateCents) per crate</td>
+                        </tr>
+                        <tr>
+                            <td>Nothing available at the scheduled pickup</td>
+                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.MissedPickupCents)</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="small text-muted mt-2">
+                    Every charge is reviewed by a human before it's applied. Full detail in the
+                    <a asp-controller="Legal" asp-action="RentalTerms">rental terms</a>.
+                </p>
+            </div>
+
+            <div class="col-lg-6">
+                <h2 class="h4 fw-bold mb-3">Extending your rental</h2>
+                <p class="text-muted">
+                    Moves slip. Extend by the week from your dashboard at any point before pickup and we
+                    charge the card on file at the extra-week rate for your bundle. Your pickup date moves
+                    automatically, so there's nothing to reschedule by phone.
+                </p>
+
+                <div class="bd-divider-note mb-4">
+                    <p class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Cancellations</p>
+                    <p class="small text-muted mb-0">
+                        Cancel more than 48 hours before delivery for a full refund. Inside 48 hours the
+                        truck is already routed, so we refund everything except a $25 scheduling fee.
+                    </p>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a class="btn btn-primary btn-lg" asp-controller="Book" asp-action="Index">Book your crates</a>
+                    <a class="btn btn-outline-primary" asp-action="Contact">Ask about a large or commercial move</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

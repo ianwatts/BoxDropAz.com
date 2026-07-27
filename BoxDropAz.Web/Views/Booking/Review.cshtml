@@ -1,0 +1,292 @@
+@model BoxDropAz.Web.Models.Booking.ReviewViewModel
+@{
+    ViewData["Title"] = "Review your booking";
+    var form = Model.Form;
+    var quote = Model.Quote;
+    var fees = Model.Region.DamageFees;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>Review and confirm</h1>
+        <p class="text-muted mb-0">Step 3 of 3 &middot; @Model.Region.Name</p>
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <form asp-action="Checkout" method="post" data-submit-once>
+            @Html.AntiForgeryToken()
+
+            @* The wizard keeps no server-side session; every answer rides along to checkout. *@
+            <input type="hidden" name="RegionId" value="@form.RegionId" />
+            <input type="hidden" name="PackageId" value="@form.PackageId" />
+            <input type="hidden" name="DeliveryDate" value="@form.DeliveryDate" />
+            <input type="hidden" name="DeliveryWindow" value="@form.DeliveryWindow" />
+            <input type="hidden" name="PickupWindow" value="@form.PickupWindow" />
+            <input type="hidden" name="RentalWeeks" value="@form.RentalWeeks" />
+            <input type="hidden" name="FullName" value="@form.FullName" />
+            <input type="hidden" name="Email" value="@form.Email" />
+            <input type="hidden" name="Phone" value="@form.Phone" />
+            <input type="hidden" name="AddressLine1" value="@form.AddressLine1" />
+            <input type="hidden" name="AddressLine2" value="@form.AddressLine2" />
+            <input type="hidden" name="City" value="@form.City" />
+            <input type="hidden" name="Zip" value="@form.Zip" />
+            <input type="hidden" name="PickupSameAsDelivery" value="@form.PickupSameAsDelivery.ToString().ToLowerInvariant()" />
+            <input type="hidden" name="PickupAddressLine1" value="@form.PickupAddressLine1" />
+            <input type="hidden" name="PickupAddressLine2" value="@form.PickupAddressLine2" />
+            <input type="hidden" name="PickupCity" value="@form.PickupCity" />
+            <input type="hidden" name="PickupZip" value="@form.PickupZip" />
+            <input type="hidden" name="ExtraCrateQty" value="@form.ExtraCrateQty" />
+            <input type="hidden" name="PackingPaperQty" value="@form.PackingPaperQty" />
+            <input type="hidden" name="WardrobeCrateQty" value="@form.WardrobeCrateQty" />
+            <input type="hidden" name="DeliveryNotes" value="@form.DeliveryNotes" />
+            <input type="hidden" name="GiftToken" value="@form.GiftToken" />
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h2 class="h5 fw-bold mb-0">Your rental</h2>
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-action="Schedule"
+                                   asp-route-region="@form.RegionId"
+                                   asp-route-package="@form.PackageId"
+                                   asp-route-zip="@form.Zip"
+                                   asp-route-gift="@form.GiftToken">Edit</a>
+                            </div>
+
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Bundle</span>
+                                <span class="bd-review-value">
+                                    @Model.Package.Name<br />
+                                    <span class="text-muted small">
+                                        @Model.Package.CrateCount crates &middot; @Model.Package.DollyCount dollies
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Rental length</span>
+                                <span class="bd-review-value">
+                                    @quote.RentalWeeks week@(quote.RentalWeeks == 1 ? "" : "s")
+                                </span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Delivery</span>
+                                <span class="bd-review-value">
+                                    @Model.DeliveryDate.ToString("dddd, MMMM d")<br />
+                                    <span class="text-muted small">@form.DeliveryWindow</span>
+                                </span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Pickup</span>
+                                <span class="bd-review-value">
+                                    @Model.PickupDate.ToString("dddd, MMMM d")<br />
+                                    <span class="text-muted small">@form.PickupWindow</span>
+                                </span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Delivery address</span>
+                                <span class="bd-review-value">
+                                    @form.AddressLine1@(string.IsNullOrWhiteSpace(form.AddressLine2) ? "" : ", " + form.AddressLine2)<br />
+                                    <span class="text-muted small">
+                                        @form.City, AZ @form.Zip
+                                        @if (Model.Zone is not null)
+                                        {
+                                            <text>&middot; @Model.Zone.Name</text>
+                                        }
+                                    </span>
+                                </span>
+                            </div>
+                            @if (!form.PickupSameAsDelivery)
+                            {
+                                <div class="bd-review-row">
+                                    <span class="bd-review-label">Pickup address</span>
+                                    <span class="bd-review-value">
+                                        @form.PickupAddressLine1@(string.IsNullOrWhiteSpace(form.PickupAddressLine2) ? "" : ", " + form.PickupAddressLine2)<br />
+                                        <span class="text-muted small">@form.PickupCity, AZ @form.PickupZip</span>
+                                    </span>
+                                </div>
+                            }
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Contact</span>
+                                <span class="bd-review-value">
+                                    @form.FullName<br />
+                                    <span class="text-muted small">@form.Email &middot; @form.Phone</span>
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(form.DeliveryNotes))
+                            {
+                                <div class="bd-review-row">
+                                    <span class="bd-review-label">Driver notes</span>
+                                    <span class="bd-review-value">@form.DeliveryNotes</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-2">Card on file</h2>
+                            <p class="text-muted small mb-0">
+                                We keep your card securely with Stripe so you can extend the rental in one click,
+                                and so we can settle damage or missed-pickup fees if they come up. We never charge
+                                anything beyond the amounts listed in the agreement below, and we always email a
+                                receipt.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-2">Rental agreement</h2>
+                            <p class="text-muted small">
+                                Version @RentalTerms.CurrentVersion. The fees that could apply after delivery:
+                            </p>
+
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Damaged or missing crate</span>
+                                <span class="bd-review-value">@Money.Format(fees.CrateReplacementCents) each</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Damaged or missing dolly</span>
+                                <span class="bd-review-value">@Money.Format(fees.DollyReplacementCents) each</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Missed pickup</span>
+                                <span class="bd-review-value">@Money.Format(fees.MissedPickupCents)</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Deep clean</span>
+                                <span class="bd-review-value">@Money.Format(fees.DeepCleanPerCrateCents) per crate</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Extra week</span>
+                                <span class="bd-review-value">@Money.Format(Model.Package.ExtraWeekPriceCents)</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Cancellation</span>
+                                <span class="bd-review-value">
+                                    Free up to @RentalTerms.FreeCancellationHours hours before delivery,
+                                    then @Money.Format(RentalTerms.LateCancellationFeeCents)
+                                </span>
+                            </div>
+
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" name="AcceptTerms" value="true"
+                                       id="acceptTerms" checked="@form.AcceptTerms" required />
+                                <input type="hidden" name="AcceptTerms" value="false" />
+                                <label class="form-check-label" for="acceptTerms">
+                                    I have read and accept the
+                                    <a asp-controller="Legal" asp-action="RentalTerms"
+                                       asp-route-region="@Model.Region.Id" target="_blank" rel="noopener">rental agreement</a>,
+                                    including the fees above being charged to my card on file.
+                                </label>
+                                @Html.ValidationMessage("AcceptTerms", new { @class = "d-block text-danger small" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="bd-card bd-summary-card">
+                        <div class="bd-card-body">
+                            <h2 class="h6 fw-bold mb-3">Order total</h2>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">@Model.Package.Name bundle (7 days)</span>
+                                <span>@Money.Format(quote.PackageBaseCents)</span>
+                            </div>
+
+                            @if (quote.ExtraWeeksCents > 0)
+                            {
+                                var extra = quote.RentalWeeks - 1;
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">@extra additional week@(extra == 1 ? "" : "s")</span>
+                                    <span>@Money.Format(quote.ExtraWeeksCents)</span>
+                                </div>
+                            }
+
+                            @if (quote.ZoneSurchargeCents > 0)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Delivery surcharge (@Model.Zone?.Name)</span>
+                                    <span>@Money.Format(quote.ZoneSurchargeCents)</span>
+                                </div>
+                            }
+
+                            @foreach (var addOn in quote.AddOns)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">@addOn.Name &times; @addOn.Quantity</span>
+                                    <span>@Money.Format(addOn.TotalCents)</span>
+                                </div>
+                            }
+
+                            <hr />
+
+                            @if (quote.GiftCreditAppliedCents > 0)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal</span>
+                                    <span>@Money.Format(quote.SubtotalCents)</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="bd-credit">
+                                        Gift credit
+                                        @if (!string.IsNullOrWhiteSpace(Model.GiftingAgentName))
+                                        {
+                                            <text>from @Model.GiftingAgentName</text>
+                                        }
+                                    </span>
+                                    <span class="bd-credit">-@Money.Format(quote.GiftCreditAppliedCents)</span>
+                                </div>
+                            }
+
+                            <div class="d-flex justify-content-between align-items-baseline mb-3">
+                                <span class="fw-bold">Total due today</span>
+                                <span class="fw-bold fs-3">@Money.Format(quote.TotalDueCents)</span>
+                            </div>
+
+                            @if (quote.UnusedCreditCents > 0)
+                            {
+                                <p class="text-muted small">
+                                    @Money.Format(quote.UnusedCreditCents) of your gift credit goes unused on this
+                                    bundle. A larger bundle or a longer rental would put it to work.
+                                </p>
+                            }
+
+                            @if (!Model.StripeConfigured)
+                            {
+                                <div class="alert alert-warning small">
+                                    Online payment isn't available right now. Please
+                                    <a asp-controller="Home" asp-action="Contact">contact us</a> and we'll book it for you.
+                                </div>
+                            }
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100" @(Model.StripeConfigured ? "" : "disabled")>
+                                @if (quote.IsFullyCoveredByCredit)
+                                {
+                                    <text>Confirm booking <i class="bi bi-arrow-right ms-1"></i></text>
+                                }
+                                else
+                                {
+                                    <text>Pay @Money.Format(quote.TotalDueCents) <i class="bi bi-lock-fill ms-1"></i></text>
+                                }
+                            </button>
+
+                            <p class="text-muted small text-center mt-3 mb-0">
+                                <i class="bi bi-shield-check me-1"></i>Secure checkout by Stripe.
+                                @if (quote.IsFullyCoveredByCredit)
+                                {
+                                    <text>Your gift covers the full cost &mdash; we only verify a card for the agreement.</text>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>

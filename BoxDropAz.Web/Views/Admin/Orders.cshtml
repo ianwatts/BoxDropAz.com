@@ -1,0 +1,140 @@
+@model BoxDropAz.Web.Models.Admin.AdminOrderListViewModel
+@{
+    ViewData["Title"] = "Orders";
+    var statuses = Enum.GetValues<OrderStatus>();
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Orders</h1>
+                <p class="text-muted mb-0">
+                    @Model.Orders.Count order@(Model.Orders.Count == 1 ? "" : "s") in @(Model.Region?.Name ?? "no region")
+                </p>
+            </div>
+            @await Html.PartialAsync("_RegionSwitcher", (Model.Region, Model.AllRegions, Model.CanSwitchRegion))
+        </div>
+        @await Html.PartialAsync("_AdminNav", Model.Region)
+    </div>
+</div>
+
+<div class="container py-4">
+    <form method="get" class="bd-panel mb-4">
+        <input type="hidden" name="region" value="@Model.Region?.Id" />
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label" for="search">Search</label>
+                <input type="search" id="search" name="search" class="form-control" value="@Model.Search"
+                       placeholder="Order number, name, email, phone, ZIP" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="status">Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">Any</option>
+                    @foreach (var status in statuses)
+                    {
+                        <option value="@status" selected="@(string.Equals(Model.StatusFilter, status.ToString(), StringComparison.OrdinalIgnoreCase))">
+                            @StatusBadge.LabelFor(status)
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="from">Placed from</label>
+                <input type="date" id="from" name="from" class="form-control" value="@Model.FromDate" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="to">Placed to</label>
+                <input type="date" id="to" name="to" class="form-control" value="@Model.ToDate" />
+            </div>
+            <div class="col-6 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                <a class="btn btn-outline-secondary" asp-action="Orders" asp-route-region="@Model.Region?.Id" title="Clear filters">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-inbox"></i>
+            <p class="mb-0">No orders match those filters.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bd-table">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Delivery</th>
+                        <th>Pickup</th>
+                        <th>Equipment</th>
+                        <th class="text-end">Paid</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var order in Model.Orders)
+                    {
+                        var flagged = order.Damages.Any(d => d.Status is DamageChargeStatus.PendingReview or DamageChargeStatus.ChargeFailed);
+                        <tr>
+                            <td>
+                                <a asp-action="Order" asp-route-id="@order.OrderId" class="fw-semibold">@order.OrderNumber</a>
+                                <div class="small text-muted">@order.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")</div>
+                            </td>
+                            <td>
+                                <div>@order.CustomerName</div>
+                                <div class="small text-muted">@order.CustomerEmail</div>
+                            </td>
+                            <td class="small">
+                                @order.DeliveryDate
+                                <div class="text-muted">@order.DeliveryCity @order.DeliveryZip</div>
+                            </td>
+                            <td class="small">
+                                @order.PickupDate
+                                <div class="text-muted">@order.RentalWeeks wk</div>
+                            </td>
+                            <td class="small">
+                                @order.CrateCount crates
+                                @if (order.DollyCount > 0)
+                                {
+                                    <div class="text-muted">@order.DollyCount dolly@(order.DollyCount == 1 ? "" : "s")</div>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @Money.Format(order.AmountPaidCents)
+                                @if (order.GiftCreditAppliedCents > 0)
+                                {
+                                    <div class="small text-muted">@Money.Format(order.GiftCreditAppliedCents) gifted</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="@StatusBadge.CssFor(order.Status)">@StatusBadge.LabelFor(order.Status)</span>
+                                @if (order.Source == OrderSource.RealtorGift)
+                                {
+                                    <div class="small text-muted mt-1"><i class="bi bi-gift"></i> Agent gift</div>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (flagged)
+                                {
+                                    <i class="bi bi-exclamation-triangle-fill text-warning" title="Damage charges need attention"></i>
+                                }
+                                <a class="btn btn-sm btn-outline-secondary ms-1" asp-action="Order" asp-route-id="@order.OrderId">Open</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

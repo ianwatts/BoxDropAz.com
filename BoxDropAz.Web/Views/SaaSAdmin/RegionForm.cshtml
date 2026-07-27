@@ -1,0 +1,287 @@
+@model BoxDropAz.Web.Models.SaaSAdmin.RegionEditModel
+@{
+    var isNew = ViewData["IsNew"] as bool? ?? string.IsNullOrWhiteSpace(Model.Id);
+    var packageCount = ViewData["PackageCount"] as int? ?? 0;
+    var orderCount = ViewData["OrderCount"] as int? ?? 0;
+    ViewData["Title"] = isNew ? "New region" : Model.Name;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <a class="small text-muted" asp-action="Regions"><i class="bi bi-arrow-left"></i> Back to regions</a>
+        <h1 class="mt-1">@(isNew ? "New region" : Model.Name)</h1>
+        <p class="text-muted mb-0">
+            @if (isNew)
+            {
+                <span>Zones decide which ZIPs you serve and what the trip costs.</span>
+            }
+            else
+            {
+                <span>@packageCount package@(packageCount == 1 ? "" : "s") &middot; @orderCount lifetime order@(orderCount == 1 ? "" : "s")</span>
+            }
+        </p>
+        @await Html.PartialAsync("_PlatformNav")
+    </div>
+</div>
+
+<div class="container py-4">
+    <form asp-action="SaveRegion" method="post" data-submit-once>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        }
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="bd-panel mb-4">
+                    <div class="bd-panel-title">Basics</div>
+                    <div class="row g-3">
+                        <div class="col-sm-7">
+                            <label class="form-label" asp-for="Name"></label>
+                            <input class="form-control" asp-for="Name" placeholder="Phoenix Metro" />
+                            <span class="text-danger small" asp-validation-for="Name"></span>
+                        </div>
+                        <div class="col-sm-5">
+                            <label class="form-label" asp-for="Slug"></label>
+                            <input class="form-control" asp-for="Slug" placeholder="phoenix" />
+                            <div class="form-text">Appears in links: /r/<span id="slugPreview">@Model.Slug</span></div>
+                            <span class="text-danger small" asp-validation-for="Slug"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" asp-for="Description"></label>
+                            <textarea class="form-control" rows="3" asp-for="Description"
+                                      placeholder="What this market covers, in a sentence or two."></textarea>
+                            <span class="text-danger small" asp-validation-for="Description"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" asp-for="SupportPhone"></label>
+                            <input class="form-control" asp-for="SupportPhone" placeholder="(480) 555-0142" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" asp-for="TimeZoneId"></label>
+                            <input class="form-control" asp-for="TimeZoneId" />
+                            <div class="form-text">IANA id. Arizona does not observe DST.</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" />
+                                <label class="form-check-label" asp-for="IsActive"></label>
+                            </div>
+                            <div class="form-text">
+                                Turning this off hides the region from booking without touching existing rentals.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bd-panel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bd-panel-title mb-0">Delivery zones</div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="addZone">
+                            <i class="bi bi-plus-lg me-1"></i>Add zone
+                        </button>
+                    </div>
+
+                    <span class="text-danger small d-block mb-2" asp-validation-for="Zones"></span>
+
+                    <div id="zoneList">
+                        @for (var i = 0; i < Model.Zones.Count; i++)
+                        {
+                            <div class="border rounded p-3 mb-3 bd-zone-row">
+                                <div class="row g-2">
+                                    <div class="col-sm-5">
+                                        <label class="form-label small" asp-for="Zones[i].Name"></label>
+                                        <input class="form-control form-control-sm" asp-for="Zones[i].Name" placeholder="Zone A" />
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <label class="form-label small" asp-for="Zones[i].Cities"></label>
+                                        <input class="form-control form-control-sm" asp-for="Zones[i].Cities"
+                                               placeholder="Mesa, Gilbert, Chandler" />
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <label class="form-label small" asp-for="Zones[i].SurchargeCents"></label>
+                                        <input class="form-control form-control-sm" type="number" min="0" step="100"
+                                               asp-for="Zones[i].SurchargeCents" />
+                                        <div class="form-text">cents</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small" asp-for="Zones[i].ZipCodes"></label>
+                                        <textarea class="form-control form-control-sm" rows="2"
+                                                  asp-for="Zones[i].ZipCodes"
+                                                  placeholder="85201, 85202, 85203"></textarea>
+                                        <div class="form-text">
+                                            Commas, spaces, or one per line. Anything that isn't a 5-digit ZIP is dropped.
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 mt-2 bd-remove-zone">
+                                    Remove this zone
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    <p class="small text-muted mb-0">
+                        A ZIP listed in two zones resolves to the first match, so keep them exclusive.
+                        Zone A is normally free; outer zones carry the round-trip surcharge.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bd-panel mb-4">
+                    <div class="bd-panel-title">Damage &amp; replacement fees</div>
+                    <p class="small text-muted">
+                        These appear verbatim on the rental terms page and are snapshotted onto each order at
+                        checkout, so changing them never re-prices an existing rental.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small" asp-for="CrateReplacementCents"></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">&cent;</span>
+                                <input class="form-control" type="number" min="0" asp-for="CrateReplacementCents" />
+                            </div>
+                            <div class="form-text">@Money.Format(Model.CrateReplacementCents)</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small" asp-for="DollyReplacementCents"></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">&cent;</span>
+                                <input class="form-control" type="number" min="0" asp-for="DollyReplacementCents" />
+                            </div>
+                            <div class="form-text">@Money.Format(Model.DollyReplacementCents)</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small" asp-for="MissedPickupCents"></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">&cent;</span>
+                                <input class="form-control" type="number" min="0" asp-for="MissedPickupCents" />
+                            </div>
+                            <div class="form-text">@Money.Format(Model.MissedPickupCents)</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small" asp-for="DeepCleanPerCrateCents"></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">&cent;</span>
+                                <input class="form-control" type="number" min="0" asp-for="DeepCleanPerCrateCents" />
+                            </div>
+                            <div class="form-text">@Money.Format(Model.DeepCleanPerCrateCents)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bd-panel mb-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        @(isNew ? "Create region" : "Save changes")
+                    </button>
+                    <a class="btn btn-link w-100 mt-1" asp-action="Regions">Cancel</a>
+                    @if (isNew)
+                    {
+                        <p class="small text-muted mb-0 mt-2">
+                            You'll add crate packages next &mdash; a region can't take a booking without one.
+                        </p>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </form>
+
+    @if (!isNew)
+    {
+        <div class="row g-4 mt-1">
+            <div class="col-lg-5 offset-lg-7">
+                <div class="bd-panel border-danger-subtle">
+                    <div class="bd-panel-title text-danger">Delete this region</div>
+                    @if (orderCount > 0)
+                    {
+                        <p class="small mb-0">
+                            @orderCount order@(orderCount == 1 ? "" : "s") reference this region, so it can't be
+                            deleted. Switch off <em>Accepting bookings</em> instead.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="small">
+                            Removes the region and its @packageCount package@(packageCount == 1 ? "" : "s").
+                        </p>
+                        <form asp-action="DeleteRegion" asp-route-id="@Model.Id" method="post"
+                              onsubmit="return confirm('Delete @Model.Name and its packages? This cannot be undone.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete @Model.Name</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<template id="zoneTemplate">
+    <div class="border rounded p-3 mb-3 bd-zone-row">
+        <div class="row g-2">
+            <div class="col-sm-5">
+                <label class="form-label small">Zone name</label>
+                <input class="form-control form-control-sm" name="Zones[__i__].Name" placeholder="Zone B" />
+            </div>
+            <div class="col-sm-5">
+                <label class="form-label small">Cities covered</label>
+                <input class="form-control form-control-sm" name="Zones[__i__].Cities" placeholder="Queen Creek, Florence" />
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label small">Surcharge</label>
+                <input class="form-control form-control-sm" type="number" min="0" step="100"
+                       name="Zones[__i__].SurchargeCents" value="0" />
+                <div class="form-text">cents</div>
+            </div>
+            <div class="col-12">
+                <label class="form-label small">ZIP codes</label>
+                <textarea class="form-control form-control-sm" rows="2" name="Zones[__i__].ZipCodes"></textarea>
+            </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 mt-2 bd-remove-zone">Remove this zone</button>
+    </div>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const list = document.getElementById('zoneList');
+            const template = document.getElementById('zoneTemplate');
+            const addButton = document.getElementById('addZone');
+
+            // Indexes only need to be unique and gap-free for the model binder, so appending at the
+            // current count is enough; removals renumber below.
+            function renumber() {
+                list.querySelectorAll('.bd-zone-row').forEach((row, index) => {
+                    row.querySelectorAll('[name]').forEach(field => {
+                        field.name = field.name.replace(/Zones\[\d+\]/, `Zones[${index}]`);
+                    });
+                });
+            }
+
+            addButton?.addEventListener('click', () => {
+                const count = list.querySelectorAll('.bd-zone-row').length;
+                const markup = template.innerHTML.replaceAll('__i__', count);
+                const holder = document.createElement('div');
+                holder.innerHTML = markup;
+                list.appendChild(holder.firstElementChild);
+            });
+
+            list?.addEventListener('click', event => {
+                if (!event.target.classList.contains('bd-remove-zone')) { return; }
+                event.target.closest('.bd-zone-row').remove();
+                renumber();
+            });
+
+            const slug = document.getElementById('Slug');
+            const preview = document.getElementById('slugPreview');
+            slug?.addEventListener('input', () => { preview.textContent = slug.value; });
+        })();
+    </script>
+}

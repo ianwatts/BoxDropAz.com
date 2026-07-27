@@ -1,0 +1,519 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BoxDropAz - moving crate rental and realtor gifting platform (ASP.NET Core MVC on Lambda).
+
+Parameters:
+  StageName:
+    Type: String
+    Default: Prod
+  TablePrefix:
+    Type: String
+    Default: BoxDropAz_Prod_
+  ManageTables:
+    Type: String
+    Default: "true"
+    Description: >-
+      Set to false once the tables exist and are managed outside this stack, so a stack update can
+      never touch live order data.
+  SiteBaseUrl:
+    Type: String
+    Default: "https://www.boxdropaz.com"
+    Description: Absolute base URL used to build links in emails and Stripe redirect URLs.
+  SupportEmail:
+    Type: String
+    Default: "support@boxdropaz.com"
+  AdminEmail:
+    Type: String
+    Default: "support@boxdropaz.com"
+  SupportPhone:
+    Type: String
+    Default: "(480) 555-0142"
+  SesFromEmail:
+    Type: String
+    Default: "support@boxdropaz.com"
+  StripeSecretKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+  StripePublishableKey:
+    Type: String
+    Default: ""
+  StripeWebhookSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+  StripeRealtorStarterMonthlyPriceId:
+    Type: String
+    Default: ""
+  StripeRealtorProfessionalMonthlyPriceId:
+    Type: String
+    Default: ""
+  StripeRealtorBrokerageMonthlyPriceId:
+    Type: String
+    Default: ""
+  SeedAdminEmail:
+    Type: String
+    Default: ""
+  SeedAdminPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  SeedRegionalAdminEmail:
+    Type: String
+    Default: ""
+  SeedRegionalAdminPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  SeedWorkerEmail:
+    Type: String
+    Default: ""
+  SeedWorkerPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  SeedRealtorEmail:
+    Type: String
+    Default: ""
+  SeedRealtorPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  SeedCustomerEmail:
+    Type: String
+    Default: ""
+  SeedCustomerPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+
+Conditions:
+  ShouldCreateTables: !Equals [ !Ref ManageTables, "true" ]
+  IsDevStage: !Or
+    - !Equals [ !Ref StageName, "dev" ]
+    - !Equals [ !Ref StageName, "Dev" ]
+
+Resources:
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref StageName
+      # API Gateway will not gzip or pass through binary payloads unless the type is declared here.
+      # The ~1 forms are the escaped variants API Gateway matches against.
+      BinaryMediaTypes:
+        - "image~1webp"
+        - "image~1png"
+        - "image~1jpeg"
+        - "image~1jpg"
+        - "image~1svg+xml"
+        - "font~1woff2"
+        - "application~1pdf"
+        - "application~1octet-stream"
+        - "*~1*"
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  DataProtectionBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      # Data protection keys must outlive any single Lambda instance, or every cold start would
+      # invalidate auth cookies and antiforgery tokens.
+      BucketName: !Sub "boxdropaz-dp-${StageName}-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # ---------- Identity ----------
+
+  ApplicationUserTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}ApplicationUser"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+
+  ApplicationRoleTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}ApplicationRole"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+
+  UserToRolesTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}UserToRoles"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: RoleId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: UserId
+          KeyType: HASH
+        - AttributeName: RoleId
+          KeyType: RANGE
+
+  UserLoginTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}UserLogin"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+        - AttributeName: UserId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserId-index
+          KeySchema:
+            - AttributeName: UserId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # ---------- Catalog and geography ----------
+
+  RegionTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}Region"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+
+  CratePackageTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}CratePackage"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: RegionId
+          AttributeType: S
+        - AttributeName: PackageId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: RegionId
+          KeyType: HASH
+        - AttributeName: PackageId
+          KeyType: RANGE
+
+  # ---------- Orders and fulfillment ----------
+
+  RentalOrderTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}RentalOrder"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: OrderId
+          AttributeType: S
+        - AttributeName: RegionId
+          AttributeType: S
+        - AttributeName: DeliveryDate
+          AttributeType: S
+        - AttributeName: PickupDate
+          AttributeType: S
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: CreatedAtUtc
+          AttributeType: S
+      KeySchema:
+        - AttributeName: OrderId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        # The worker manifest is "everything going out in this region today", so it is a single query.
+        - IndexName: RegionId-DeliveryDate-index
+          KeySchema:
+            - AttributeName: RegionId
+              KeyType: HASH
+            - AttributeName: DeliveryDate
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: RegionId-PickupDate-index
+          KeySchema:
+            - AttributeName: RegionId
+              KeyType: HASH
+            - AttributeName: PickupDate
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: UserId-CreatedAtUtc-index
+          KeySchema:
+            - AttributeName: UserId
+              KeyType: HASH
+            - AttributeName: CreatedAtUtc
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        # Backs the revenue graphs, which are always a date range within one region.
+        - IndexName: RegionId-CreatedAtUtc-index
+          KeySchema:
+            - AttributeName: RegionId
+              KeyType: HASH
+            - AttributeName: CreatedAtUtc
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # ---------- Realtor gifting ----------
+
+  RealtorSubscriptionTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}RealtorSubscription"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: UserId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: UserId
+          KeyType: HASH
+
+  GiftOrderTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}GiftOrder"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: GiftId
+          AttributeType: S
+        - AttributeName: RealtorUserId
+          AttributeType: S
+        - AttributeName: CreatedAtUtc
+          AttributeType: S
+        - AttributeName: ClaimToken
+          AttributeType: S
+      KeySchema:
+        - AttributeName: GiftId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: RealtorUserId-CreatedAtUtc-index
+          KeySchema:
+            - AttributeName: RealtorUserId
+              KeyType: HASH
+            - AttributeName: CreatedAtUtc
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        # /gift/claim/{token} has to be a lookup, not a scan, since it is a public URL.
+        - IndexName: ClaimToken-index
+          KeySchema:
+            - AttributeName: ClaimToken
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  CreditLedgerTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}CreditLedger"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: EntryId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: UserId
+          KeyType: HASH
+        - AttributeName: EntryId
+          KeyType: RANGE
+
+  # ---------- Billing plumbing ----------
+
+  StripeEventTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}StripeEvent"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: EventId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: EventId
+          KeyType: HASH
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDbAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:DescribeTable
+                  - dynamodb:CreateTable
+                Resource:
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TablePrefix}*"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TablePrefix}*/index/*"
+        - PolicyName: DataProtectionS3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "arn:aws:s3:::boxdropaz-dp-${StageName}-${AWS::AccountId}-${AWS::Region}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::boxdropaz-dp-${StageName}-${AWS::AccountId}-${AWS::Region}"
+        - PolicyName: SesAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: "*"
+
+  WebFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "BoxDropAzWeb-${StageName}"
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures:
+        - arm64
+      CodeUri: BoxDropAz.Web/
+      MemorySize: 1024
+      Timeout: 900
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          ASPNETCORE_ENVIRONMENT: !If [ IsDevStage, Development, Production ]
+          STAGE_NAME: !Ref StageName
+          DYNAMODB_TABLE_PREFIX: !Ref TablePrefix
+          # Tables come from CloudFormation in a deployed stack, so the app must not try to create them.
+          DynamoDB__AutoCreateTables: "false"
+          DATA_PROTECTION_BUCKET: !Ref DataProtectionBucket
+          AWS__S3__DataProtectionBucket: !Ref DataProtectionBucket
+          AWS__SES__FromEmail: !Ref SesFromEmail
+          Site__BaseUrl: !Ref SiteBaseUrl
+          Site__SupportEmail: !Ref SupportEmail
+          Site__AdminEmail: !Ref AdminEmail
+          Site__SupportPhone: !Ref SupportPhone
+          STRIPE_SECRET_KEY: !Ref StripeSecretKey
+          STRIPE_SECRETKEY: !Ref StripeSecretKey
+          STRIPE_PUBLISHABLEKEY: !Ref StripePublishableKey
+          STRIPE_WEBHOOKSECRET: !Ref StripeWebhookSecret
+          STRIPE_REALTORSTARTERMONTHLYPRICEID: !Ref StripeRealtorStarterMonthlyPriceId
+          STRIPE_REALTORPROFESSIONALMONTHLYPRICEID: !Ref StripeRealtorProfessionalMonthlyPriceId
+          STRIPE_REALTORBROKERAGEMONTHLYPRICEID: !Ref StripeRealtorBrokerageMonthlyPriceId
+          SEED_ADMIN_EMAIL: !Ref SeedAdminEmail
+          SEED_ADMIN_PASSWORD: !Ref SeedAdminPassword
+          SEED_REGIONALADMIN_EMAIL: !Ref SeedRegionalAdminEmail
+          SEED_REGIONALADMIN_PASSWORD: !Ref SeedRegionalAdminPassword
+          SEED_WORKER_EMAIL: !Ref SeedWorkerEmail
+          SEED_WORKER_PASSWORD: !Ref SeedWorkerPassword
+          SEED_REALTOR_EMAIL: !Ref SeedRealtorEmail
+          SEED_REALTOR_PASSWORD: !Ref SeedRealtorPassword
+          SEED_CUSTOMER_EMAIL: !Ref SeedCustomerEmail
+          SEED_CUSTOMER_PASSWORD: !Ref SeedCustomerPassword
+      Events:
+        RootResource:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId: !Ref RestApi
+        ProxyResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref RestApi
+
+Outputs:
+  ApiUrl:
+    Description: API endpoint URL
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+  StripeWebhookUrl:
+    Description: Endpoint to register in the Stripe dashboard
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/stripe/webhook"
+  DataProtectionBucketName:
+    Value: !Ref DataProtectionBucket
+  WebFunctionName:
+    Value: !Ref WebFunction

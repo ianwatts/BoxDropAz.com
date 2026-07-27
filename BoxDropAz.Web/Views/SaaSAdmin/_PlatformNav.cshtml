@@ -1,0 +1,18 @@
+@{
+    var current = (ViewContext.RouteData.Values["action"] as string) ?? "";
+
+    string Tab(params string[] actions)
+        => actions.Contains(current, StringComparer.OrdinalIgnoreCase) ? "bd-tab active" : "bd-tab";
+}
+
+<div class="bd-tabs mb-4">
+    <a class="@Tab("Index")" asp-action="Index"><i class="bi bi-graph-up me-1"></i>Overview</a>
+    <a class="@Tab("Regions", "EditRegion", "NewRegion", "SaveRegion")" asp-action="Regions">
+        <i class="bi bi-geo-alt me-1"></i>Regions
+    </a>
+    <a class="@Tab("Packages", "EditPackage", "NewPackage", "SavePackage")" asp-action="Packages">
+        <i class="bi bi-box-seam me-1"></i>Packages
+    </a>
+    <a class="@Tab("StripeEvents")" asp-action="StripeEvents"><i class="bi bi-lightning me-1"></i>Stripe events</a>
+    <a class="bd-tab" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i>Regional ops</a>
+</div>

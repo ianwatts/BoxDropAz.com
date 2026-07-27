@@ -1,0 +1,260 @@
+@model BoxDropAz.Web.Models.Admin.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Regional dashboard";
+    var change = Model.RevenueChangePercent;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Regional dashboard</h1>
+                <p class="text-muted mb-0">
+                    @(Model.Region?.Name ?? "No region selected") &middot;
+                    @DateTime.Now.ToString("dddd, MMMM d")
+                </p>
+            </div>
+            @await Html.PartialAsync("_RegionSwitcher", (Model.Region, Model.AllRegions, Model.CanSwitchRegion))
+        </div>
+        @await Html.PartialAsync("_AdminNav", Model.Region)
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (Model.Region is null)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-geo-alt"></i>
+            <p class="mb-0">No region is assigned to your account yet. Ask a platform admin to set one.</p>
+        </div>
+    }
+    else
+    {
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Revenue this month</div>
+                <div class="bd-metric-value">@Money.Format(Model.RevenueThisMonthCents)</div>
+                @if (change is not null)
+                {
+                    var up = change > 0;
+                    <div class="small @(up ? "text-success" : "text-danger")">
+                        <i class="bi @(up ? "bi-arrow-up-right" : "bi-arrow-down-right")"></i>
+                        @Math.Abs(change.Value).ToString("0.#")% vs last month
+                    </div>
+                }
+                else
+                {
+                    <div class="small text-muted">No prior month to compare</div>
+                }
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Orders this month</div>
+                <div class="bd-metric-value">@Model.OrdersThisMonth</div>
+                <div class="small text-muted">@Model.GiftOrdersThisMonth from agent gifts</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Active rentals</div>
+                <div class="bd-metric-value">@Model.ActiveRentals</div>
+                <div class="small text-muted">@Model.CratesInTheField crates in the field</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Damages awaiting review</div>
+                <div class="bd-metric-value">@Money.Format(Model.PendingDamageCents)</div>
+                <div class="small text-muted">
+                    @Model.PendingDamageCount line@(Model.PendingDamageCount == 1 ? "" : "s") queued
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+            <div class="bd-panel h-100">
+                <div class="bd-panel-title">Revenue, last 30 days</div>
+                <div class="bd-chart-wrap"><canvas id="dailyChart"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="bd-panel h-100">
+                <div class="bd-panel-title">Revenue by month</div>
+                <div class="bd-chart-wrap"><canvas id="monthlyChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="bd-table">
+                <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+                    <strong class="small text-uppercase text-muted">Needs attention</strong>
+                    <a class="small" asp-action="Orders" asp-route-region="@Model.Region.Id">All orders</a>
+                </div>
+                @if (Model.NeedsAttention.Count == 0)
+                {
+                    <div class="bd-empty py-4">
+                        <i class="bi bi-check2-circle"></i>
+                        <p class="mb-0 small">Nothing is stuck. Nice.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="table">
+                        <tbody>
+                        @foreach (var order in Model.NeedsAttention)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Order" asp-route-id="@order.OrderId" class="fw-semibold">
+                                        @order.OrderNumber
+                                    </a>
+                                    <div class="small text-muted">@order.CustomerName</div>
+                                </td>
+                                <td class="small">
+                                    @{
+                                        var pendingDamage = order.Damages.Count(d => d.Status == DamageChargeStatus.PendingReview);
+                                        var failedDamage = order.Damages.Count(d => d.Status == DamageChargeStatus.ChargeFailed);
+                                        var failedExtension = order.Extensions.Count(e => !e.Succeeded);
+                                    }
+                                    @if (failedDamage > 0)
+                                    {
+                                        <div class="text-danger">@failedDamage failed charge@(failedDamage == 1 ? "" : "s")</div>
+                                    }
+                                    @if (failedExtension > 0)
+                                    {
+                                        <div class="text-danger">@failedExtension failed extension@(failedExtension == 1 ? "" : "s")</div>
+                                    }
+                                    @if (pendingDamage > 0)
+                                    {
+                                        <div class="text-warning-emphasis">@pendingDamage damage line@(pendingDamage == 1 ? "" : "s") to review</div>
+                                    }
+                                    @if (order.PickedUpAtUtc is null && order.Status is OrderStatus.Delivered or OrderStatus.OutForPickup)
+                                    {
+                                        <div class="text-muted">Pickup due @order.PickupDate</div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="bd-table">
+                <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+                    <strong class="small text-uppercase text-muted">Upcoming deliveries</strong>
+                    <a class="small" asp-controller="Worker" asp-action="Index" asp-route-region="@Model.Region.Id">Manifest</a>
+                </div>
+                @if (Model.UpcomingDeliveries.Count == 0)
+                {
+                    <div class="bd-empty py-4">
+                        <i class="bi bi-calendar-x"></i>
+                        <p class="mb-0 small">No deliveries scheduled.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="table">
+                        <tbody>
+                        @foreach (var order in Model.UpcomingDeliveries)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Order" asp-route-id="@order.OrderId" class="fw-semibold">
+                                        @order.OrderNumber
+                                    </a>
+                                    <div class="small text-muted">@order.DeliveryCity &middot; @order.ZoneName</div>
+                                </td>
+                                <td class="small text-muted">
+                                    @order.DeliveryDate<br />@order.DeliveryWindow
+                                </td>
+                                <td class="text-end small">
+                                    @order.CrateCount crates
+                                    <div><span class="@StatusBadge.CssFor(order.Status)">@StatusBadge.LabelFor(order.Status)</span></div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const dailyCanvas = document.getElementById('dailyChart');
+            const monthlyCanvas = document.getElementById('monthlyChart');
+            if (!dailyCanvas || !monthlyCanvas) { return; }
+
+            const daily = @Html.Raw(Json.Serialize(Model.DailyRevenue.Select(p => new { p.Label, dollars = p.RevenueCents / 100.0, p.OrderCount })));
+            const monthly = @Html.Raw(Json.Serialize(Model.MonthlyRevenue.Select(p => new { p.Label, dollars = p.RevenueCents / 100.0, p.OrderCount })));
+
+            const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+            const shared = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${money.format(ctx.parsed.y)} · ${ctx.raw.orders} order${ctx.raw.orders === 1 ? '' : 's'}`
+                        }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => money.format(v) } },
+                    x: { grid: { display: false } }
+                }
+            };
+
+            // Chart.js reads `orders` off the raw point, so each value carries its count along.
+            const toPoints = rows => rows.map(r => ({ x: r.label, y: r.dollars, orders: r.orderCount }));
+
+            new Chart(dailyCanvas, {
+                type: 'line',
+                data: {
+                    labels: daily.map(r => r.label),
+                    datasets: [{
+                        data: toPoints(daily),
+                        borderColor: '#0f766e',
+                        backgroundColor: 'rgba(15,118,110,.12)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: .3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: shared
+            });
+
+            new Chart(monthlyCanvas, {
+                type: 'bar',
+                data: {
+                    labels: monthly.map(r => r.label),
+                    datasets: [{
+                        data: toPoints(monthly),
+                        backgroundColor: '#14b8a6',
+                        borderRadius: 6,
+                        maxBarThickness: 34
+                    }]
+                },
+                options: shared
+            });
+        })();
+    </script>
+}

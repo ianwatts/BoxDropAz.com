@@ -1,0 +1,161 @@
+@model BoxDropAz.Web.Models.Public.RentalTermsViewModel
+@{
+    var fees = Model.DamageFees;
+}
+
+<section class="bd-section">
+    <div class="container">
+        <div class="bd-legal mx-auto">
+            <span class="bd-eyebrow"><i class="bi bi-file-earmark-text"></i> Version @RentalTerms.CurrentVersion</span>
+            <h1 class="h2 fw-bold mt-3 mb-2">Crate rental agreement</h1>
+            <p class="text-muted">
+                This is the agreement you accept at checkout. Fee amounts below are the ones in force for
+                @(Model.Region?.Name ?? "your region"), and a copy of the schedule is stored with your order
+                so a later price change can never apply to a rental you already booked.
+            </p>
+
+            @if (Model.AllRegions.Count > 1)
+            {
+                <div class="btn-group btn-group-sm mb-4 bd-no-print" role="group">
+                    @foreach (var region in Model.AllRegions)
+                    {
+                        var isActive = Model.Region?.Id == region.Id;
+                        <a class="btn @(isActive ? "btn-primary" : "btn-outline-primary")"
+                           asp-action="RentalTerms" asp-route-region="@region.Slug">@region.Name</a>
+                    }
+                </div>
+            }
+
+            <h2>1. What you're renting</h2>
+            <p>
+                BoxDrop AZ rents reusable plastic moving crates, rolling dollies, and reusable labels. The
+                equipment remains our property at all times. You are renting the use of it for the period
+                below, not buying it.
+            </p>
+
+            <h2>2. Rental period</h2>
+            <p>
+                The standard rental period is @RentalTerms.BaseRentalDays days, starting on your scheduled
+                delivery date and ending on your scheduled pickup date. Additional weeks are available at
+                the extra-week rate for your bundle, shown on the pricing page and at checkout.
+            </p>
+            <p>
+                You may extend at any time before pickup from your account dashboard. Extending charges the
+                payment method on file and moves your pickup date forward automatically.
+            </p>
+
+            <h2>3. Delivery and pickup</h2>
+            <ul>
+                <li>Delivery and pickup happen inside the two hour window you select at checkout.</li>
+                <li>Someone must be present at delivery to receive the equipment and direct placement.</li>
+                <li>You do not need to be present at pickup. Leave the equipment stacked and accessible at the address on the order.</li>
+                <li>
+                    If nothing is available to collect at the scheduled pickup, a missed pickup fee of
+                    <strong>@Money.FormatCompact(fees.MissedPickupCents)</strong> applies and we reschedule.
+                </li>
+            </ul>
+
+            <h2>4. Payment method on file</h2>
+            <p>
+                You authorize BoxDrop AZ to keep your payment method on file and to charge it, without
+                further authorization, for:
+            </p>
+            <ul>
+                <li>rental extensions you request;</li>
+                <li>replacement and cleaning fees under section 5;</li>
+                <li>missed pickup fees under section 3.</li>
+            </ul>
+            <p>
+                Every fee under section 5 is reviewed by a member of our team before it is charged, and you
+                receive an itemized email at the time of any charge.
+            </p>
+
+            <h2>5. Damage, loss, and cleaning</h2>
+            <p>
+                Normal wear from a move is expected and never charged. The following fees apply only to
+                equipment that does not come back, or comes back unusable:
+            </p>
+
+            <div class="bd-table my-3">
+                <table class="table mb-0">
+                    <thead>
+                    <tr>
+                        <th>Situation</th>
+                        <th class="text-end">Fee</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Crate not returned, cracked, or otherwise unusable</td>
+                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.CrateReplacementCents) per crate</td>
+                    </tr>
+                    <tr>
+                        <td>Dolly not returned or damaged beyond repair</td>
+                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.DollyReplacementCents) per dolly</td>
+                    </tr>
+                    <tr>
+                        <td>Crate requires deep cleaning (spills, pet waste, paint, chemicals)</td>
+                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.DeepCleanPerCrateCents) per crate</td>
+                    </tr>
+                    <tr>
+                        <td>Nothing available at the scheduled pickup</td>
+                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.MissedPickupCents)</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                If you believe a fee was applied in error, reply to the charge email within 14 days and we
+                will review it with the driver's report and photographs.
+            </p>
+
+            <h2>6. Acceptable use</h2>
+            <ul>
+                <li>Do not exceed 50 lbs per crate.</li>
+                <li>Do not transport hazardous, flammable, corrosive, or perishable materials in the crates.</li>
+                <li>Do not modify, drill, paint, or apply adhesive labels to any equipment. Reusable labels are provided.</li>
+                <li>Do not sublet, sell, or move the equipment outside Arizona.</li>
+            </ul>
+
+            <h2>7. Changes and cancellations</h2>
+            <p>
+                Change your dates or cancel free of charge up to @RentalTerms.FreeCancellationHours hours
+                before your delivery window. Inside that window the route is already planned, so a
+                cancellation is refunded in full less a
+                @Money.FormatCompact(RentalTerms.LateCancellationFeeCents) scheduling fee.
+            </p>
+
+            <h2>8. Gifted rentals</h2>
+            <p>
+                When a real estate agent gifts a rental, the gift is applied as a credit against your order
+                total. Credit has no cash value, cannot be refunded to you, and cannot be transferred. If
+                you choose a bundle costing more than the credit, you pay the difference. If your bundle
+                costs less, the remainder stays with the agent's account rather than being paid out.
+            </p>
+            <p>
+                Sections 4 and 5 apply to gifted rentals exactly as they do to direct rentals: a payment
+                method is still collected at claim time so replacement and cleaning fees can be settled.
+            </p>
+
+            <h2>9. Liability</h2>
+            <p>
+                BoxDrop AZ is not responsible for damage to the contents you place in the crates. The
+                equipment is provided as-is for transporting household goods. Our total liability under this
+                agreement is limited to the amount you paid for the rental.
+            </p>
+
+            <h2>10. Contact</h2>
+            <p>
+                Questions about this agreement? <a asp-controller="Home" asp-action="Contact">Contact us</a>
+                and we'll walk you through it before you book.
+            </p>
+
+            <hr class="my-4" />
+            <p class="text-muted small">
+                Version @RentalTerms.CurrentVersion. When you check out we record this version number, the
+                timestamp, your IP address, and a snapshot of the fee amounts above alongside your order.
+            </p>
+        </div>
+    </div>
+</section>

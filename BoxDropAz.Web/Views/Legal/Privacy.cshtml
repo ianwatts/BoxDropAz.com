@@ -1,0 +1,68 @@
+@inject IConfiguration Configuration
+@{
+    var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+}
+
+<section class="bd-section">
+    <div class="container">
+        <div class="bd-legal mx-auto">
+            <h1 class="h2 fw-bold mb-2">Privacy policy</h1>
+            <p class="text-muted">Last updated @DateTime.Now.ToString("MMMM yyyy")</p>
+
+            <h2>What we collect</h2>
+            <ul>
+                <li><strong>Account details</strong> &mdash; your name, email address, phone number, and for agents, your brokerage.</li>
+                <li><strong>Order details</strong> &mdash; delivery and pickup addresses, dates, time windows, and the bundle you chose.</li>
+                <li><strong>Payment details</strong> &mdash; handled entirely by Stripe. We store only a card brand, the last four digits, and Stripe's identifiers. Full card numbers never touch our servers.</li>
+                <li><strong>Agreement records</strong> &mdash; the version of the rental agreement you accepted, when, and the IP address it came from.</li>
+            </ul>
+
+            <h2>How we use it</h2>
+            <ul>
+                <li>To schedule, deliver, and collect your rental.</li>
+                <li>To send order confirmations, delivery reminders, and receipts.</li>
+                <li>To charge extensions and equipment fees you have authorized.</li>
+                <li>To answer your support questions.</li>
+            </ul>
+
+            <h2>Who we share it with</h2>
+            <p>
+                We do not sell your personal information. We share the minimum necessary with the services
+                that run the business: Stripe for payments, Amazon Web Services for hosting and email
+                delivery, and our own drivers, who see only the delivery details needed for that day's route.
+            </p>
+            <p>
+                If a real estate agent gifted your rental, they can see that you claimed the gift, which
+                bundle you chose, and the delivery date. They do not see your payment details or any amount
+                you paid on top of the gift.
+            </p>
+
+            <h2>How long we keep it</h2>
+            <p>
+                Order and agreement records are kept for seven years to satisfy tax and dispute
+                requirements. You can ask us to close your account at any time; we'll remove your profile
+                and keep only the records we're required to retain.
+            </p>
+
+            <h2>Your choices</h2>
+            <ul>
+                <li>Request a copy of the personal information we hold about you.</li>
+                <li>Ask us to correct anything that's wrong.</li>
+                <li>Ask us to delete your account.</li>
+                <li>Unsubscribe from marketing email at any time. Transactional email about an active rental will still be sent.</li>
+            </ul>
+
+            <h2>Cookies</h2>
+            <p>
+                We use a session cookie to keep you signed in and an anti-forgery cookie to protect forms.
+                Both are required for the site to work and neither is used for advertising.
+            </p>
+
+            <h2>Contact</h2>
+            <p>
+                Email <a href="mailto:@supportEmail">@supportEmail</a> with any privacy question and we'll
+                respond within 30 days.
+            </p>
+        </div>
+    </div>
+</section>

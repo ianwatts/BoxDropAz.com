@@ -1,0 +1,25 @@
+@model BoxDropAz.Core.Models.Regions.Region
+@{
+    var current = (ViewContext.RouteData.Values["action"] as string) ?? "";
+    var regionId = Model?.Id;
+
+    string Tab(string action) => string.Equals(current, action, StringComparison.OrdinalIgnoreCase) ? "bd-tab active" : "bd-tab";
+}
+
+<div class="bd-tabs mb-4">
+    <a class="@Tab("Index")" asp-controller="Admin" asp-action="Index" asp-route-region="@regionId">
+        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+    </a>
+    <a class="@Tab("Orders")" asp-controller="Admin" asp-action="Orders" asp-route-region="@regionId">
+        <i class="bi bi-box-seam me-1"></i>Orders
+    </a>
+    <a class="@Tab("Users")" asp-controller="Admin" asp-action="Users" asp-route-region="@regionId">
+        <i class="bi bi-people me-1"></i>Users
+    </a>
+    @if (User.IsInRole(Roles.SaaSAdmin))
+    {
+        <a class="bd-tab" asp-controller="SaaSAdmin" asp-action="Index">
+            <i class="bi bi-globe2 me-1"></i>Platform
+        </a>
+    }
+</div>

@@ -1,0 +1,105 @@
+@model BoxDropAz.Web.Models.Worker.WorkerOrderViewModel
+@{
+    var order = Model.Order;
+    var done = Model.IsPickup ? order.PickedUpAtUtc is not null : order.DeliveredAtUtc is not null;
+    var line1 = Model.IsPickup ? order.PickupAddressLine1 : order.DeliveryAddressLine1;
+    var line2 = Model.IsPickup ? order.PickupAddressLine2 : order.DeliveryAddressLine2;
+    var city = Model.IsPickup ? order.PickupCity : order.DeliveryCity;
+    var zip = Model.IsPickup ? order.PickupZip : order.DeliveryZip;
+    var window = Model.IsPickup ? order.PickupWindow : order.DeliveryWindow;
+    var mapQuery = Uri.EscapeDataString($"{line1}, {city}, AZ {zip}");
+    var driverNote = order.Notes.FirstOrDefault();
+    var dateString = Model.ManifestDate.ToString("yyyy-MM-dd");
+}
+
+<div class="bd-card h-100 @(done ? "bd-stop-done" : "")">
+    <div class="bd-card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+                <div class="text-muted small">@order.OrderNumber &middot; @window</div>
+                <h3 class="h6 fw-bold mb-0">@order.CustomerName</h3>
+            </div>
+            @if (done)
+            {
+                <span class="bd-status bd-status-delivered">
+                    <i class="bi bi-check-lg"></i> @(Model.IsPickup ? "Collected" : "Delivered")
+                </span>
+            }
+            else
+            {
+                <span class="bd-status bd-status-confirmed">@order.ZoneName</span>
+            }
+        </div>
+
+        <p class="mb-2">
+            <a href="https://www.google.com/maps/search/?api=1&query=@mapQuery"
+               target="_blank" rel="noopener" class="text-decoration-none">
+                <i class="bi bi-geo-alt me-1"></i>@line1@(string.IsNullOrWhiteSpace(line2) ? "" : ", " + line2)<br />
+                <span class="text-muted small ms-4">@city, AZ @zip</span>
+            </a>
+        </p>
+
+        <p class="mb-2">
+            <a href="tel:@order.CustomerPhone" class="text-decoration-none">
+                <i class="bi bi-telephone me-1"></i>@order.CustomerPhone
+            </a>
+        </p>
+
+        <div class="d-flex gap-3 small text-muted mb-3">
+            <span><strong>@order.CrateCount</strong> crates</span>
+            <span><strong>@order.DollyCount</strong> dollies</span>
+            <span>@order.PackageName</span>
+        </div>
+
+        @if (driverNote is not null)
+        {
+            <div class="alert alert-light border small py-2 mb-3">
+                <i class="bi bi-sticky me-1"></i>@driverNote.Body
+            </div>
+        }
+
+        @if (order.IncludeCoBrandingInsert)
+        {
+            <div class="alert alert-info small py-2 mb-3">
+                <i class="bi bi-gift me-1"></i>
+                Include the co-branded insert from @order.GiftingRealtorName.
+            </div>
+        }
+
+        @if (!done)
+        {
+            @if (Model.IsPickup)
+            {
+                <form asp-action="MarkPickedUp" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="date" value="@dateString" />
+                    <div class="row g-2 align-items-end">
+                        <div class="col-5">
+                            <label class="form-label small" for="crates-@order.OrderId">Crates back</label>
+                            <input type="number" name="cratesReturned" id="crates-@order.OrderId"
+                                   class="form-control" value="@order.CrateCount" min="0" max="@order.CrateCount" />
+                        </div>
+                        <div class="col-7">
+                            <button type="submit" class="btn btn-primary w-100">Mark collected</button>
+                        </div>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <form asp-action="MarkDelivered" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="date" value="@dateString" />
+                    <button type="submit" class="btn btn-primary w-100">Mark delivered</button>
+                </form>
+            }
+        }
+
+        <a class="btn btn-outline-secondary w-100 mt-2"
+           asp-action="Order" asp-route-id="@order.OrderId"
+           asp-route-pickup="@Model.IsPickup.ToString().ToLowerInvariant()"
+           asp-route-date="@dateString">
+            Details@(order.Damages.Count > 0 ? $" ({order.Damages.Count} reported)" : "")
+        </a>
+    </div>
+</div>

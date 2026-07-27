@@ -1,0 +1,123 @@
+@model BoxDropAz.Web.Models.Agent.GiftListViewModel
+@{
+    ViewData["Title"] = "Gift history";
+
+    string FilterClass(string? value)
+        => string.Equals(Model.StatusFilter, value, StringComparison.OrdinalIgnoreCase)
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline-secondary";
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Gift history</h1>
+                <p class="text-muted mb-0">
+                    @Model.Gifts.Count gift@(Model.Gifts.Count == 1 ? "" : "s") &middot;
+                    @Money.Format(Model.Subscription.CreditBalanceCents) credit available
+                </p>
+            </div>
+            <a class="btn btn-primary" asp-action="SendGift"><i class="bi bi-send me-1"></i>Send a gift</a>
+        </div>
+        <partial name="_AgentNav" />
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a class="@FilterClass(null)" asp-action="Gifts">All</a>
+            <a class="@FilterClass("Sent")" asp-action="Gifts" asp-route-status="Sent">Awaiting claim</a>
+            <a class="@FilterClass("Claimed")" asp-action="Gifts" asp-route-status="Claimed">Claimed</a>
+            <a class="@FilterClass("Cancelled")" asp-action="Gifts" asp-route-status="Cancelled">Cancelled</a>
+        </div>
+
+        @if (Model.Gifts.Count == 0)
+        {
+            <div class="bd-card">
+                <div class="bd-empty">
+                    <i class="bi bi-inbox"></i>
+                    No gifts here yet.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="bd-table">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Property</th>
+                                <th>Closing</th>
+                                <th class="text-end">Value</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var gift in Model.Gifts)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@gift.ClientName</div>
+                                        <div class="text-muted small">@gift.ClientEmail</div>
+                                    </td>
+                                    <td>
+                                        <div>@gift.PropertyAddressLine1</div>
+                                        <div class="text-muted small">@gift.PropertyCity @gift.PropertyZip</div>
+                                    </td>
+                                    <td>
+                                        @(DateOnly.TryParse(gift.ClosingDate, out var closing)
+                                            ? closing.ToString("MMM d, yyyy")
+                                            : gift.ClosingDate)
+                                    </td>
+                                    <td class="text-end fw-semibold">@Money.Format(gift.GiftAmountCents)</td>
+                                    <td>
+                                        <span class="@StatusBadge.CssFor(gift.Status)">
+                                            @StatusBadge.LabelFor(gift.Status)
+                                        </span>
+                                        @if (gift.Status == GiftStatus.Sent)
+                                        {
+                                            <div class="text-muted small mt-1">
+                                                Expires @gift.ExpiresAtUtc.ToLocalTime().ToString("MMM d, yyyy")
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        @if (gift.IsClaimable)
+                                        {
+                                            <form asp-action="ResendGift" asp-route-giftId="@gift.GiftId"
+                                                  method="post" class="d-inline" data-submit-once>
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                        title="Resend the claim link">
+                                                    <i class="bi bi-envelope"></i>
+                                                </button>
+                                            </form>
+                                            <form asp-action="CancelGift" asp-route-giftId="@gift.GiftId"
+                                                  method="post" class="d-inline" data-submit-once
+                                                  onsubmit="return confirm('Cancel this gift and return @Money.Format(gift.GiftAmountCents) to your balance?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        title="Cancel and refund the credit">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">&mdash;</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</section>

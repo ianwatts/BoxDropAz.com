@@ -1,0 +1,335 @@
+@model BoxDropAz.Web.Models.Dashboard.OrderDetailViewModel
+@{
+    var order = Model.Order;
+    ViewData["Title"] = $"Order {order.OrderNumber}";
+    var fees = Model.Region?.DamageFees;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <a class="text-muted small text-decoration-none" asp-action="Index">
+                    <i class="bi bi-arrow-left me-1"></i>All rentals
+                </a>
+                <h1 class="mt-1">@order.PackageName</h1>
+                <p class="text-muted mb-0">
+                    Order @order.OrderNumber &middot; booked @order.CreatedAtUtc.ToLocalTime().ToString("MMMM d, yyyy")
+                </p>
+            </div>
+            <span class="@StatusBadge.CssFor(order.Status)">@StatusBadge.LabelFor(order.Status)</span>
+        </div>
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="bd-card mb-4">
+                    <div class="bd-card-body">
+                        <h2 class="h5 fw-bold mb-3">Schedule</h2>
+
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Delivery</span>
+                            <span class="bd-review-value">
+                                @(Model.DeliveryDate?.ToString("dddd, MMMM d") ?? order.DeliveryDate)<br />
+                                <span class="text-muted small fw-normal">@order.DeliveryWindow</span>
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Pickup</span>
+                            <span class="bd-review-value">
+                                @(Model.PickupDate?.ToString("dddd, MMMM d") ?? order.PickupDate)<br />
+                                <span class="text-muted small fw-normal">@order.PickupWindow</span>
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Rental length</span>
+                            <span class="bd-review-value">
+                                @order.RentalWeeks week@(order.RentalWeeks == 1 ? "" : "s")
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Delivery address</span>
+                            <span class="bd-review-value">
+                                @order.DeliveryAddressLine1@(string.IsNullOrWhiteSpace(order.DeliveryAddressLine2) ? "" : ", " + order.DeliveryAddressLine2)<br />
+                                <span class="text-muted small fw-normal">@order.DeliveryCity, AZ @order.DeliveryZip</span>
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Equipment</span>
+                            <span class="bd-review-value">
+                                @order.CrateCount crates &middot; @order.DollyCount dollies
+                            </span>
+                        </div>
+                        @if (order.DeliveredAtUtc is { } delivered)
+                        {
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Delivered</span>
+                                <span class="bd-review-value">@delivered.ToLocalTime().ToString("MMM d 'at' h:mm tt")</span>
+                            </div>
+                        }
+                        @if (order.PickedUpAtUtc is { } collected)
+                        {
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Collected</span>
+                                <span class="bd-review-value">@collected.ToLocalTime().ToString("MMM d 'at' h:mm tt")</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (Model.CanExtend && Model.WeeklyPriceCents is { } weekly)
+                {
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Need them longer?</h2>
+                            <p class="text-muted small mb-3">
+                                @Money.Format(weekly) per additional week, charged to your
+                                @if (!string.IsNullOrWhiteSpace(Model.CardLast4))
+                                {
+                                    <text>@Model.CardBrand ending @Model.CardLast4</text>
+                                }
+                                else
+                                {
+                                    <text>card on file</text>
+                                }
+                                right away. Your pickup date moves out automatically.
+                            </p>
+
+                            <form asp-action="Extend" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                                @Html.AntiForgeryToken()
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-sm-5">
+                                        <label class="form-label" for="additionalWeeks">Additional weeks</label>
+                                        <select name="additionalWeeks" id="additionalWeeks" class="form-select"
+                                                data-weekly="@weekly">
+                                            @for (var weeks = 1; weeks <= 8; weeks++)
+                                            {
+                                                <option value="@weeks">
+                                                    @weeks week@(weeks == 1 ? "" : "s") &mdash; @Money.Format(weekly * weeks)
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            Extend and charge <span id="extendAmount">@Money.Format(weekly)</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            @if (string.IsNullOrWhiteSpace(Model.CardLast4))
+                            {
+                                <p class="text-danger small mt-3 mb-0">
+                                    We don't have a card for this rental yet. Add one from
+                                    <a asp-action="Index">your rentals page</a> first.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (order.Extensions.Count > 0)
+                {
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-3">Extensions</h2>
+                            @foreach (var extension in order.Extensions.OrderByDescending(e => e.CreatedAtUtc))
+                            {
+                                <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                    <div>
+                                        <div class="small fw-semibold">
+                                            +@extension.AdditionalWeeks week@(extension.AdditionalWeeks == 1 ? "" : "s")
+                                            to @extension.NewPickupDate
+                                        </div>
+                                        <div class="text-muted" style="font-size:.8rem;">
+                                            @extension.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")
+                                            @if (!extension.Succeeded)
+                                            {
+                                                <span class="text-danger"> &middot; @extension.FailureReason</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-semibold">@Money.Format(extension.AmountCents)</div>
+                                        <div class="@(extension.Succeeded ? "text-success" : "text-danger")"
+                                             style="font-size:.8rem;">
+                                            @(extension.Succeeded ? "Paid" : "Declined")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (order.Damages.Count > 0)
+                {
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-3">Equipment charges</h2>
+                            @foreach (var damage in order.Damages)
+                            {
+                                <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                    <div class="pe-3">
+                                        <div class="small fw-semibold">
+                                            @damage.Quantity &times; @damage.Kind
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(damage.Description))
+                                        {
+                                            <div class="text-muted" style="font-size:.8rem;">@damage.Description</div>
+                                        }
+                                    </div>
+                                    <div class="text-end text-nowrap">
+                                        <div class="fw-semibold">@Money.Format(damage.TotalCents)</div>
+                                        <span class="@StatusBadge.CssFor(damage.Status)">
+                                            @StatusBadge.LabelFor(damage.Status)
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                            <p class="text-muted small mt-3 mb-0">
+                                Think a charge is wrong? Reply to your receipt email within 14 days and we'll
+                                review it against the driver's report.
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bd-card mb-4">
+                    <div class="bd-card-body">
+                        <h2 class="h6 fw-bold mb-3">What you paid</h2>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">@order.PackageName bundle</span>
+                            <span>@Money.Format(order.PackageBaseCents)</span>
+                        </div>
+                        @if (order.ExtraWeeksCents > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Extra weeks</span>
+                                <span>@Money.Format(order.ExtraWeeksCents)</span>
+                            </div>
+                        }
+                        @if (order.ZoneSurchargeCents > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Delivery surcharge</span>
+                                <span>@Money.Format(order.ZoneSurchargeCents)</span>
+                            </div>
+                        }
+                        @foreach (var addOn in order.AddOns)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">@addOn.Name &times; @addOn.Quantity</span>
+                                <span>@Money.Format(addOn.TotalCents)</span>
+                            </div>
+                        }
+                        @if (order.GiftCreditAppliedCents > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="bd-credit">
+                                    Gift credit@(string.IsNullOrWhiteSpace(order.GiftingRealtorName) ? "" : $" from {order.GiftingRealtorName}")
+                                </span>
+                                <span class="bd-credit">-@Money.Format(order.GiftCreditAppliedCents)</span>
+                            </div>
+                        }
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold">Total paid</span>
+                            <span class="fw-bold fs-5">@Money.Format(order.AmountPaidCents)</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.CardLast4))
+                        {
+                            <p class="text-muted small mt-3 mb-0">
+                                <i class="bi bi-credit-card me-1"></i>@Model.CardBrand ending @Model.CardLast4
+                            </p>
+                        }
+                    </div>
+                </div>
+
+                @if (fees is not null)
+                {
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h6 fw-bold mb-2">Fees that could apply</h2>
+                            <p class="text-muted small">
+                                From the agreement you accepted
+                                @if (order.Terms is { } terms)
+                                {
+                                    <text>on @terms.AcceptedAtUtc.ToLocalTime().ToString("MMMM d, yyyy") (version @terms.TermsVersion)</text>
+                                }
+                                <text>.</text>
+                            </p>
+
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Damaged or missing crate</span>
+                                <span class="bd-review-value">@Money.Format(fees.CrateReplacementCents)</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Damaged or missing dolly</span>
+                                <span class="bd-review-value">@Money.Format(fees.DollyReplacementCents)</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Missed pickup</span>
+                                <span class="bd-review-value">@Money.Format(fees.MissedPickupCents)</span>
+                            </div>
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Deep clean</span>
+                                <span class="bd-review-value">@Money.Format(fees.DeepCleanPerCrateCents) per crate</span>
+                            </div>
+
+                            <a class="small" asp-controller="Legal" asp-action="RentalTerms"
+                               asp-route-region="@order.RegionId">Read the full agreement</a>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.CanCancel)
+                {
+                    <div class="bd-card">
+                        <div class="bd-card-body">
+                            <h2 class="h6 fw-bold mb-2">Cancel this rental</h2>
+                            <p class="text-muted small">
+                                Free until @RentalTerms.FreeCancellationHours hours before delivery. After that,
+                                give us a call instead.
+                            </p>
+                            <form asp-action="Cancel" asp-route-id="@order.OrderId" method="post" data-submit-once
+                                  onsubmit="return confirm('Cancel this rental? Your delivery slot will be released.');">
+                                @Html.AntiForgeryToken()
+                                <input type="text" name="reason" class="form-control mb-2"
+                                       placeholder="Reason (optional)" maxlength="200" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Cancel rental</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var select = document.getElementById('additionalWeeks');
+            if (!select) { return; }
+
+            var weekly = parseInt(select.dataset.weekly, 10) || 0;
+            var label = document.getElementById('extendAmount');
+
+            select.addEventListener('change', function () {
+                var weeks = parseInt(this.value, 10) || 1;
+                label.textContent = '$' + ((weekly * weeks) / 100).toFixed(2);
+            });
+        })();
+    </script>
+}

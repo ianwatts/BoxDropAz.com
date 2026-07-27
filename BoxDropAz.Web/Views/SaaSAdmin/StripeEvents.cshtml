@@ -1,0 +1,155 @@
+@model BoxDropAz.Web.Models.SaaSAdmin.StripeEventsViewModel
+@{
+    ViewData["Title"] = "Stripe events";
+
+    var failed = Model.Events.Count(e => !string.IsNullOrWhiteSpace(e.ErrorMessage));
+    var stuck = Model.Events.Count(e => e.ProcessedAtUtc is null);
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>Stripe events</h1>
+        <p class="text-muted mb-0">
+            Every webhook we've claimed, and what we did with it. This is the idempotency ledger, so a
+            row here is also the reason a retry was skipped.
+        </p>
+        @await Html.PartialAsync("_PlatformNav")
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Events shown</div>
+                <div class="bd-metric-value">@Model.Events.Count</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Failed</div>
+                <div class="bd-metric-value @(failed > 0 ? "text-danger" : "")">@failed</div>
+                <div class="small text-muted">Stripe will keep retrying these</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="bd-metric-card">
+                <div class="bd-metric-label">Still processing</div>
+                <div class="bd-metric-value @(stuck > 0 ? "text-warning-emphasis" : "")">@stuck</div>
+                <div class="small text-muted">Claimed but never finished</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="get" class="bd-panel mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="type">Event type</label>
+                <select id="type" name="type" class="form-select">
+                    <option value="">Any type</option>
+                    @foreach (var known in Model.KnownTypes)
+                    {
+                        <option value="@known" selected="@(string.Equals(Model.TypeFilter, known, StringComparison.OrdinalIgnoreCase))">
+                            @known
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="outcome">Result</label>
+                <select id="outcome" name="outcome" class="form-select">
+                    <option value="">Any result</option>
+                    <option value="processed" selected="@(Model.OutcomeFilter == "processed")">Processed cleanly</option>
+                    <option value="failed" selected="@(Model.OutcomeFilter == "failed")">Failed</option>
+                    <option value="unprocessed" selected="@(Model.OutcomeFilter == "unprocessed")">Never finished</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a class="btn btn-outline-secondary" asp-action="StripeEvents">Clear</a>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Events.Count == 0)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-lightning"></i>
+            <p class="mb-0">
+                No events recorded. Point the Stripe CLI at <code>/stripe/webhook</code> and take a
+                test booking to see traffic here.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="bd-table">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Received</th>
+                        <th>Type</th>
+                        <th>Outcome</th>
+                        <th>Related</th>
+                        <th>Event id</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var record in Model.Events)
+                    {
+                        var isFailed = !string.IsNullOrWhiteSpace(record.ErrorMessage);
+                        <tr class="@(isFailed ? "table-danger" : "")">
+                            <td class="small text-nowrap">
+                                @record.ReceivedAtUtc.ToLocalTime().ToString("MMM d, h:mm:ss tt")
+                                @if (record.ProcessedAtUtc is not null)
+                                {
+                                    var elapsed = (record.ProcessedAtUtc.Value - record.ReceivedAtUtc).TotalMilliseconds;
+                                    <div class="text-muted">@elapsed.ToString("0") ms</div>
+                                }
+                                else
+                                {
+                                    <div class="text-warning-emphasis">unfinished</div>
+                                }
+                            </td>
+                            <td class="small"><code>@record.EventType</code></td>
+                            <td class="small">
+                                @if (isFailed)
+                                {
+                                    <span class="bd-status bd-status-cancelled">Failed</span>
+                                    <div class="text-danger mt-1">@record.ErrorMessage</div>
+                                }
+                                else
+                                {
+                                    <span class="bd-status bd-status-delivered">@(string.IsNullOrWhiteSpace(record.Outcome) ? "processed" : record.Outcome)</span>
+                                }
+                            </td>
+                            <td class="small">
+                                @if (!string.IsNullOrWhiteSpace(record.RelatedId))
+                                {
+                                    <code>@record.RelatedId</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">&mdash;</span>
+                                }
+                            </td>
+                            <td class="small">
+                                <a href="https://dashboard.stripe.com/events/@record.EventId" target="_blank" rel="noopener">
+                                    @record.EventId <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="small text-muted mt-3 mb-0">
+            A row marked <em>unfinished</em> means the handler threw after claiming the event. The claim is
+            released on transient failures so Stripe's retry gets another attempt; if the row is old and
+            still unfinished, replay the event from the Stripe dashboard.
+        </p>
+    }
+</div>

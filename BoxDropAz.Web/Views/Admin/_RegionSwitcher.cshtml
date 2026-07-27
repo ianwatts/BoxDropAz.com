@@ -1,0 +1,21 @@
+@model (BoxDropAz.Core.Models.Regions.Region? Current, List<BoxDropAz.Core.Models.Regions.Region> All, bool CanSwitch)
+
+@if (Model.CanSwitch && Model.All.Count > 1)
+{
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0 small text-muted" for="regionSwitch">Region</label>
+        <select id="regionSwitch" name="region" class="form-select form-select-sm" style="width:auto"
+                onchange="this.form.submit()">
+            @foreach (var region in Model.All)
+            {
+                <option value="@region.Id" selected="@(region.Id == Model.Current?.Id)">
+                    @region.Name@(region.IsActive ? "" : " (inactive)")
+                </option>
+            }
+        </select>
+    </form>
+}
+else if (Model.Current is not null)
+{
+    <span class="badge bd-badge-soft"><i class="bi bi-geo-alt me-1"></i>@Model.Current.Name</span>
+}

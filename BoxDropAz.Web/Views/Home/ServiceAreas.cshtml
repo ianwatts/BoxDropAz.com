@@ -1,0 +1,112 @@
+@model BoxDropAz.Web.Models.Public.ServiceAreasViewModel
+
+<section class="bd-hero">
+    <div class="container text-center">
+        <span class="bd-eyebrow"><i class="bi bi-geo-alt"></i> Service areas</span>
+        <h1 class="mt-3 mb-3">Do we deliver to you?</h1>
+        <p class="lead mx-auto mb-4">
+            Enter your ZIP code and we'll tell you your zone and whether delivery is free.
+        </p>
+
+        <form asp-action="ServiceAreas" method="get" class="row g-2 justify-content-center">
+            <div class="col-auto" style="min-width:16rem;">
+                <label for="zip" class="visually-hidden">ZIP code</label>
+                <input type="text" id="zip" name="zip" value="@Model.CheckedZip" class="form-control form-control-lg"
+                       inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="85142" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg">Check my ZIP</button>
+            </div>
+        </form>
+
+        @if (Model.DidCheck)
+        {
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-7">
+                    @if (Model.MatchedRegion is not null && Model.MatchedZone is not null)
+                    {
+                        <div class="alert alert-success text-start mb-0">
+                            <h2 class="h6 fw-bold mb-2">
+                                <i class="bi bi-check-circle-fill me-1"></i>
+                                Yes, we deliver to @Model.CheckedZip
+                            </h2>
+                            <p class="mb-2">
+                                You're in <strong>@Model.MatchedZone.Name</strong> of our
+                                <strong>@Model.MatchedRegion.Name</strong> region.
+                                @if (Model.MatchedZone.SurchargeCents == 0)
+                                {
+                                    <text>Delivery and pickup are <strong>included</strong> in the bundle price.</text>
+                                }
+                                else
+                                {
+                                    <text>
+                                        Delivery and pickup add a flat
+                                        <strong>@Money.FormatCompact(Model.MatchedZone.SurchargeCents)</strong>
+                                        round trip.
+                                    </text>
+                                }
+                            </p>
+                            <a class="btn btn-primary btn-sm" asp-controller="Book" asp-action="Index"
+                               asp-route-region="@Model.MatchedRegion.Id" asp-route-zip="@Model.CheckedZip">
+                                Book crates for @Model.CheckedZip
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning text-start mb-0">
+                            <h2 class="h6 fw-bold mb-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                We don't have a route to @Model.CheckedZip yet
+                            </h2>
+                            <p class="mb-2">
+                                We're adding ZIP codes as routes fill up. Tell us where you're moving and we'll
+                                let you know the moment we cover it, or quote a one-off delivery.
+                            </p>
+                            <a class="btn btn-outline-primary btn-sm" asp-action="Contact">Ask about my area</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="bd-section-head">
+            <h2>Where we run routes</h2>
+            <p>Zone A is included in every bundle price. Outer zones carry a flat round trip surcharge.</p>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var region in Model.AllRegions)
+            {
+                <div class="col-lg-6">
+                    <div class="bd-card">
+                        <div class="bd-card-body">
+                            <h3 class="h5 fw-bold mb-1">@region.Name</h3>
+                            <p class="text-muted small mb-3">@region.Description</p>
+
+                            @foreach (var zone in region.DeliveryZones)
+                            {
+                                <div class="border-top pt-3 mt-3">
+                                    <div class="d-flex justify-content-between align-items-baseline mb-1">
+                                        <span class="fw-semibold">@zone.Name</span>
+                                        <span class="bd-status @(zone.SurchargeCents == 0 ? "bd-status-delivered" : "bd-status-confirmed")">
+                                            @(zone.SurchargeCents == 0 ? "Free delivery" : $"+{Money.FormatCompact(zone.SurchargeCents)}")
+                                        </span>
+                                    </div>
+                                    <p class="small text-muted mb-1">@zone.Cities</p>
+                                    <p class="small text-muted mb-0" style="font-size:.8rem;">
+                                        @string.Join(", ", zone.ZipCodes)
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

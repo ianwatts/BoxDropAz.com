@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "Check your email";
+    var email = ViewData["Email"] as string;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card auth-card shadow-sm text-center">
+                <div class="card-body p-4 p-md-5">
+                    <div class="display-5 mb-3">&#128231;</div>
+                    <h1 class="h3 fw-bold mb-3">Check your email</h1>
+                    <p class="text-muted">
+                        We sent a confirmation link to
+                        <strong>@(string.IsNullOrWhiteSpace(email) ? "your inbox" : email)</strong>.
+                        Click it to activate your account.
+                    </p>
+                    <p class="text-muted small mb-4">
+                        Nothing yet? Give it a minute, then check your spam folder.
+                    </p>
+                    <a asp-action="Login" class="btn btn-outline-primary">Back to sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

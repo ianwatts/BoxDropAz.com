@@ -1,0 +1,224 @@
+@model BoxDropAz.Web.Models.Agent.AgentDashboardViewModel
+@{
+    ViewData["Title"] = "Agent dashboard";
+    var sub = Model.Subscription;
+    var plan = Model.Plan;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Agent portal</h1>
+                <p class="text-muted mb-0">
+                    @if (Model.HasSubscription)
+                    {
+                        <text>@sub.PlanName plan &middot; </text>
+                        <span class="@(sub.IsActive ? "text-success" : "text-danger")">
+                            @(sub.IsActive ? "Active" : sub.Status)
+                        </span>
+                        @if (sub.CurrentPeriodEndUtc is { } renews)
+                        {
+                            <text> &middot; renews @renews.ToLocalTime().ToString("MMMM d")</text>
+                        }
+                    }
+                    else
+                    {
+                        <text>You don't have a plan yet.</text>
+                    }
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                @if (Model.HasSubscription && sub.IsActive)
+                {
+                    <a class="btn btn-primary" asp-action="SendGift"><i class="bi bi-send me-1"></i>Send a gift</a>
+                }
+                @if (Model.BillingPortalAvailable)
+                {
+                    <a class="btn btn-outline-secondary" asp-action="Billing">Manage billing</a>
+                }
+            </div>
+        </div>
+        <partial name="_AgentNav" />
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        @if (!Model.HasSubscription)
+        {
+            <div class="bd-card mb-4">
+                <div class="bd-card-body text-center py-5">
+                    <i class="bi bi-gift" style="font-size:2.5rem;color:var(--bd-teal);"></i>
+                    <h2 class="h4 fw-bold mt-3">Pick a plan to start gifting</h2>
+                    <p class="text-muted mx-auto" style="max-width:34rem;">
+                        Every plan credits more than it costs, and unused credit rolls over for up to three
+                        months. Your clients get their crates delivered; you get the credit for it.
+                    </p>
+                    <a class="btn btn-primary btn-lg mt-2" asp-controller="Realtors" asp-action="Plans">
+                        See the plans
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3 mb-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="bd-balance-card">
+                        <div class="bd-metric-label">Credit available</div>
+                        <div class="bd-balance-value">@Money.Format(sub.CreditBalanceCents)</div>
+                        @if (plan is not null)
+                        {
+                            <div class="small mt-2" style="color:#99f6e4;">
+                                @Money.FormatCompact(plan.MonthlyCreditCents) added monthly &middot;
+                                caps at @Money.FormatCompact(plan.CreditCapCents)
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="bd-metric-card">
+                        <div class="bd-metric-label">Gifts claimed</div>
+                        <div class="bd-metric-value">@Model.GiftsClaimed</div>
+                        <div class="text-muted small mt-2">Clients who booked their crates</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="bd-metric-card">
+                        <div class="bd-metric-label">Awaiting claim</div>
+                        <div class="bd-metric-value">@Model.GiftsOutstanding</div>
+                        <div class="text-muted small mt-2">
+                            @Money.Format(Model.OutstandingValueCents) committed
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="bd-metric-card">
+                        <div class="bd-metric-label">Gifted to date</div>
+                        <div class="bd-metric-value">@Money.FormatCompact((int)sub.LifetimeCreditSpentCents)</div>
+                        <div class="text-muted small mt-2">Across @sub.GiftsSent gift@(sub.GiftsSent == 1 ? "" : "s")</div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!sub.IsActive)
+            {
+                <div class="alert alert-warning">
+                    <strong>Your plan is @sub.Status.</strong>
+                    Credit you've already earned stays spendable, but no new credit arrives until billing
+                    is back in good standing.
+                    @if (Model.BillingPortalAvailable)
+                    {
+                        <a asp-action="Billing">Update your payment method</a><text>.</text>
+                    }
+                </div>
+            }
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="bd-card">
+                        <div class="bd-card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h5 fw-bold mb-0">Recent gifts</h2>
+                                <a class="small" asp-action="Gifts">View all</a>
+                            </div>
+
+                            @if (Model.RecentGifts.Count == 0)
+                            {
+                                <div class="bd-empty">
+                                    <i class="bi bi-send"></i>
+                                    You haven't sent a gift yet. Your first one takes about a minute.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table align-middle mb-0">
+                                        <tbody>
+                                            @foreach (var gift in Model.RecentGifts)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <div class="fw-semibold">@gift.ClientName</div>
+                                                        <div class="text-muted small">
+                                                            @gift.PropertyAddressLine1, @gift.PropertyCity
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end">@Money.Format(gift.GiftAmountCents)</td>
+                                                    <td class="text-end">
+                                                        <span class="@StatusBadge.CssFor(gift.Status)">
+                                                            @StatusBadge.LabelFor(gift.Status)
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="bd-card">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-3">Credit activity</h2>
+
+                            @if (Model.Ledger.Count == 0)
+                            {
+                                <div class="bd-empty">
+                                    <i class="bi bi-journal-text"></i>
+                                    Nothing here yet. Your first monthly credit lands when your invoice is paid.
+                                </div>
+                            }
+                            else
+                            {
+                                foreach (var entry in Model.Ledger)
+                                {
+                                    <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                        <div class="pe-3">
+                                            <div class="small fw-semibold">@entry.Description</div>
+                                            <div class="text-muted" style="font-size:.8rem;">
+                                                @entry.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")
+                                            </div>
+                                        </div>
+                                        <div class="text-end text-nowrap">
+                                            <div class="fw-semibold @(entry.AmountCents < 0 ? "text-danger" : "text-success")">
+                                                @(entry.AmountCents < 0 ? "-" : "+")@Money.Format(Math.Abs(entry.AmountCents))
+                                            </div>
+                                            <div class="text-muted" style="font-size:.8rem;">
+                                                @Money.Format(entry.BalanceAfterCents) left
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    @if (sub.IsActive && !string.IsNullOrWhiteSpace(sub.StripeSubscriptionId))
+                    {
+                        <div class="bd-card mt-3">
+                            <div class="bd-card-body">
+                                <h2 class="h6 fw-bold mb-2">Cancel your plan</h2>
+                                <p class="text-muted small">
+                                    Cancelling stops future billing at the end of the current period. Credit you've
+                                    already earned stays spendable, and gifts already sent stay claimable.
+                                </p>
+                                <form asp-action="CancelSubscription" method="post" data-submit-once
+                                      onsubmit="return confirm('Cancel your plan at the end of this billing period?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        Cancel at period end
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</section>

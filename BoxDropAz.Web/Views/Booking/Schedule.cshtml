@@ -1,0 +1,447 @@
+@model BoxDropAz.Web.Models.Booking.ScheduleViewModel
+@{
+    ViewData["Title"] = "Schedule your delivery";
+    var form = Model.Form;
+    var minDate = DeliveryWindows.EarliestDeliveryDate().ToString("yyyy-MM-dd");
+    var maxDate = DeliveryWindows.LatestDeliveryDate().ToString("yyyy-MM-dd");
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>Schedule your delivery</h1>
+        <p class="text-muted mb-0">Step 2 of 3 &middot; @Model.Region?.Name</p>
+    </div>
+</div>
+
+@if (Model.GiftCreditCents > 0)
+{
+    <div class="container mt-4">
+        <div class="alert alert-success d-flex align-items-center gap-3 mb-0">
+            <i class="bi bi-gift-fill fs-4"></i>
+            <div>
+                <strong>@Money.FormatCompact(Model.GiftCreditCents) gift credit applied.</strong>
+                @if (!string.IsNullOrWhiteSpace(Model.GiftingAgentName))
+                {
+                    <text>Courtesy of @Model.GiftingAgentName.</text>
+                }
+                It comes off your total automatically &mdash; you only pay the difference.
+            </div>
+        </div>
+    </div>
+}
+
+<section class="bd-section">
+    <div class="container">
+        <form asp-action="Review" method="post" data-submit-once>
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="RegionId" id="regionId" value="@form.RegionId" />
+            <input type="hidden" name="GiftToken" value="@form.GiftToken" />
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <strong>Please fix the following:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var message in ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Distinct())
+                                {
+                                    <li>@message</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Your bundle</h2>
+                            <p class="text-muted small mb-3">Pick the size that matches your home.</p>
+
+                            <div class="row g-3 row-cols-1 row-cols-md-2">
+                                @foreach (var package in Model.Packages)
+                                {
+                                    <div class="col">
+                                        <label class="bd-option-tile">
+                                            <input type="radio" name="PackageId" value="@package.PackageId"
+                                                   class="package-radio"
+                                                   data-base="@package.BasePriceCents"
+                                                   data-extra-week="@package.ExtraWeekPriceCents"
+                                                   checked="@(form.PackageId == package.PackageId)" />
+                                            <span class="bd-option-body">
+                                                <span class="bd-option-title">@package.Name</span>
+                                                <span class="bd-option-meta">
+                                                    @package.CrateCount crates &middot; @package.DollyCount dollies
+                                                </span>
+                                            </span>
+                                            <span class="bd-option-price">@Money.FormatCompact(package.BasePriceCents)</span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            @Html.ValidationMessage("PackageId", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Dates and windows</h2>
+                            <p class="text-muted small mb-3">
+                                We need two days' notice. Your pickup date follows from the rental length.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="deliveryDate">Delivery date</label>
+                                    <input type="date" name="DeliveryDate" id="deliveryDate" class="form-control"
+                                           value="@form.DeliveryDate" min="@minDate" max="@maxDate" required />
+                                    @Html.ValidationMessage("DeliveryDate", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="deliveryWindow">Delivery window</label>
+                                    <select name="DeliveryWindow" id="deliveryWindow" class="form-select">
+                                        @foreach (var window in DeliveryWindows.All)
+                                        {
+                                            <option value="@window" selected="@(form.DeliveryWindow == window)">@window</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="rentalWeeks">How long do you need them?</label>
+                                    <select name="RentalWeeks" id="rentalWeeks" class="form-select">
+                                        @for (var weeks = PricingService.MinRentalWeeks; weeks <= PricingService.MaxRentalWeeks; weeks++)
+                                        {
+                                            <option value="@weeks" selected="@(form.RentalWeeks == weeks)">
+                                                @weeks week@(weeks == 1 ? "" : "s") (@(weeks * 7) days)
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="pickupWindow">Pickup window</label>
+                                    <select name="PickupWindow" id="pickupWindow" class="form-select">
+                                        @foreach (var window in DeliveryWindows.All)
+                                        {
+                                            <option value="@window" selected="@(form.PickupWindow == window)">@window</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <p class="text-muted small mt-3 mb-0">
+                                We'd collect on <strong id="pickupDatePreview">&mdash;</strong>.
+                                You can extend later if the move slips.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Delivery address</h2>
+                            <p class="text-muted small mb-3">Where should we drop the crates?</p>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="addressLine1">Street address</label>
+                                    <input name="AddressLine1" id="addressLine1" class="form-control"
+                                           value="@form.AddressLine1" autocomplete="address-line1" required />
+                                    @Html.ValidationMessage("AddressLine1", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="addressLine2">Apt, suite, unit</label>
+                                    <input name="AddressLine2" id="addressLine2" class="form-control"
+                                           value="@form.AddressLine2" autocomplete="address-line2" />
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label" for="city">City</label>
+                                    <input name="City" id="city" class="form-control"
+                                           value="@form.City" autocomplete="address-level2" required />
+                                    @Html.ValidationMessage("City", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label" for="zip">ZIP code</label>
+                                    <input name="Zip" id="zip" class="form-control" value="@form.Zip"
+                                           inputmode="numeric" maxlength="5" autocomplete="postal-code" required />
+                                    @Html.ValidationMessage("Zip", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <div id="zoneFeedback" class="small"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-check mt-3">
+                                @* Checkbox first: the bool binder takes the first posted value. *@
+                                <input class="form-check-input" type="checkbox" name="PickupSameAsDelivery" value="true"
+                                       id="pickupSame" checked="@form.PickupSameAsDelivery" />
+                                <input type="hidden" name="PickupSameAsDelivery" value="false" />
+                                <label class="form-check-label" for="pickupSame">
+                                    Pick the crates up from this same address
+                                </label>
+                            </div>
+
+                            <div id="pickupAddressFields" class="row g-3 mt-1 @(form.PickupSameAsDelivery ? "d-none" : "")">
+                                <div class="col-12">
+                                    <label class="form-label" for="pickupAddressLine1">Pickup street address</label>
+                                    <input name="PickupAddressLine1" id="pickupAddressLine1" class="form-control"
+                                           value="@form.PickupAddressLine1" />
+                                    @Html.ValidationMessage("PickupAddressLine1", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="pickupAddressLine2">Apt, suite, unit</label>
+                                    <input name="PickupAddressLine2" id="pickupAddressLine2" class="form-control"
+                                           value="@form.PickupAddressLine2" />
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label" for="pickupCity">Pickup city</label>
+                                    <input name="PickupCity" id="pickupCity" class="form-control" value="@form.PickupCity" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label" for="pickupZip">Pickup ZIP</label>
+                                    <input name="PickupZip" id="pickupZip" class="form-control" value="@form.PickupZip"
+                                           inputmode="numeric" maxlength="5" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Optional extras</h2>
+                            <p class="text-muted small mb-3">Leave these at zero if you don't need them.</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="extraCrateQty">Extra crates</label>
+                                    <input type="number" name="ExtraCrateQty" id="extraCrateQty" class="form-control addon-qty"
+                                           value="@form.ExtraCrateQty" min="0" max="@AddOnCatalog.ExtraCrate.MaxQuantity"
+                                           data-unit="@AddOnCatalog.ExtraCrate.UnitAmountCents" />
+                                    <div class="form-text">@Money.FormatCompact(AddOnCatalog.ExtraCrate.UnitAmountCents) each</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="packingPaperQty">Packing paper bundles</label>
+                                    <input type="number" name="PackingPaperQty" id="packingPaperQty" class="form-control addon-qty"
+                                           value="@form.PackingPaperQty" min="0" max="@AddOnCatalog.PackingPaper.MaxQuantity"
+                                           data-unit="@AddOnCatalog.PackingPaper.UnitAmountCents" />
+                                    <div class="form-text">@Money.FormatCompact(AddOnCatalog.PackingPaper.UnitAmountCents) each</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="wardrobeCrateQty">Wardrobe crates</label>
+                                    <input type="number" name="WardrobeCrateQty" id="wardrobeCrateQty" class="form-control addon-qty"
+                                           value="@form.WardrobeCrateQty" min="0" max="@AddOnCatalog.WardrobeCrate.MaxQuantity"
+                                           data-unit="@AddOnCatalog.WardrobeCrate.UnitAmountCents" />
+                                    <div class="form-text">@Money.FormatCompact(AddOnCatalog.WardrobeCrate.UnitAmountCents) each</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Contact details</h2>
+                            <p class="text-muted small mb-3">
+                                We text you on delivery morning with a tighter arrival estimate.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="fullName">Full name</label>
+                                    <input name="FullName" id="fullName" class="form-control"
+                                           value="@form.FullName" autocomplete="name" required />
+                                    @Html.ValidationMessage("FullName", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="phone">Mobile phone</label>
+                                    <input name="Phone" id="phone" class="form-control"
+                                           value="@form.Phone" autocomplete="tel" required />
+                                    @Html.ValidationMessage("Phone", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="email">Email</label>
+                                    <input type="email" name="Email" id="email" class="form-control"
+                                           value="@form.Email" autocomplete="email" required />
+                                    @Html.ValidationMessage("Email", new { @class = "text-danger small" })
+                                    <div class="form-text">Your confirmation and account link go here.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="deliveryNotes">Anything the driver should know?</label>
+                                    <textarea name="DeliveryNotes" id="deliveryNotes" class="form-control" rows="2"
+                                              maxlength="500"
+                                              placeholder="Gate code, where to leave the crates, dog in the yard...">@form.DeliveryNotes</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="bd-card bd-summary-card">
+                        <div class="bd-card-body">
+                            <h2 class="h6 fw-bold mb-3">Your quote</h2>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Bundle</span>
+                                <span id="sumBase">&mdash;</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" id="sumWeeksRow" hidden>
+                                <span class="text-muted">Extra weeks</span>
+                                <span id="sumWeeks">&mdash;</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" id="sumZoneRow" hidden>
+                                <span class="text-muted">Delivery surcharge</span>
+                                <span id="sumZone">&mdash;</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" id="sumAddOnsRow" hidden>
+                                <span class="text-muted">Extras</span>
+                                <span id="sumAddOns">&mdash;</span>
+                            </div>
+
+                            <hr />
+
+                            <div class="d-flex justify-content-between mb-2" id="sumCreditRow" hidden>
+                                <span class="bd-credit">Gift credit</span>
+                                <span class="bd-credit" id="sumCredit">&mdash;</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-baseline mb-3">
+                                <span class="fw-bold">Total due</span>
+                                <span class="fw-bold fs-4" id="sumTotal">&mdash;</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                Review booking <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+
+                            <p class="text-muted small mt-3 mb-0">
+                                Nothing is charged yet. You confirm everything on the next screen.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var giftCreditCents = @Model.GiftCreditCents;
+            var zoneSurchargeCents = @(Model.Zone?.SurchargeCents ?? 0);
+            var zoneKnown = @((Model.Zone is not null).ToString().ToLowerInvariant());
+            var zoneLookupUrl = '@Url.Action("ZoneLookup", "Booking")';
+            var scheduleUrl = '@Url.Action("Schedule", "Booking")';
+
+            function money(cents) {
+                return '$' + (cents / 100).toFixed(2);
+            }
+
+            function recalc() {
+                var pkg = document.querySelector('.package-radio:checked');
+                if (!pkg) { return; }
+
+                var base = parseInt(pkg.dataset.base, 10) || 0;
+                var extraWeekPrice = parseInt(pkg.dataset.extraWeek, 10) || 0;
+                var weeks = parseInt(document.getElementById('rentalWeeks').value, 10) || 1;
+                var extraWeeks = Math.max(0, weeks - 1) * extraWeekPrice;
+
+                var addOns = 0;
+                document.querySelectorAll('.addon-qty').forEach(function (input) {
+                    var qty = Math.max(0, parseInt(input.value, 10) || 0);
+                    var unit = parseInt(input.dataset.unit, 10) || 0;
+                    addOns += qty * unit;
+                });
+
+                var surcharge = zoneKnown ? zoneSurchargeCents : 0;
+                var subtotal = base + extraWeeks + surcharge + addOns;
+                var credit = Math.min(giftCreditCents, subtotal);
+
+                document.getElementById('sumBase').textContent = money(base);
+                setRow('sumWeeksRow', 'sumWeeks', extraWeeks);
+                setRow('sumZoneRow', 'sumZone', surcharge);
+                setRow('sumAddOnsRow', 'sumAddOns', addOns);
+
+                document.getElementById('sumCreditRow').hidden = credit <= 0;
+                document.getElementById('sumCredit').textContent = '-' + money(credit);
+                document.getElementById('sumTotal').textContent = money(Math.max(0, subtotal - credit));
+
+                updatePickupPreview(weeks);
+            }
+
+            function setRow(rowId, valueId, cents) {
+                document.getElementById(rowId).hidden = cents <= 0;
+                document.getElementById(valueId).textContent = money(cents);
+            }
+
+            function updatePickupPreview(weeks) {
+                var input = document.getElementById('deliveryDate');
+                var preview = document.getElementById('pickupDatePreview');
+                if (!input.value) { preview.textContent = '\u2014'; return; }
+
+                var parts = input.value.split('-');
+                var date = new Date(parts[0], parts[1] - 1, parts[2]);
+                date.setDate(date.getDate() + (7 * weeks));
+                preview.textContent = date.toLocaleDateString(undefined, {
+                    weekday: 'long', month: 'long', day: 'numeric'
+                });
+            }
+
+            function checkZip() {
+                var zip = document.getElementById('zip').value.trim();
+                var feedback = document.getElementById('zoneFeedback');
+
+                if (!/^\d{5}$/.test(zip)) {
+                    feedback.innerHTML = '';
+                    zoneKnown = false;
+                    recalc();
+                    return;
+                }
+
+                var regionId = document.getElementById('regionId').value;
+                var url = zoneLookupUrl + '?regionId=' + encodeURIComponent(regionId) + '&zip=' + encodeURIComponent(zip);
+
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data.covered) {
+                            zoneKnown = false;
+                            feedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>' +
+                                'We don\'t deliver to ' + zip + ' yet.</span>';
+                        } else if (!data.inSelectedRegion) {
+                            zoneKnown = false;
+                            feedback.innerHTML = '<span class="text-warning-emphasis"><i class="bi bi-exclamation-triangle me-1"></i>' +
+                                zip + ' is served from ' + data.regionName + '. ' +
+                                '<a href="' + scheduleUrl + '?region=' + encodeURIComponent(data.regionId) +
+                                '&zip=' + encodeURIComponent(zip) + '">Switch to ' + data.regionName + '</a></span>';
+                        } else {
+                            zoneKnown = true;
+                            zoneSurchargeCents = data.surchargeCents;
+                            feedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' +
+                                data.zoneName + ' \u2014 ' +
+                                (data.surchargeCents === 0
+                                    ? 'delivery and pickup included'
+                                    : 'adds ' + money(data.surchargeCents) + ' round trip') + '</span>';
+                        }
+                        recalc();
+                    })
+                    .catch(function () { feedback.innerHTML = ''; });
+            }
+
+            document.querySelectorAll('.package-radio, #rentalWeeks, .addon-qty, #deliveryDate').forEach(function (el) {
+                el.addEventListener('change', recalc);
+                el.addEventListener('input', recalc);
+            });
+
+            var zipTimer;
+            document.getElementById('zip').addEventListener('input', function () {
+                clearTimeout(zipTimer);
+                zipTimer = setTimeout(checkZip, 350);
+            });
+
+            document.getElementById('pickupSame').addEventListener('change', function () {
+                document.getElementById('pickupAddressFields').classList.toggle('d-none', this.checked);
+            });
+
+            recalc();
+            checkZip();
+        })();
+    </script>
+}

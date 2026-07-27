@@ -1,0 +1,112 @@
+@{
+}
+
+<section class="bd-hero">
+    <div class="container text-center">
+        <span class="bd-eyebrow"><i class="bi bi-signpost-2"></i> How it works</span>
+        <h1 class="mt-3 mb-3">Pack once. Move once. Hand it all back.</h1>
+        <p class="lead mx-auto">
+            From booking to pickup, here is exactly what happens and what we need from you.
+        </p>
+    </div>
+</section>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                <div class="d-flex gap-4 mb-5">
+                    <div><div class="bd-step-number">1</div></div>
+                    <div>
+                        <h2 class="h5 fw-bold">Book online</h2>
+                        <p class="text-muted mb-2">
+                            Choose the bundle that matches your home, pick your delivery and pickup dates, and
+                            enter the address we're delivering to. We'll confirm your ZIP is in our service
+                            area before you pay, and show any zone surcharge up front.
+                        </p>
+                        <p class="text-muted small mb-0">
+                            You'll be asked to keep a card on file. That card is only charged again if you
+                            extend the rental or if crates come back damaged or missing.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-4 mb-5">
+                    <div><div class="bd-step-number">2</div></div>
+                    <div>
+                        <h2 class="h5 fw-bold">We deliver</h2>
+                        <p class="text-muted mb-2">
+                            Your crates, dollies, and reusable labels arrive inside a two hour window. Our driver
+                            stacks them wherever you want them, usually the garage or living room. There is
+                            nothing to sign for and nothing to assemble.
+                        </p>
+                        <p class="text-muted small mb-0">
+                            Windows are 8am&ndash;10am, 10am&ndash;12pm, 12pm&ndash;2pm, or 2pm&ndash;4pm.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-4 mb-5">
+                    <div><div class="bd-step-number">3</div></div>
+                    <div>
+                        <h2 class="h5 fw-bold">You pack, move, and unpack</h2>
+                        <p class="text-muted mb-2">
+                            Seven full days is the standard rental, which is enough for most moves without
+                            rushing. Label the crates with the reusable tags, stack them, and load them.
+                            They interlock, so a truck packs tighter than it would with cardboard.
+                        </p>
+                        <p class="text-muted small mb-0">
+                            Need longer? Extend by the week from your dashboard at any time, even after
+                            delivery. We charge the card on file and move your pickup date automatically.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-4">
+                    <div><div class="bd-step-number">4</div></div>
+                    <div>
+                        <h2 class="h5 fw-bold">We pick up</h2>
+                        <p class="text-muted mb-2">
+                            On your pickup day, leave the empty crates and dollies stacked by the front door or
+                            in the garage. You don't need to be home. We count them, load them, and you're done.
+                        </p>
+                        <p class="text-muted small mb-0">
+                            Give them a quick wipe if anything spilled. Crates needing a deep clean carry a
+                            small per-crate fee, listed in the
+                            <a asp-controller="Legal" asp-action="RentalTerms">rental terms</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bd-card mb-4">
+                    <div class="bd-card-body">
+                        <h3 class="h6 fw-bold mb-3">What's in every bundle</h3>
+                        <ul class="bd-feature-list mb-0">
+                            <li>Stackable crates with attached lids</li>
+                            <li>Rolling dollies rated for full stacks</li>
+                            <li>Reusable room labels</li>
+                            <li>Delivery and pickup on your dates</li>
+                            <li>Seven day rental as standard</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bd-divider-note">
+                    <p class="fw-semibold mb-1"><i class="bi bi-lightbulb me-1"></i>Sizing tip</p>
+                    <p class="small text-muted mb-0">
+                        People underestimate more often than they overestimate. If you're between two
+                        bundles, take the larger one &mdash; adding crates mid-rental costs more per crate
+                        than starting with the bigger bundle.
+                    </p>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a class="btn btn-primary btn-lg" asp-controller="Book" asp-action="Index">Book your crates</a>
+                    <a class="btn btn-outline-primary" asp-action="Faq">Read the FAQ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

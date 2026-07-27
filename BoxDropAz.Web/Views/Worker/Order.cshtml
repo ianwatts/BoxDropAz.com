@@ -1,0 +1,266 @@
+@model BoxDropAz.Web.Models.Worker.WorkerOrderViewModel
+@{
+    var order = Model.Order;
+    ViewData["Title"] = order.OrderNumber;
+    var fees = Model.Region?.DamageFees;
+    var dateString = Model.ManifestDate.ToString("yyyy-MM-dd");
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <a class="text-muted small text-decoration-none"
+           asp-action="Index" asp-route-date="@dateString" asp-route-region="@order.RegionId">
+            <i class="bi bi-arrow-left me-1"></i>Back to manifest
+        </a>
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mt-1">
+            <div>
+                <h1>@order.CustomerName</h1>
+                <p class="text-muted mb-0">
+                    @order.OrderNumber &middot; @order.PackageName &middot; @order.ZoneName
+                </p>
+            </div>
+            <span class="@StatusBadge.CssFor(order.Status)">@StatusBadge.LabelFor(order.Status)</span>
+        </div>
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="bd-card mb-4">
+                    <div class="bd-card-body">
+                        <h2 class="h5 fw-bold mb-3">Stop details</h2>
+
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Delivery</span>
+                            <span class="bd-review-value">
+                                @order.DeliveryAddressLine1@(string.IsNullOrWhiteSpace(order.DeliveryAddressLine2) ? "" : ", " + order.DeliveryAddressLine2)<br />
+                                <span class="text-muted small fw-normal">
+                                    @order.DeliveryCity, AZ @order.DeliveryZip &middot;
+                                    @order.DeliveryDate, @order.DeliveryWindow
+                                </span>
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Pickup</span>
+                            <span class="bd-review-value">
+                                @order.PickupAddressLine1@(string.IsNullOrWhiteSpace(order.PickupAddressLine2) ? "" : ", " + order.PickupAddressLine2)<br />
+                                <span class="text-muted small fw-normal">
+                                    @order.PickupCity, AZ @order.PickupZip &middot;
+                                    @order.PickupDate, @order.PickupWindow
+                                </span>
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Equipment</span>
+                            <span class="bd-review-value">
+                                @order.CrateCount crates &middot; @order.DollyCount dollies
+                                @if (order.CratesReturned is { } returned)
+                                {
+                                    <span class="text-muted small d-block fw-normal">@returned returned</span>
+                                }
+                            </span>
+                        </div>
+                        <div class="bd-review-row">
+                            <span class="bd-review-label">Phone</span>
+                            <span class="bd-review-value">
+                                <a href="tel:@order.CustomerPhone">@order.CustomerPhone</a>
+                            </span>
+                        </div>
+
+                        @if (order.AddOns.Count > 0)
+                        {
+                            <div class="bd-review-row">
+                                <span class="bd-review-label">Extras to load</span>
+                                <span class="bd-review-value">
+                                    @foreach (var addOn in order.AddOns)
+                                    {
+                                        <div>@addOn.Quantity &times; @addOn.Name</div>
+                                    }
+                                </span>
+                            </div>
+                        }
+
+                        @if (order.IncludeCoBrandingInsert)
+                        {
+                            <div class="alert alert-info small mt-3 mb-0">
+                                <i class="bi bi-gift me-1"></i>
+                                Pack the co-branded insert from @order.GiftingRealtorName.
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (fees is not null)
+                {
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Report a problem</h2>
+                            <p class="text-muted small mb-3">
+                                This queues a charge for admin review. Nothing hits the customer's card until
+                                someone signs it off, so report what you actually see and let them decide.
+                            </p>
+
+                            <form asp-action="ReportDamage" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                                @Html.AntiForgeryToken()
+
+                                <div class="row g-3">
+                                    <div class="col-md-7">
+                                        <label class="form-label" for="kind">What happened?</label>
+                                        <select name="kind" id="kind" class="form-select" required>
+                                            <option value="">Choose one...</option>
+                                            @foreach (var kind in DamageKinds.All)
+                                            {
+                                                var unit = DamageKinds.UnitAmountCents(kind.Code, order.Terms, fees);
+                                                <option value="@kind.Code">
+                                                    @kind.Label &mdash; @Money.Format(unit)@(kind.PerUnit ? " each" : "")
+                                                </option>
+                                            }
+                                        </select>
+                                        <div class="form-text" id="kindHint">&nbsp;</div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label" for="quantity">How many?</label>
+                                        <input type="number" name="quantity" id="quantity" class="form-control"
+                                               value="1" min="1" max="@Math.Max(1, order.CrateCount)" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label" for="description">What did you see?</label>
+                                        <textarea name="description" id="description" class="form-control" rows="2"
+                                                  maxlength="300"
+                                                  placeholder="Lid cracked across the hinge, photo sent to dispatch"></textarea>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-outline-danger mt-3">
+                                    Queue this for review
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+
+                @if (order.Notes.Count > 0)
+                {
+                    <div class="bd-card">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-3">Notes</h2>
+                            @foreach (var note in order.Notes.OrderByDescending(n => n.CreatedAtUtc))
+                            {
+                                <div class="py-2 border-bottom">
+                                    <div class="small">@note.Body</div>
+                                    <div class="text-muted" style="font-size:.8rem;">
+                                        @note.AuthorName &middot; @note.CreatedAtUtc.ToLocalTime().ToString("MMM d, h:mm tt")
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bd-card mb-4">
+                    <div class="bd-card-body">
+                        <h2 class="h6 fw-bold mb-3">Actions</h2>
+
+                        @if (order.DeliveredAtUtc is null)
+                        {
+                            <form asp-action="MarkDelivered" asp-route-id="@order.OrderId" method="post"
+                                  class="mb-2" data-submit-once>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="date" value="@dateString" />
+                                <button type="submit" class="btn btn-primary w-100">Mark delivered</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <p class="small text-success mb-2">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Delivered @order.DeliveredAtUtc.Value.ToLocalTime().ToString("MMM d 'at' h:mm tt")
+                            </p>
+                        }
+
+                        @if (order.PickedUpAtUtc is null)
+                        {
+                            <form asp-action="MarkPickedUp" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="date" value="@dateString" />
+                                <label class="form-label small" for="cratesReturned">Crates returned</label>
+                                <input type="number" name="cratesReturned" id="cratesReturned" class="form-control mb-2"
+                                       value="@order.CrateCount" min="0" max="@order.CrateCount" />
+                                <button type="submit" class="btn btn-outline-primary w-100">Mark collected</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <p class="small text-success mb-0">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Collected @order.PickedUpAtUtc.Value.ToLocalTime().ToString("MMM d 'at' h:mm tt")
+                            </p>
+                        }
+                    </div>
+                </div>
+
+                @if (order.Damages.Count > 0)
+                {
+                    <div class="bd-card">
+                        <div class="bd-card-body">
+                            <h2 class="h6 fw-bold mb-3">Reported so far</h2>
+                            @foreach (var damage in order.Damages.OrderByDescending(d => d.ReportedAtUtc))
+                            {
+                                <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                    <div class="pe-3">
+                                        <div class="small fw-semibold">
+                                            @damage.Quantity &times; @(DamageKinds.FromCode(damage.Kind)?.Label ?? damage.Kind)
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(damage.Description))
+                                        {
+                                            <div class="text-muted" style="font-size:.8rem;">@damage.Description</div>
+                                        }
+                                        <div class="text-muted" style="font-size:.8rem;">
+                                            @damage.ReportedByName &middot;
+                                            @damage.ReportedAtUtc.ToLocalTime().ToString("MMM d")
+                                        </div>
+                                    </div>
+                                    <div class="text-end text-nowrap">
+                                        <div class="fw-semibold">@Money.Format(damage.TotalCents)</div>
+                                        <span class="@StatusBadge.CssFor(damage.Status)">
+                                            @StatusBadge.LabelFor(damage.Status)
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var hints = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                DamageKinds.All.ToDictionary(k => k.Code, k => new { hint = k.Hint, perUnit = k.PerUnit })));
+
+            var select = document.getElementById('kind');
+            if (!select) { return; }
+
+            var quantity = document.getElementById('quantity');
+            var hint = document.getElementById('kindHint');
+
+            select.addEventListener('change', function () {
+                var info = hints[this.value];
+                hint.textContent = info ? info.hint : '\u00a0';
+
+                // A missed pickup is a flat fee, so asking "how many" would be nonsense.
+                var perUnit = info ? info.perUnit : true;
+                quantity.disabled = !perUnit;
+                if (!perUnit) { quantity.value = 1; }
+            });
+        })();
+    </script>
+}

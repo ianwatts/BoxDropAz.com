@@ -1,0 +1,129 @@
+@model IReadOnlyList<RealtorPlan>
+@{
+    var isRealtor = User.IsInRole(Roles.Realtor);
+}
+
+<section class="bd-hero">
+    <div class="container text-center">
+        <span class="bd-eyebrow"><i class="bi bi-gift"></i> Agent plans</span>
+        <h1 class="mt-3 mb-3">Gift credit that carries over</h1>
+        <p class="lead mx-auto">
+            Pick a monthly allocation that matches your closing volume. Every plan credits more than it
+            costs, and unused credit rolls over for up to three months.
+        </p>
+    </div>
+</section>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-4 row-cols-1 row-cols-lg-3">
+            @foreach (var plan in Model)
+            {
+                var featured = plan.Id == RealtorPlanId.Professional;
+                <div class="col">
+                    <div class="bd-price-card @(featured ? "featured" : "")">
+                        @if (featured)
+                        {
+                            <span class="bd-price-badge">Most agents pick this</span>
+                        }
+
+                        <h2 class="h5 fw-bold mb-1">@plan.Name</h2>
+                        <p class="text-muted small mb-3">@plan.Tagline</p>
+
+                        <div class="d-flex align-items-baseline gap-2 mb-1">
+                            <span class="bd-price">@Money.FormatCompact(plan.MonthlyPriceCents)</span>
+                            <span class="bd-price-suffix">/ month</span>
+                        </div>
+                        <p class="small mb-0" style="color:var(--bd-teal);font-weight:600;">
+                            @Money.FormatCompact(plan.MonthlyCreditCents) in gift credit each month
+                        </p>
+
+                        <ul class="bd-feature-list">
+                            @foreach (var feature in plan.Features)
+                            {
+                                <li>@feature</li>
+                            }
+                        </ul>
+
+                        @if (isRealtor)
+                        {
+                            <form asp-controller="Agent" asp-action="Subscribe" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="planId" value="@plan.Id" />
+                                <button type="submit" class="btn @(featured ? "btn-primary" : "btn-outline-primary") w-100">
+                                    Choose @plan.Name
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn @(featured ? "btn-primary" : "btn-outline-primary") w-100"
+                               asp-controller="Account" asp-action="Register"
+                               asp-route-accountType="Realtor"
+                               asp-route-returnUrl="/Realtors/Plans">
+                                Choose @plan.Name
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <p class="text-center text-muted small mt-4">
+            Prices in USD, billed monthly. Cancel any time &mdash; credit you've already earned stays
+            usable until it expires.
+        </p>
+    </div>
+</section>
+
+<section class="bd-section bd-section-alt">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="bd-section-head mb-4">
+                    <h2>How the credit works</h2>
+                </div>
+
+                <div class="bd-card mb-3">
+                    <div class="bd-card-body">
+                        <h3 class="h6 fw-bold">Credit arrives when your invoice is paid</h3>
+                        <p class="text-muted small mb-0">
+                            Each successful monthly payment adds your plan's allocation to your balance.
+                            You spend it by sending gifts, and the balance updates immediately.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bd-card mb-3">
+                    <div class="bd-card-body">
+                        <h3 class="h6 fw-bold">Rollover is capped at three months</h3>
+                        <p class="text-muted small mb-0">
+                            A slow quarter doesn't cost you anything, but the balance stops accruing at
+                            three times your monthly allocation so it can't build up indefinitely.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bd-card mb-3">
+                    <div class="bd-card-body">
+                        <h3 class="h6 fw-bold">You choose the gift amount per client</h3>
+                        <p class="text-muted small mb-0">
+                            Send $75 to one client and $175 to another. The only limit is your available
+                            balance at the moment you send.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bd-card">
+                    <div class="bd-card-body">
+                        <h3 class="h6 fw-bold">Unclaimed gifts come back</h3>
+                        <p class="text-muted small mb-0">
+                            Cancel a gift your client hasn't claimed and the full amount returns to your
+                            balance. Gifts expire after 180 days and return automatically.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

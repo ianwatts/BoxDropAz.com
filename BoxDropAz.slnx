@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BoxDropAz.Core/BoxDropAz.Core.csproj" />
+  <Project Path="BoxDropAz.Web/BoxDropAz.Web.csproj" />
+</Solution>

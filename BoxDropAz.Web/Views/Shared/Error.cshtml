@@ -1,0 +1,31 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Something went wrong";
+}
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-7 text-center">
+                <div class="display-1 mb-3" style="color:var(--bd-teal);"><i class="bi bi-exclamation-octagon"></i></div>
+                <h1 class="h3 fw-bold mb-3">That didn't work</h1>
+                <p class="text-muted mb-4">
+                    Something broke on our side. Nothing you did caused it, and no payment was taken.
+                    Try again in a moment, or contact us if it keeps happening.
+                </p>
+
+                @if (Model?.ShowRequestId == true)
+                {
+                    <p class="text-muted small mb-4">
+                        Reference: <code>@Model.RequestId</code>
+                    </p>
+                }
+
+                <div class="d-flex justify-content-center gap-2">
+                    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to home</a>
+                    <a class="btn btn-outline-primary" asp-controller="Home" asp-action="Contact">Contact support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

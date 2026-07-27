@@ -1,0 +1,105 @@
+@model BoxDropAz.Web.Models.SaaSAdmin.RegionListViewModel
+@{
+    ViewData["Title"] = "Regions";
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Regions</h1>
+                <p class="text-muted mb-0">Each region prices independently and has its own delivery zones.</p>
+            </div>
+            <a class="btn btn-primary" asp-action="NewRegion"><i class="bi bi-plus-lg me-1"></i>New region</a>
+        </div>
+        @await Html.PartialAsync("_PlatformNav")
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (Model.Regions.Count == 0)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-geo-alt"></i>
+            <p class="mb-3">No regions exist yet.</p>
+            <a class="btn btn-primary" asp-action="NewRegion">Create the first region</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var region in Model.Regions.OrderBy(r => r.Name))
+            {
+                var zips = region.DeliveryZones.Sum(z => z.ZipCodes.Count);
+                <div class="col-md-6">
+                    <div class="bd-panel h-100">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h2 class="h5 mb-1">
+                                    <a asp-action="EditRegion" asp-route-id="@region.Id">@region.Name</a>
+                                </h2>
+                                <div class="small text-muted">/@region.Slug &middot; @region.TimeZoneId</div>
+                            </div>
+                            @if (region.IsActive)
+                            {
+                                <span class="bd-status bd-status-delivered">Booking</span>
+                            }
+                            else
+                            {
+                                <span class="bd-status bd-status-cancelled">Paused</span>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(region.Description))
+                        {
+                            <p class="small text-muted mt-2 mb-3">@region.Description</p>
+                        }
+
+                        <div class="row g-2 small mb-3">
+                            <div class="col-4">
+                                <div class="text-muted">Zones</div>
+                                <div class="fw-semibold">@region.DeliveryZones.Count</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted">ZIPs covered</div>
+                                <div class="fw-semibold">@zips</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted">Packages</div>
+                                <div class="fw-semibold">@(Model.PackageCounts.GetValueOrDefault(region.Id))</div>
+                            </div>
+                        </div>
+
+                        <ul class="list-unstyled small mb-3">
+                            @foreach (var zone in region.DeliveryZones)
+                            {
+                                <li class="d-flex justify-content-between border-bottom py-1">
+                                    <span>@zone.Name <span class="text-muted">@zone.Cities</span></span>
+                                    <span class="text-muted">
+                                        @(zone.SurchargeCents == 0 ? "Free" : Money.Format(zone.SurchargeCents))
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="EditRegion" asp-route-id="@region.Id">
+                                Edit region
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Packages" asp-route-regionId="@region.Id">
+                                Packages
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Index"
+                               asp-route-region="@region.Id">
+                                Operations
+                            </a>
+                            <span class="ms-auto small text-muted align-self-center">
+                                @(Model.OrderCounts.GetValueOrDefault(region.Id)) lifetime orders
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

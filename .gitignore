@@ -1,0 +1,24 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+*.user
+
+# IDE
+.vs/
+.idea/
+
+# Secrets - never commit. See appsettings.example.json for the expected shape.
+appsettings.json
+appsettings.Development.json
+stripe-settings.dev.json
+stripe-settings.prod.json
+
+# Local DataProtection keys
+DataProtection-Keys/
+
+# AWS deploy artifacts
+.aws-sam/
+*.zip

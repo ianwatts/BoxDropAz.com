@@ -1,0 +1,254 @@
+@model BoxDropAz.Web.Models.Agent.SendGiftViewModel
+@{
+    ViewData["Title"] = "Send a closing gift";
+    var form = Model.Form;
+    var balance = Model.Subscription.CreditBalanceCents;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>Send a closing gift</h1>
+        <p class="text-muted mb-0">
+            @Money.Format(balance) of credit available. Your client picks their own bundle and dates.
+        </p>
+        <partial name="_AgentNav" />
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <form asp-action="SendGift" method="post" data-submit-once>
+            @Html.AntiForgeryToken()
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <strong>Please fix the following:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var message in ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Distinct())
+                                {
+                                    <li>@message</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Your client</h2>
+                            <p class="text-muted small mb-3">
+                                We email them a claim link. They never see what you paid.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="clientName">Client name</label>
+                                    <input name="ClientName" id="clientName" class="form-control"
+                                           value="@form.ClientName" required />
+                                    @Html.ValidationMessage("ClientName", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="clientEmail">Client email</label>
+                                    <input type="email" name="ClientEmail" id="clientEmail" class="form-control"
+                                           value="@form.ClientEmail" required />
+                                    @Html.ValidationMessage("ClientEmail", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="clientPhone">Client mobile (optional)</label>
+                                    <input name="ClientPhone" id="clientPhone" class="form-control"
+                                           value="@form.ClientPhone" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="closingDate">Closing date</label>
+                                    <input type="date" name="ClosingDate" id="closingDate" class="form-control"
+                                           value="@form.ClosingDate" required />
+                                    @Html.ValidationMessage("ClosingDate", new { @class = "text-danger small" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">The property</h2>
+                            <p class="text-muted small mb-3">
+                                Where they're moving to. We use it to confirm we deliver there.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="propertyAddress">Property address</label>
+                                    <input name="PropertyAddressLine1" id="propertyAddress" class="form-control"
+                                           value="@form.PropertyAddressLine1" required />
+                                    @Html.ValidationMessage("PropertyAddressLine1", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label" for="propertyCity">City</label>
+                                    <input name="PropertyCity" id="propertyCity" class="form-control"
+                                           value="@form.PropertyCity" required />
+                                    @Html.ValidationMessage("PropertyCity", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="propertyZip">ZIP code</label>
+                                    <input name="PropertyZip" id="propertyZip" class="form-control"
+                                           value="@form.PropertyZip" inputmode="numeric" maxlength="5" required />
+                                    @Html.ValidationMessage("PropertyZip", new { @class = "text-danger small" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Gift amount</h2>
+                            <p class="text-muted small mb-3">
+                                Anything they spend above this, they pay themselves at checkout.
+                            </p>
+
+                            @if (Model.Suggestions.Count > 0)
+                            {
+                                <div class="row g-2 row-cols-1 row-cols-md-2 mb-3">
+                                    @foreach (var suggestion in Model.Suggestions)
+                                    {
+                                        <div class="col">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary w-100 text-start amount-preset"
+                                                    data-dollars="@(suggestion.AmountCents / 100)"
+                                                    @(suggestion.Affordable ? "" : "disabled")>
+                                                <span class="fw-bold">@suggestion.Label</span>
+                                                <span class="d-block text-muted small">@suggestion.Detail</span>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label" for="giftAmount">Gift amount (USD)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" name="GiftAmountDollars" id="giftAmount"
+                                               class="form-control" value="@form.GiftAmountDollars"
+                                               min="@BoxDropAz.Web.Models.Agent.GiftFormModel.MinGiftDollars"
+                                               max="@(balance / 100)" step="5" required />
+                                    </div>
+                                    @Html.ValidationMessage("GiftAmountDollars", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-7">
+                                    <p class="text-muted small mb-0" id="remainingHint"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bd-card mb-4">
+                        <div class="bd-card-body">
+                            <h2 class="h5 fw-bold mb-1">Personal touch</h2>
+                            <p class="text-muted small mb-3">Optional, but it's what makes the gift land.</p>
+
+                            <label class="form-label" for="personalMessage">Personal note</label>
+                            <textarea name="PersonalMessage" id="personalMessage" class="form-control" rows="3"
+                                      maxlength="400"
+                                      placeholder="Congratulations on the new place! Thought this might make moving day easier.">@form.PersonalMessage</textarea>
+
+                            @if (Model.Subscription.CoBrandingEnabled)
+                            {
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input" type="checkbox" name="IncludeCoBrandingInsert"
+                                           value="true" id="coBranding" checked="@form.IncludeCoBrandingInsert" />
+                                    <input type="hidden" name="IncludeCoBrandingInsert" value="false" />
+                                    <label class="form-check-label" for="coBranding">
+                                        Include my co-branded insert with the delivery
+                                    </label>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mt-3 mb-0">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Co-branded inserts are part of the Professional and Brokerage plans.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="bd-card bd-summary-card">
+                        <div class="bd-card-body">
+                            <h2 class="h6 fw-bold mb-3">Before you send</h2>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Credit available</span>
+                                <span class="fw-semibold">@Money.Format(balance)</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">This gift</span>
+                                <span class="fw-semibold" id="giftPreview">@Money.Format(form.GiftAmountCents)</span>
+                            </div>
+
+                            <hr />
+
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="fw-bold">Credit left after</span>
+                                <span class="fw-bold" id="balancePreview">
+                                    @Money.Format(Math.Max(0, balance - form.GiftAmountCents))
+                                </span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-send me-1"></i>Send the gift
+                            </button>
+
+                            <p class="text-muted small mt-3 mb-0">
+                                The credit leaves your balance now. If they never claim it, cancel the gift and
+                                it comes straight back.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var balanceCents = @balance;
+            var amountInput = document.getElementById('giftAmount');
+
+            function money(cents) {
+                return '$' + (cents / 100).toFixed(2);
+            }
+
+            function refresh() {
+                var cents = (parseInt(amountInput.value, 10) || 0) * 100;
+                var remaining = balanceCents - cents;
+
+                document.getElementById('giftPreview').textContent = money(cents);
+                document.getElementById('balancePreview').textContent = money(Math.max(0, remaining));
+
+                var hint = document.getElementById('remainingHint');
+                hint.textContent = remaining < 0
+                    ? 'That is ' + money(-remaining) + ' more than you have available.'
+                    : money(remaining) + ' would remain in your balance.';
+                hint.className = remaining < 0 ? 'small mb-0 text-danger' : 'small mb-0 text-muted';
+            }
+
+            amountInput.addEventListener('input', refresh);
+
+            document.querySelectorAll('.amount-preset').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    amountInput.value = this.dataset.dollars;
+                    refresh();
+                });
+            });
+
+            refresh();
+        })();
+    </script>
+}

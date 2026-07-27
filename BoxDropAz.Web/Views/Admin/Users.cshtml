@@ -1,0 +1,168 @@
+@model BoxDropAz.Web.Models.Admin.AdminUserListViewModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Users</h1>
+                <p class="text-muted mb-0">
+                    @Model.Users.Count account@(Model.Users.Count == 1 ? "" : "s")
+                    @if (Model.Region is not null)
+                    {
+                        <span>in @Model.Region.Name</span>
+                    }
+                </p>
+            </div>
+            @await Html.PartialAsync("_RegionSwitcher", (Model.Region, Model.AllRegions, Model.CanSwitchRegion))
+        </div>
+        @await Html.PartialAsync("_AdminNav", Model.Region)
+    </div>
+</div>
+
+<div class="container py-4">
+    <form method="get" class="bd-panel mb-4">
+        <input type="hidden" name="region" value="@Model.Region?.Id" />
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="search">Search</label>
+                <input type="search" id="search" name="search" class="form-control" value="@Model.Search"
+                       placeholder="Name, email, or brokerage" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="role">Role</label>
+                <select id="role" name="role" class="form-select">
+                    <option value="">Any role</option>
+                    @foreach (var role in Roles.All)
+                    {
+                        <option value="@role" selected="@(string.Equals(Model.RoleFilter, role, StringComparison.OrdinalIgnoreCase))">@role</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a class="btn btn-outline-secondary" asp-action="Users" asp-route-region="@Model.Region?.Id">Clear</a>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Users.Count == 0)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-people"></i>
+            <p class="mb-0">No accounts match those filters.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bd-table">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Role</th>
+                        <th>Region</th>
+                        <th>Joined</th>
+                        <th>Last sign-in</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in Model.Users)
+                    {
+                        var user = row.User;
+                        <tr class="@(user.IsDisabled ? "opacity-50" : "")">
+                            <td>
+                                <div class="fw-semibold">@user.DisplayName</div>
+                                <div class="small text-muted">@user.Email</div>
+                                @if (!string.IsNullOrWhiteSpace(user.CompanyName))
+                                {
+                                    <div class="small text-muted">@user.CompanyName</div>
+                                }
+                                @if (user.IsDisabled)
+                                {
+                                    <span class="bd-status bd-status-cancelled">Disabled</span>
+                                }
+                            </td>
+                            <td>
+                                <form asp-action="SetRole" asp-route-userId="@user.Id" method="post" class="d-flex gap-1">
+                                    @Html.AntiForgeryToken()
+                                    <select name="role" class="form-select form-select-sm" style="width:auto">
+                                        @foreach (var role in Model.AssignableRoles)
+                                        {
+                                            <option value="@role" selected="@row.Roles.Contains(role)">@role</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Save role">
+                                        <i class="bi bi-check2"></i>
+                                    </button>
+                                </form>
+                                @if (row.Roles.Except(Model.AssignableRoles, StringComparer.OrdinalIgnoreCase).Any())
+                                {
+                                    <div class="small text-muted mt-1">Currently @string.Join(", ", row.Roles)</div>
+                                }
+                            </td>
+                            <td>
+                                @if (Model.CanSwitchRegion)
+                                {
+                                    <form asp-action="SetUserRegion" asp-route-userId="@user.Id" method="post" class="d-flex gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <select name="regionId" class="form-select form-select-sm" style="width:auto">
+                                            @foreach (var region in Model.AllRegions)
+                                            {
+                                                <option value="@region.Id" selected="@(region.Id == user.RegionId)">@region.Name</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Move region">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="small text-muted">@(Model.AllRegions.FirstOrDefault(r => r.Id == user.RegionId)?.Name ?? "\u2014")</span>
+                                }
+                            </td>
+                            <td class="small text-muted">@user.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")</td>
+                            <td class="small text-muted">
+                                @(user.LastLoginAtUtc?.ToLocalTime().ToString("MMM d, yyyy") ?? "Never")
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    @if (row.CanImpersonate && !user.IsDisabled)
+                                    {
+                                        <form asp-controller="Impersonation" asp-action="Start" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Sign in as this user">
+                                                <i class="bi bi-person-badge"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <form asp-action="ToggleUser" asp-route-userId="@user.Id" method="post"
+                                          onsubmit="return confirm('@(user.IsDisabled ? "Re-enable" : "Disable") @user.Email?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm @(user.IsDisabled ? "btn-outline-success" : "btn-outline-danger")"
+                                                title="@(user.IsDisabled ? "Re-enable sign-in" : "Block sign-in")">
+                                            <i class="bi @(user.IsDisabled ? "bi-unlock" : "bi-slash-circle")"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="small text-muted mt-3 mb-0">
+            Changing a role replaces the existing one &mdash; an account holds exactly one role here.
+            Impersonation is logged, and the banner stays visible until you stop it.
+        </p>
+    }
+</div>

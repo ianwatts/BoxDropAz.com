@@ -1,0 +1,129 @@
+@model BoxDropAz.Web.Models.SaaSAdmin.PackageListViewModel
+@{
+    ViewData["Title"] = $"Packages — {Model.Region.Name}";
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Packages</h1>
+                <p class="text-muted mb-0">
+                    What @Model.Region.Name sells, and at what price.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                @if (Model.AllRegions.Count > 1)
+                {
+                    <form method="get" class="d-flex align-items-center gap-2">
+                        <select name="regionId" class="form-select form-select-sm" style="width:auto"
+                                onchange="this.form.submit()">
+                            @foreach (var region in Model.AllRegions)
+                            {
+                                <option value="@region.Id" selected="@(region.Id == Model.Region.Id)">@region.Name</option>
+                            }
+                        </select>
+                    </form>
+                }
+                <a class="btn btn-primary" asp-action="NewPackage" asp-route-regionId="@Model.Region.Id">
+                    <i class="bi bi-plus-lg me-1"></i>New package
+                </a>
+            </div>
+        </div>
+        @await Html.PartialAsync("_PlatformNav")
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (Model.Packages.Count == 0)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-box-seam"></i>
+            <p class="mb-3">@Model.Region.Name has no packages, so nobody can book it yet.</p>
+            <a class="btn btn-primary" asp-action="NewPackage" asp-route-regionId="@Model.Region.Id">
+                Add the first package
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="bd-table">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Package</th>
+                        <th class="text-end">Crates</th>
+                        <th class="text-end">Dollies</th>
+                        <th class="text-end">First week</th>
+                        <th class="text-end">Extra week</th>
+                        <th class="text-end">Order</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var package in Model.Packages)
+                    {
+                        <tr class="@(package.IsActive ? "" : "opacity-50")">
+                            <td>
+                                <a asp-action="EditPackage" asp-route-regionId="@package.RegionId"
+                                   asp-route-packageId="@package.PackageId" class="fw-semibold">@package.Name</a>
+                                @if (!string.IsNullOrWhiteSpace(package.Badge))
+                                {
+                                    <span class="badge bd-badge-soft ms-1">@package.Badge</span>
+                                }
+                                <div class="small text-muted">@package.Subtitle</div>
+                            </td>
+                            <td class="text-end">@package.CrateCount</td>
+                            <td class="text-end">@package.DollyCount</td>
+                            <td class="text-end">@Money.Format(package.BasePriceCents)</td>
+                            <td class="text-end">@Money.Format(package.ExtraWeekPriceCents)</td>
+                            <td class="text-end text-muted">@package.SortOrder</td>
+                            <td>
+                                @if (package.IsActive)
+                                {
+                                    <span class="bd-status bd-status-delivered">Bookable</span>
+                                }
+                                else
+                                {
+                                    <span class="bd-status bd-status-complete">Hidden</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="EditPackage"
+                                       asp-route-regionId="@package.RegionId" asp-route-packageId="@package.PackageId">
+                                        Edit
+                                    </a>
+                                    <form asp-action="TogglePackage" asp-route-regionId="@package.RegionId"
+                                          asp-route-packageId="@package.PackageId" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                title="@(package.IsActive ? "Hide from booking" : "Make bookable")">
+                                            <i class="bi @(package.IsActive ? "bi-eye-slash" : "bi-eye")"></i>
+                                        </button>
+                                    </form>
+                                    <form asp-action="DeletePackage" asp-route-regionId="@package.RegionId"
+                                          asp-route-packageId="@package.PackageId" method="post"
+                                          onsubmit="return confirm('Delete @package.Name? Past orders keep their own copy of the price.');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="small text-muted mt-3 mb-0">
+            Order controls the left-to-right position on the pricing page. Hiding a package leaves existing
+            rentals and their extension pricing untouched.
+        </p>
+    }
+</div>

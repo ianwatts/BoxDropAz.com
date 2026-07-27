@@ -1,0 +1,529 @@
+@model BoxDropAz.Web.Models.Admin.AdminOrderDetailViewModel
+@{
+    var order = Model.Order;
+    ViewData["Title"] = $"Order {order.OrderNumber}";
+
+    var pending = order.Damages.Where(d => d.Status == DamageChargeStatus.PendingReview).ToList();
+    var resolved = order.Damages.Where(d => d.Status != DamageChargeStatus.PendingReview).ToList();
+    var canExtend = order.IsActiveRental && Model.WeeklyPriceCents is > 0;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <a class="small text-muted" asp-action="Orders" asp-route-region="@order.RegionId">
+                    <i class="bi bi-arrow-left"></i> Back to orders
+                </a>
+                <h1 class="mt-1">
+                    Order @order.OrderNumber
+                    <span class="@StatusBadge.CssFor(order.Status) align-middle ms-2">@StatusBadge.LabelFor(order.Status)</span>
+                </h1>
+                <p class="text-muted mb-0">
+                    Placed @order.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy h:mm tt")
+                    @if (order.Source == OrderSource.RealtorGift)
+                    {
+                        <span>&middot; gifted by @order.GiftingRealtorName</span>
+                    }
+                </p>
+            </div>
+            <div class="text-lg-end">
+                <div class="bd-metric-label">Collected</div>
+                <div class="bd-metric-value">@Money.Format(order.AmountPaidCents)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <div class="bd-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="bd-panel-title mb-0">Rental details</div>
+                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#editOrder">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </button>
+                </div>
+
+                <div class="row g-3 small">
+                    <div class="col-sm-6">
+                        <div class="text-muted">Delivery</div>
+                        <div class="fw-semibold">@order.DeliveryDate &middot; @order.DeliveryWindow</div>
+                        <div>@order.DeliveryAddressLine1</div>
+                        @if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2))
+                        {
+                            <div>@order.DeliveryAddressLine2</div>
+                        }
+                        <div>@order.DeliveryCity, @order.DeliveryState @order.DeliveryZip</div>
+                        <div class="text-muted">@order.ZoneName</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted">Pickup</div>
+                        <div class="fw-semibold">@order.PickupDate &middot; @order.PickupWindow</div>
+                        <div>@order.PickupAddressLine1</div>
+                        @if (!string.IsNullOrWhiteSpace(order.PickupAddressLine2))
+                        {
+                            <div>@order.PickupAddressLine2</div>
+                        }
+                        <div>@order.PickupCity, @order.PickupState @order.PickupZip</div>
+                        <div class="text-muted">@order.RentalWeeks week@(order.RentalWeeks == 1 ? "" : "s")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted">Customer</div>
+                        <div class="fw-semibold">@order.CustomerName</div>
+                        <div><a href="mailto:@order.CustomerEmail">@order.CustomerEmail</a></div>
+                        <div><a href="tel:@order.CustomerPhone">@order.CustomerPhone</a></div>
+                        @if (Model.Customer is not null)
+                        {
+                            <form asp-controller="Impersonation" asp-action="Start" method="post" class="mt-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@Model.Customer.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-person-badge me-1"></i>View as customer
+                                </button>
+                            </form>
+                        }
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted">Equipment</div>
+                        <div class="fw-semibold">@order.PackageName</div>
+                        <div>@order.CrateCount crates, @order.DollyCount dollies</div>
+                        @if (order.AddOns.Count > 0)
+                        {
+                            <div class="text-muted">
+                                @string.Join(", ", order.AddOns.Select(a => $"{a.Quantity}\u00d7 {a.Name}"))
+                            </div>
+                        }
+                        @if (order.IncludeCoBrandingInsert)
+                        {
+                            <div class="text-muted"><i class="bi bi-card-heading"></i> Include agent insert</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="collapse mt-4" id="editOrder">
+                    <hr />
+                    <form asp-action="EditOrder" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.DeliveryDate"></label>
+                                <input class="form-control" type="date" asp-for="Edit.DeliveryDate" />
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.DeliveryWindow"></label>
+                                <select class="form-select" asp-for="Edit.DeliveryWindow"
+                                        asp-items="@(new SelectList(DeliveryWindows.All))"></select>
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.PickupDate"></label>
+                                <input class="form-control" type="date" asp-for="Edit.PickupDate" />
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.PickupWindow"></label>
+                                <select class="form-select" asp-for="Edit.PickupWindow"
+                                        asp-items="@(new SelectList(DeliveryWindows.All))"></select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label" asp-for="Edit.AddressLine1"></label>
+                                <input class="form-control" asp-for="Edit.AddressLine1" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label" asp-for="Edit.AddressLine2"></label>
+                                <input class="form-control" asp-for="Edit.AddressLine2" />
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="form-label" asp-for="Edit.City"></label>
+                                <input class="form-control" asp-for="Edit.City" />
+                            </div>
+                            <div class="col-sm-2">
+                                <label class="form-label" asp-for="Edit.Zip"></label>
+                                <input class="form-control" asp-for="Edit.Zip" />
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.CustomerName"></label>
+                                <input class="form-control" asp-for="Edit.CustomerName" />
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.CustomerPhone"></label>
+                                <input class="form-control" asp-for="Edit.CustomerPhone" />
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.CrateCount"></label>
+                                <input class="form-control" type="number" min="1" asp-for="Edit.CrateCount" />
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label" asp-for="Edit.DollyCount"></label>
+                                <input class="form-control" type="number" min="0" asp-for="Edit.DollyCount" />
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                            <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#editOrder">Cancel</button>
+                        </div>
+                        <p class="small text-muted mt-2 mb-0">
+                            Edits are recorded in the notes below. Changing the address does not re-price the
+                            zone surcharge &mdash; adjust it in Stripe if the zone changed.
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <div class="bd-panel mb-4">
+                <div class="bd-panel-title">Equipment charges</div>
+
+                @if (pending.Count == 0 && resolved.Count == 0)
+                {
+                    <p class="small text-muted mb-0">Nothing reported on this rental.</p>
+                }
+
+                @if (pending.Count > 0)
+                {
+                    <form asp-action="ChargeDamages" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                        @Html.AntiForgeryToken()
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-2">
+                                <thead>
+                                <tr>
+                                    <th style="width:2.5rem"></th>
+                                    <th>What</th>
+                                    <th>Reported by</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var line in pending)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input class="form-check-input" type="checkbox" name="damageIds"
+                                                   value="@line.DamageId" checked />
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @line.Quantity &times; @(DamageKinds.FromCode(line.Kind)?.Label ?? line.Kind)
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(line.Description))
+                                            {
+                                                <div class="small text-muted">@line.Description</div>
+                                            }
+                                        </td>
+                                        <td class="small text-muted">
+                                            @line.ReportedByName<br />
+                                            @line.ReportedAtUtc.ToLocalTime().ToString("MMM d, h:mm tt")
+                                        </td>
+                                        <td class="text-end">@Money.Format(line.TotalCents)</td>
+                                    </tr>
+                                }
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-end">Selected total</th>
+                                    <th class="text-end">@Money.Format(pending.Sum(d => d.TotalCents))</th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 align-items-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-credit-card me-1"></i>Charge the card on file
+                            </button>
+                            <div class="flex-grow-1" style="min-width:12rem">
+                                <input class="form-control form-control-sm" name="reason" placeholder="Reason, if waiving" />
+                            </div>
+                            <button type="submit" class="btn btn-outline-secondary"
+                                    formaction="@Url.Action("WaiveDamages", new { id = order.OrderId })">
+                                Waive
+                            </button>
+                        </div>
+                        @if (string.IsNullOrWhiteSpace(order.PaymentMethodId) && Model.Customer?.DefaultPaymentMethodId is null)
+                        {
+                            <p class="small text-danger mt-2 mb-0">
+                                No card is on file for this rental, so a charge will fail. Invoice manually instead.
+                            </p>
+                        }
+                    </form>
+                }
+
+                @if (resolved.Count > 0)
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm align-middle mb-0">
+                            <tbody>
+                            @foreach (var line in resolved.OrderByDescending(d => d.ResolvedAtUtc))
+                            {
+                                <tr>
+                                    <td>
+                                        @line.Quantity &times; @(DamageKinds.FromCode(line.Kind)?.Label ?? line.Kind)
+                                        @if (!string.IsNullOrWhiteSpace(line.FailureReason))
+                                        {
+                                            <div class="small text-danger">@line.FailureReason</div>
+                                        }
+                                    </td>
+                                    <td><span class="@StatusBadge.CssFor(line.Status)">@StatusBadge.LabelFor(line.Status)</span></td>
+                                    <td class="text-end">@Money.Format(line.TotalCents)</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <hr />
+                <form asp-action="AddDamage" asp-route-id="@order.OrderId" method="post" class="row g-2 align-items-end" data-submit-once>
+                    @Html.AntiForgeryToken()
+                    <div class="col-sm-4">
+                        <label class="form-label small" for="damageKind">Add a charge</label>
+                        <select class="form-select form-select-sm" id="damageKind" name="kind">
+                            @foreach (var kind in DamageKinds.All)
+                            {
+                                <option value="@kind.Code">@kind.Label</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="damageQty">Qty</label>
+                        <input class="form-control form-control-sm" type="number" id="damageQty" name="quantity" value="1" min="1" max="200" />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small" for="damageNote">Detail</label>
+                        <input class="form-control form-control-sm" id="damageNote" name="description" placeholder="What happened" />
+                    </div>
+                    <div class="col-sm-2">
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">Queue</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bd-panel">
+                <div class="bd-panel-title">Notes &amp; history</div>
+
+                <form asp-action="AddNote" asp-route-id="@order.OrderId" method="post" class="mb-4" data-submit-once>
+                    @Html.AntiForgeryToken()
+                    <div class="input-group">
+                        <input class="form-control" name="body" placeholder="Add an internal note" required />
+                        <button type="submit" class="btn btn-outline-primary">Add</button>
+                    </div>
+                    <div class="form-text">Workers see these on the manifest. Customers never do.</div>
+                </form>
+
+                @if (order.Notes.Count == 0 && order.Extensions.Count == 0)
+                {
+                    <p class="small text-muted mb-0">No activity yet.</p>
+                }
+                else
+                {
+                    <ul class="bd-timeline">
+                        @foreach (var entry in order.Notes
+                            .Select(n => new { n.CreatedAtUtc, Body = n.Body, Who = n.AuthorName })
+                            .Concat(order.Extensions.Select(e => new
+                            {
+                                e.CreatedAtUtc,
+                                Body = e.Succeeded
+                                    ? $"Extended {e.AdditionalWeeks} week(s) for {Money.Format(e.AmountCents)}. Pickup moved to {e.NewPickupDate}."
+                                    : $"Extension of {e.AdditionalWeeks} week(s) failed: {e.FailureReason}",
+                                Who = "System"
+                            }))
+                            .OrderByDescending(e => e.CreatedAtUtc))
+                        {
+                            <li>
+                                @entry.Body
+                                <time>@entry.Who &middot; @entry.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</time>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="bd-panel mb-4">
+                <div class="bd-panel-title">Payment</div>
+                <dl class="row small mb-0">
+                    <dt class="col-6 fw-normal text-muted">Package</dt>
+                    <dd class="col-6 text-end">@Money.Format(order.PackageBaseCents)</dd>
+                    @if (order.ExtraWeeksCents > 0)
+                    {
+                        <dt class="col-6 fw-normal text-muted">Extra weeks</dt>
+                        <dd class="col-6 text-end">@Money.Format(order.ExtraWeeksCents)</dd>
+                    }
+                    @if (order.ZoneSurchargeCents > 0)
+                    {
+                        <dt class="col-6 fw-normal text-muted">Zone surcharge</dt>
+                        <dd class="col-6 text-end">@Money.Format(order.ZoneSurchargeCents)</dd>
+                    }
+                    @if (order.AddOnsCents > 0)
+                    {
+                        <dt class="col-6 fw-normal text-muted">Add-ons</dt>
+                        <dd class="col-6 text-end">@Money.Format(order.AddOnsCents)</dd>
+                    }
+                    @if (order.GiftCreditAppliedCents > 0)
+                    {
+                        <dt class="col-6 fw-normal text-muted">Gift credit</dt>
+                        <dd class="col-6 text-end text-success">-@Money.Format(order.GiftCreditAppliedCents)</dd>
+                    }
+                    <dt class="col-6 border-top pt-2">Charged</dt>
+                    <dd class="col-6 text-end border-top pt-2 fw-bold">@Money.Format(order.AmountPaidCents)</dd>
+                </dl>
+
+                <hr />
+                <div class="small">
+                    @if (!string.IsNullOrWhiteSpace(order.CardLast4))
+                    {
+                        <div><i class="bi bi-credit-card me-1"></i>@order.CardBrand ending @order.CardLast4</div>
+                    }
+                    else
+                    {
+                        <div class="text-warning-emphasis"><i class="bi bi-exclamation-triangle me-1"></i>No card on file</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(order.StripePaymentIntentId))
+                    {
+                        <div class="text-muted mt-1">
+                            <a href="https://dashboard.stripe.com/payments/@order.StripePaymentIntentId" target="_blank" rel="noopener">
+                                View in Stripe <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Gift is not null)
+                {
+                    <hr />
+                    <div class="small">
+                        <div class="text-muted">Gifted by</div>
+                        <div class="fw-semibold">@Model.Gift.RealtorName</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Gift.RealtorCompany))
+                        {
+                            <div class="text-muted">@Model.Gift.RealtorCompany</div>
+                        }
+                        <div>@Money.Format(Model.Gift.GiftAmountCents) gift value</div>
+                    </div>
+                }
+            </div>
+
+            <div class="bd-panel mb-4">
+                <div class="bd-panel-title">Fulfillment</div>
+                <form asp-action="SetStatus" asp-route-id="@order.OrderId" method="post" class="mb-3" data-submit-once>
+                    @Html.AntiForgeryToken()
+                    <label class="form-label small" for="statusSelect">Set status</label>
+                    <div class="input-group input-group-sm">
+                        <select class="form-select" id="statusSelect" name="status">
+                            @foreach (var status in Enum.GetValues<OrderStatus>().Where(s => s != OrderStatus.Cancelled))
+                            {
+                                <option value="@status" selected="@(status == order.Status)">@StatusBadge.LabelFor(status)</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-outline-primary">Apply</button>
+                    </div>
+                </form>
+
+                <ul class="list-unstyled small mb-0">
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Confirmed</span>
+                        <span>@(order.ConfirmedAtUtc?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "\u2014")</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Delivered</span>
+                        <span>@(order.DeliveredAtUtc?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "\u2014")</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Picked up</span>
+                        <span>@(order.PickedUpAtUtc?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "\u2014")</span>
+                    </li>
+                    @if (order.CratesReturned is not null)
+                    {
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">Crates returned</span>
+                            <span>@order.CratesReturned of @order.CrateCount</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @if (canExtend)
+            {
+                <div class="bd-panel mb-4">
+                    <div class="bd-panel-title">Extend the rental</div>
+                    <form asp-action="ExtendOrder" asp-route-id="@order.OrderId" method="post" data-submit-once>
+                        @Html.AntiForgeryToken()
+                        <div class="input-group input-group-sm">
+                            <select class="form-select" name="additionalWeeks" id="extendWeeks">
+                                @for (var weeks = 1; weeks <= 8; weeks++)
+                                {
+                                    <option value="@weeks">@weeks week@(weeks == 1 ? "" : "s")</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary">Charge &amp; extend</button>
+                        </div>
+                        <div class="form-text">
+                            @Money.Format(Model.WeeklyPriceCents!.Value) per week, billed to the card on file.
+                            New pickup: <span id="extendPreview">@order.PickupDate</span>
+                        </div>
+                    </form>
+                </div>
+            }
+
+            @if (order.Status != OrderStatus.Cancelled)
+            {
+                <div class="bd-panel border-danger-subtle">
+                    <div class="bd-panel-title text-danger">Cancel this order</div>
+                    <form asp-action="CancelOrder" asp-route-id="@order.OrderId" method="post" data-submit-once
+                          onsubmit="return confirm('Cancel order @order.OrderNumber? Refunds are issued separately in Stripe.');">
+                        @Html.AntiForgeryToken()
+                        <input class="form-control form-control-sm mb-2" name="reason" placeholder="Reason (shown to the customer)" />
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="notifyCustomer" name="notifyCustomer" value="true" checked />
+                            <label class="form-check-label small" for="notifyCustomer">Email the customer</label>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">Cancel order</button>
+                    </form>
+                    @if (order.AmountPaidCents > 0)
+                    {
+                        <p class="small text-muted mb-0 mt-2">
+                            @Money.Format(order.AmountPaidCents) was collected. Refund it in Stripe if it's owed.
+                        </p>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="bd-panel">
+                    <div class="bd-panel-title">Cancelled</div>
+                    <p class="small mb-0">
+                        @order.CancelledAtUtc?.ToLocalTime().ToString("MMM d, yyyy")
+                        @if (!string.IsNullOrWhiteSpace(order.CancellationReason))
+                        {
+                            <span>&mdash; @order.CancellationReason</span>
+                        }
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const select = document.getElementById('extendWeeks');
+            const preview = document.getElementById('extendPreview');
+            if (!select || !preview) { return; }
+
+            const basePickup = new Date('@order.PickupDate' + 'T12:00:00');
+
+            function update() {
+                const next = new Date(basePickup);
+                next.setDate(next.getDate() + parseInt(select.value, 10) * 7);
+                preview.textContent = next.toISOString().slice(0, 10);
+            }
+
+            select.addEventListener('change', update);
+            update();
+        })();
+    </script>
+}

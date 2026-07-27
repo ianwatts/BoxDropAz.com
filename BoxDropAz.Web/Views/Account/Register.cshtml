@@ -1,0 +1,90 @@
+@model BoxDropAz.Web.Models.Account.RegisterViewModel
+@{
+    ViewData["Title"] = "Create your account";
+    var isRealtor = Model.AccountType == Roles.Realtor;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card auth-card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3 fw-bold mb-1">@(isRealtor ? "Join the agent program" : "Create your account")</h1>
+                    <p class="text-muted mb-4">
+                        @(isRealtor
+                            ? "Set up your agent login, then pick a plan and start gifting."
+                            : "Book crates, track your rental, and extend it without a phone call.")
+                    </p>
+
+                    <ul class="nav nav-pills nav-fill mb-4 account-type-toggle">
+                        <li class="nav-item">
+                            <a class="nav-link @(isRealtor ? "" : "active")"
+                               asp-action="Register" asp-route-accountType="Customer" asp-route-returnUrl="@Model.ReturnUrl">I'm moving</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(isRealtor ? "active" : "")"
+                               asp-action="Register" asp-route-accountType="Realtor" asp-route-returnUrl="@Model.ReturnUrl">I'm an agent</a>
+                        </li>
+                    </ul>
+
+                    <form asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="ReturnUrl" />
+                        <input type="hidden" asp-for="AccountType" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label"></label>
+                            <input asp-for="FullName" class="form-control" autocomplete="name" autofocus />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        @if (isRealtor)
+                        {
+                            <div class="mb-3">
+                                <label asp-for="CompanyName" class="form-label"></label>
+                                <input asp-for="CompanyName" class="form-control" placeholder="e.g. Desert Sky Realty" />
+                                <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Phone" class="form-label"></label>
+                            <input asp-for="Phone" class="form-control" autocomplete="tel" placeholder="(480) 555-0142" />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6">
+                                <label asp-for="Password" class="form-label"></label>
+                                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label asp-for="ConfirmPassword" class="form-label"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Create account</button>
+                    </form>
+
+                    <p class="text-center text-muted mt-4 mb-0">
+                        Already have an account? <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

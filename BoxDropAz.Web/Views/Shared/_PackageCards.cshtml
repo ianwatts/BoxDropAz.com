@@ -1,0 +1,49 @@
+@model List<CratePackage>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-warning">
+        Pricing for this area is being finalized. <a asp-controller="Home" asp-action="Contact">Contact us</a> for a quote.
+    </div>
+}
+else
+{
+    <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3 justify-content-center">
+        @foreach (var package in Model)
+        {
+            <div class="col">
+                <div class="bd-price-card @(string.IsNullOrEmpty(package.Badge) ? "" : "featured")">
+                    @if (!string.IsNullOrEmpty(package.Badge))
+                    {
+                        <span class="bd-price-badge">@package.Badge</span>
+                    }
+
+                    <h3 class="h5 fw-bold mb-1">@package.Name</h3>
+                    <p class="text-muted small mb-3">@package.Subtitle</p>
+
+                    <div class="d-flex align-items-baseline gap-2 mb-1">
+                        <span class="bd-price">@Money.FormatCompact(package.BasePriceCents)</span>
+                        <span class="bd-price-suffix">/ 7 days</span>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        @Money.FormatCompact(package.ExtraWeekPriceCents) for each extra week
+                    </p>
+
+                    <ul class="bd-feature-list">
+                        @foreach (var item in package.IncludedItems)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+
+                    <a class="btn @(string.IsNullOrEmpty(package.Badge) ? "btn-outline-primary" : "btn-primary") w-100"
+                       asp-controller="Book" asp-action="Index"
+                       asp-route-package="@package.PackageId"
+                       asp-route-region="@package.RegionId">
+                        Choose @package.Name
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}

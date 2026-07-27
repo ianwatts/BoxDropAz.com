@@ -1,0 +1,226 @@
+﻿@using System.Security.Claims
+@inject IConfiguration Configuration
+@{
+    var title = ViewData["Title"] as string;
+    var pageTitle = string.IsNullOrWhiteSpace(title)
+        ? "BoxDrop AZ | Reusable Moving Crate Rental in Phoenix & Tucson"
+        : $"{title} | BoxDrop AZ";
+    var description = ViewData["Description"] as string
+        ?? "Rent stackable, reusable moving crates in the Phoenix East Valley and Tucson. We deliver, you pack, we pick up. No tape, no cardboard, no trips to the dump.";
+    var canonical = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 555-0142";
+    var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+    var isImpersonating = User.HasClaim("IsImpersonating", "true");
+    var currentController = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+
+    string NavClass(params string[] controllers)
+        => controllers.Contains(currentController, StringComparer.OrdinalIgnoreCase) ? "nav-link active" : "nav-link";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@pageTitle</title>
+    <meta name="description" content="@description" />
+    <link rel="canonical" href="@canonical" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BoxDrop AZ" />
+    <meta property="og:title" content="@pageTitle" />
+    <meta property="og:description" content="@description" />
+    <meta property="og:url" content="@canonical" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0f766e" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+@if (isImpersonating)
+{
+    <div class="bd-impersonation-banner py-2 text-center bd-no-print">
+        <div class="container d-flex flex-wrap justify-content-center align-items-center gap-2">
+            <i class="bi bi-person-badge"></i>
+            <span>
+                Viewing as <strong>@(User.Identity?.Name)</strong>
+                (started by @User.FindFirstValue("OriginalUserName")).
+            </span>
+            <form asp-controller="Impersonation" asp-action="Stop" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Stop impersonating</button>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="bd-topbar py-2 d-none d-md-block bd-no-print">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-truck me-1"></i> Free delivery &amp; pickup in our Zone A service area</span>
+        <span>
+            <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">
+                <i class="bi bi-telephone me-1"></i>@supportPhone
+            </a>
+        </span>
+    </div>
+</div>
+
+<nav class="navbar navbar-expand-lg sticky-top bd-no-print">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+            <span class="brand-mark"><i class="bi bi-box-seam-fill"></i></span>BoxDrop AZ
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#bdNav"
+                aria-controls="bdNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="bdNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="@NavClass("Home")" asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="HowItWorks">How it works</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Pricing">Pricing</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="ServiceAreas">Service areas</a></li>
+                <li class="nav-item"><a class="@NavClass("Realtors")" asp-controller="Realtors" asp-action="Index">For agents</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Faq">FAQ</a></li>
+            </ul>
+
+            <ul class="navbar-nav align-items-lg-center gap-lg-1">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (User.IsInRole(Roles.SaaSAdmin))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="SaaSAdmin" asp-action="Index"><i class="bi bi-globe2 me-1"></i>Platform</a></li>
+                    }
+                    @if (User.IsInRole(Roles.RegionalAdmin) || User.IsInRole(Roles.SaaSAdmin))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i>Admin</a></li>
+                    }
+                    @if (User.IsInRole(Roles.Worker))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Worker" asp-action="Index"><i class="bi bi-clipboard-check me-1"></i>Manifest</a></li>
+                    }
+                    @if (User.IsInRole(Roles.Realtor))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Agent" asp-action="Index"><i class="bi bi-gift me-1"></i>Agent portal</a></li>
+                    }
+                    @if (User.IsInRole(Roles.Customer))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-person me-1"></i>My rentals</a></li>
+                    }
+                    <li class="nav-item">
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-link nav-link">Sign out</button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Sign in</a></li>
+                }
+                <li class="nav-item ms-lg-2">
+                    <a class="btn btn-primary" asp-controller="Booking" asp-action="Index">Book crates</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-grow-1">
+    @if (TempData["Success"] is string successMessage)
+    {
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-1"></i>@successMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+    @if (TempData["Error"] is string errorMessage)
+    {
+        <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-1"></i>@errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+    @if (TempData["Info"] is string infoMessage)
+    {
+        <div class="container mt-3">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle me-1"></i>@infoMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+    @RenderBody()
+</main>
+
+<footer class="bd-footer bd-no-print">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="brand-mark"><i class="bi bi-box-seam-fill"></i></span>
+                    <span class="text-white fw-bold fs-5">BoxDrop AZ</span>
+                </div>
+                <p class="mb-3" style="font-size:.93rem;max-width:22rem;">
+                    Reusable moving crates delivered to your door across the Phoenix East Valley,
+                    Pinal County, and Tucson. Pack once, move once, and skip the cardboard entirely.
+                </p>
+                <p class="mb-1"><i class="bi bi-telephone me-2"></i>@supportPhone</p>
+                <p class="mb-0"><i class="bi bi-envelope me-2"></i>@supportEmail</p>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h5>Rent crates</h5>
+                <a asp-controller="Booking" asp-action="Index">Book online</a>
+                <a asp-controller="Home" asp-action="Pricing">Pricing</a>
+                <a asp-controller="Home" asp-action="HowItWorks">How it works</a>
+                <a asp-controller="Home" asp-action="ServiceAreas">Service areas</a>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h5>Agents</h5>
+                <a asp-controller="Realtors" asp-action="Index">Gifting program</a>
+                <a asp-controller="Realtors" asp-action="Plans">Plans &amp; pricing</a>
+                <a asp-controller="Account" asp-action="Register" asp-route-accountType="Realtor">Create an account</a>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h5>Company</h5>
+                <a asp-controller="Home" asp-action="Faq">FAQ</a>
+                <a asp-controller="Home" asp-action="Contact">Contact</a>
+                <a asp-controller="Legal" asp-action="RentalTerms">Rental terms</a>
+                <a asp-controller="Legal" asp-action="Privacy">Privacy policy</a>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h5>Account</h5>
+                <a asp-controller="Account" asp-action="Login">Sign in</a>
+                <a asp-controller="Account" asp-action="Register">Create account</a>
+                <a asp-controller="Dashboard" asp-action="Index">My rentals</a>
+            </div>
+        </div>
+
+        <div class="bd-footer-bottom d-flex flex-wrap justify-content-between gap-2">
+            <span>&copy; @DateTime.Now.Year BoxDrop AZ. All rights reserved.</span>
+            <span>Phoenix Metro &middot; Pinal County &middot; Tucson</span>
+        </div>
+    </div>
+</footer>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

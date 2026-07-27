@@ -1,0 +1,145 @@
+@model BoxDropAz.Web.Models.Worker.ManifestViewModel
+@{
+    ViewData["Title"] = "Manifest";
+    var dateString = Model.Date.ToString("yyyy-MM-dd");
+    var isToday = Model.Date == DeliveryWindows.TodayInArizona();
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>@(isToday ? "Today's manifest" : Model.Date.ToString("dddd, MMMM d"))</h1>
+                <p class="text-muted mb-0">
+                    @Model.Region?.Name &middot;
+                    @Model.DeliveriesRemaining of @Model.Deliveries.Count deliveries left &middot;
+                    @Model.PickupsRemaining of @Model.Pickups.Count pickups left
+                </p>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                @if (Model.CanSwitchRegion && Model.AllRegions.Count > 1)
+                {
+                    <div class="btn-group btn-group-sm">
+                        @foreach (var region in Model.AllRegions)
+                        {
+                            <a class="btn @(Model.Region?.Id == region.Id ? "btn-primary" : "btn-outline-primary")"
+                               asp-action="Index" asp-route-date="@dateString" asp-route-region="@region.Id">
+                                @region.Name
+                            </a>
+                        }
+                    </div>
+                }
+
+                <form asp-action="Index" method="get" class="d-flex gap-2">
+                    @if (Model.Region is not null)
+                    {
+                        <input type="hidden" name="region" value="@Model.Region.Id" />
+                    }
+                    <input type="date" name="date" class="form-control form-control-sm" value="@dateString" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Go</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-action="Index" asp-route-region="@Model.Region?.Id"
+               asp-route-date="@Model.Date.AddDays(-1).ToString("yyyy-MM-dd")">
+                <i class="bi bi-chevron-left"></i> Previous day
+            </a>
+            @if (!isToday)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-region="@Model.Region?.Id">
+                    Today
+                </a>
+            }
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-action="Index" asp-route-region="@Model.Region?.Id"
+               asp-route-date="@Model.Date.AddDays(1).ToString("yyyy-MM-dd")">
+                Next day <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        @if (Model.Region is null)
+        {
+            <div class="alert alert-warning">
+                You aren't assigned to a region yet. Ask an admin to set one on your account.
+            </div>
+        }
+        else
+        {
+            @if (Model.Deliveries.Count > 0)
+            {
+                <div class="bd-metric-card mb-4">
+                    <div class="row text-center g-3">
+                        <div class="col-4">
+                            <div class="bd-metric-label">Stops</div>
+                            <div class="bd-metric-value">@(Model.Deliveries.Count + Model.Pickups.Count)</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bd-metric-label">Crates out</div>
+                            <div class="bd-metric-value">@Model.TotalCrates</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bd-metric-label">Dollies out</div>
+                            <div class="bd-metric-value">@Model.TotalDollies</div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <h2 class="h5 fw-bold mb-3">
+                <i class="bi bi-box-arrow-down me-1"></i>Deliveries (@Model.Deliveries.Count)
+            </h2>
+
+            @if (Model.Deliveries.Count == 0)
+            {
+                <div class="bd-card mb-4">
+                    <div class="bd-empty"><i class="bi bi-truck"></i>No deliveries scheduled.</div>
+                </div>
+            }
+            else
+            {
+                <div class="row g-3 mb-5">
+                    @foreach (var order in Model.Deliveries)
+                    {
+                        <div class="col-lg-6">
+                            <partial name="_ManifestStop"
+                                     model="new BoxDropAz.Web.Models.Worker.WorkerOrderViewModel {
+                                         Order = order, IsPickup = false, ManifestDate = Model.Date }" />
+                        </div>
+                    }
+                </div>
+            }
+
+            <h2 class="h5 fw-bold mb-3">
+                <i class="bi bi-box-arrow-up me-1"></i>Pickups (@Model.Pickups.Count)
+            </h2>
+
+            @if (Model.Pickups.Count == 0)
+            {
+                <div class="bd-card">
+                    <div class="bd-empty"><i class="bi bi-truck"></i>No pickups scheduled.</div>
+                </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var order in Model.Pickups)
+                    {
+                        <div class="col-lg-6">
+                            <partial name="_ManifestStop"
+                                     model="new BoxDropAz.Web.Models.Worker.WorkerOrderViewModel {
+                                         Order = order, IsPickup = true, ManifestDate = Model.Date }" />
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

@@ -1,0 +1,83 @@
+@{
+    var faqs = new (string Question, string Answer)[]
+    {
+        ("How big are the crates?",
+         "Each crate holds roughly the same as a medium moving box, about 2.4 cubic feet, and is built to carry up to 50 lbs. They're all identical, which is what lets them stack and interlock instead of leaning on each other."),
+
+        ("How many crates do I need?",
+         "As a rough guide: a studio needs about 20, a one or two bedroom about 35, a two or three bedroom about 50, a three or four bedroom about 75, and anything larger about 100. If you're between sizes, take the larger bundle. Adding crates later costs more per crate than starting bigger."),
+
+        ("How long is the rental?",
+         "Seven days from delivery, which covers most moves comfortably. You can extend by the week at any time from your dashboard, including after the crates have been delivered."),
+
+        ("Do I have to be home for delivery and pickup?",
+         "For delivery, yes, so we can put the crates where you want them and hand over the dollies. For pickup you don't need to be there. Just leave everything stacked by the front door or in the garage."),
+
+        ("What are the delivery windows?",
+         "Two hour windows at 8am-10am, 10am-12pm, 12pm-2pm, and 2pm-4pm. You choose your window at checkout and we confirm it by email."),
+
+        ("Why do you need a card on file?",
+         "So that extending your rental takes one click instead of a phone call, and so a missing crate can be settled without an invoice chase. The card is only charged again if you extend, or if crates come back damaged, missing, or needing a deep clean. Every charge is reviewed by a person first."),
+
+        ("What if a crate gets damaged?",
+         "Normal wear is expected and free. Crates that come back cracked, missing, or unusable are charged at the replacement rate shown on the pricing page and in your rental agreement. We show you the exact schedule before you check out and store a copy with your order."),
+
+        ("Can I change my dates?",
+         "Yes, free of charge up to 48 hours before your delivery date. Inside 48 hours the route is already planned, so a cancellation refunds everything except a $25 scheduling fee."),
+
+        ("Do the crates come clean?",
+         "Every crate is wiped down and inspected between rentals. If yours arrive in poor shape, tell us and we'll swap them the same day."),
+
+        ("My agent gifted me crates. How do I use it?",
+         "You'll get an email with a claim link. Open it, pick your bundle and dates, and the gift amount comes off the total automatically. If you choose a bigger bundle than the gift covers, you just pay the difference."),
+
+        ("Do you serve commercial or office moves?",
+         "Yes. Office moves usually need a custom crate count and a staged delivery schedule, so get in touch and we'll put a quote together."),
+
+        ("What areas do you cover?",
+         "The Phoenix East Valley, Casa Grande and Pinal County, and metro Tucson. Check your ZIP code on the service areas page to see your zone and whether delivery is free.")
+    };
+}
+
+<section class="bd-hero">
+    <div class="container text-center">
+        <span class="bd-eyebrow"><i class="bi bi-question-circle"></i> FAQ</span>
+        <h1 class="mt-3 mb-3">Questions, answered</h1>
+        <p class="lead mx-auto">
+            Everything people ask before their first crate rental. Still stuck?
+            <a asp-action="Contact">Send us a note</a>.
+        </p>
+    </div>
+</section>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    @for (var i = 0; i < faqs.Length; i++)
+                    {
+                        var id = $"faq{i}";
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#@id"
+                                        aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="@id">
+                                    @faqs[i].Question
+                                </button>
+                            </h2>
+                            <div id="@id" class="accordion-collapse collapse @(i == 0 ? "show" : "")"
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-muted">@faqs[i].Answer</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="text-center mt-5">
+                    <a class="btn btn-primary btn-lg" asp-controller="Book" asp-action="Index">Book your crates</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
