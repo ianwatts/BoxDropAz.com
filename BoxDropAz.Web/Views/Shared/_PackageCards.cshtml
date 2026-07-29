@@ -37,7 +37,7 @@ else
                     </ul>
 
                     <a class="btn @(string.IsNullOrEmpty(package.Badge) ? "btn-outline-primary" : "btn-primary") w-100"
-                       asp-controller="Book" asp-action="Index"
+                       asp-controller="Booking" asp-action="Index"
                        asp-route-package="@package.PackageId"
                        asp-route-region="@package.RegionId">
                         Choose @package.Name

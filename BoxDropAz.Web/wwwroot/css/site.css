@@ -242,7 +242,6 @@ a:hover {
     border: 1px solid var(--bd-line);
     border-radius: var(--bd-radius);
     box-shadow: var(--bd-shadow-sm);
-    height: 100%;
 }
 
 .bd-card-body {

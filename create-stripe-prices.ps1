@@ -18,7 +18,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $liveMode = $Environment -eq "prod"
-$modeFlag = if ($liveMode) { "--live" } else { "--test" }
+# Stripe CLI defaults to test mode; only pass --live for prod.
+$modeArgs = if ($liveMode) { @("--live") } else { @() }
 
 $settingsPath = "stripe-settings.$Environment.json"
 if (Test-Path $settingsPath) {
@@ -63,31 +64,30 @@ foreach ($plan in $plans) {
     Write-Host "`n$($plan.Name): `$$monthly/mo granting `$$credit credit" -ForegroundColor Cyan
 
     if ($DryRun) {
-        Write-Host "  [dry run] stripe products create --name=`"$($plan.Name)`" $modeFlag"
-        Write-Host "  [dry run] stripe prices create --product=<id> --currency=usd --unit-amount=$($plan.Amount) --recurring.interval=month $modeFlag"
+        $modeHint = if ($modeArgs.Count) { $modeArgs -join ' ' } else { '(test)' }
+        Write-Host "  [dry run] stripe products create --name=`"$($plan.Name)`" $modeHint"
+        Write-Host "  [dry run] stripe prices create --product=<id> --currency=usd --unit-amount=$($plan.Amount) --recurring.interval=month $modeHint"
         $results[$plan.Key] = "price_DRYRUN_$($plan.Key)"
         continue
     }
 
     # The monthly credit is stamped on the product so the Stripe dashboard shows what the plan owes.
-    $product = Invoke-Stripe @(
+    $product = Invoke-Stripe (@(
         "products", "create",
         "--name=$($plan.Name)",
         "--description=Monthly subscription granting `$$credit in closing gift credit",
-        "--metadata[monthly_credit_cents]=$($plan.Credit)",
-        $modeFlag
-    )
+        "-d", "metadata[monthly_credit_cents]=$($plan.Credit)"
+    ) + $modeArgs)
     Write-Host "  product -> $($product.id)"
 
-    $price = Invoke-Stripe @(
+    $price = Invoke-Stripe (@(
         "prices", "create",
         "--product=$($product.id)",
         "--currency=usd",
         "--unit-amount=$($plan.Amount)",
         "--recurring.interval=month",
-        "--recurring.interval-count=1",
-        $modeFlag
-    )
+        "--recurring.interval-count=1"
+    ) + $modeArgs)
     Write-Host "  price   -> $($price.id)" -ForegroundColor Green
 
     $results[$plan.Key] = $price.id
@@ -107,4 +107,4 @@ Write-Host '  }'
 Write-Host '}'
 Write-Host ""
 Write-Host "The webhook secret comes from the endpoint you register, either in the dashboard or via" -ForegroundColor Yellow
-Write-Host "  stripe listen --forward-to https://localhost:7057/stripe/webhook" -ForegroundColor Yellow
+Write-Host "  stripe listen --forward-to http://localhost:5021/stripe/webhook" -ForegroundColor Yellow

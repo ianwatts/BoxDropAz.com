@@ -79,15 +79,24 @@ public sealed class Startup
             Stripe.StripeConfiguration.ApiKey = stripeKey;
         }
 
-        // Allow overriding Price IDs via environment variables for dev/prod flexibility
-        var stripeSection = Configuration.GetSection("Stripe");
-        foreach (var child in stripeSection.GetChildren())
+        // Apply STRIPE_* env vars even when no Stripe section exists in appsettings
+        // (Lambda has no stripe-settings.*.json in the package; CloudFormation supplies these).
+        var stripeEnvKeys = new[]
         {
-            var envVarName = $"STRIPE_{child.Key.ToUpperInvariant()}";
+            "SecretKey",
+            "PublishableKey",
+            "WebhookSecret",
+            "RealtorStarterMonthlyPriceId",
+            "RealtorProfessionalMonthlyPriceId",
+            "RealtorBrokerageMonthlyPriceId"
+        };
+        foreach (var key in stripeEnvKeys)
+        {
+            var envVarName = $"STRIPE_{key.ToUpperInvariant()}";
             var envValue = Environment.GetEnvironmentVariable(envVarName);
             if (!string.IsNullOrWhiteSpace(envValue))
             {
-                Configuration[$"Stripe:{child.Key}"] = envValue;
+                Configuration[$"Stripe:{key}"] = envValue;
             }
         }
 
