@@ -30,6 +30,7 @@ public static class DynamoDbSetup
             new IndexSpec(DynamoDbTableNames.RentalOrderByRegionAndPickupDateIndex, "RegionId", "PickupDate"),
             new IndexSpec(DynamoDbTableNames.RentalOrderByUserIndex, "UserId", "CreatedAtUtc"),
             new IndexSpec(DynamoDbTableNames.RentalOrderByRegionAndCreatedIndex, "RegionId", "CreatedAtUtc"));
+        await EnsureTableAsync(ddb, Table(DynamoDbTableNames.Inventory), "RegionId", "RecordId", ct);
 
         // Realtor gifting
         await EnsureTableAsync(ddb, Table(DynamoDbTableNames.RealtorSubscription), "UserId", null, ct);

@@ -20,17 +20,20 @@ public sealed class WorkerController : Controller
 {
     private readonly IOrderService _orders;
     private readonly IRegionService _regions;
+    private readonly InventoryService _inventory;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<WorkerController> _logger;
 
     public WorkerController(
         IOrderService orders,
         IRegionService regions,
+        InventoryService inventory,
         UserManager<ApplicationUser> userManager,
         ILogger<WorkerController> logger)
     {
         _orders = orders;
         _regions = regions;
+        _inventory = inventory;
         _userManager = userManager;
         _logger = logger;
     }
@@ -72,7 +75,8 @@ public sealed class WorkerController : Controller
                 .Where(o => o.Status is OrderStatus.Delivered or OrderStatus.OutForPickup or OrderStatus.Completed)
                 .OrderBy(o => o.PickupWindow)
                 .ThenBy(o => o.PickupZip)
-                .ToList()
+                .ToList(),
+            RestockTasks = await _inventory.GetRestockTasksAsync(scopedRegion.Id, manifestDate, ct)
         });
     }
 
@@ -114,11 +118,26 @@ public sealed class WorkerController : Controller
 
         var user = await RequireUserAsync();
 
+        if (order.RequiresIndexCard && order.IndexCardIssuedAtUtc is null)
+        {
+            if (!await _inventory.ConsumeIndexCardAsync(order.RegionId, ct))
+            {
+                TempData["Error"] =
+                    $"Need at least {InventoryService.IndexCardsPerPack} colored index cards (1 pack) in inventory before delivery.";
+                return RedirectToAction(nameof(Index), new { date });
+            }
+
+            order.IndexCardIssuedAtUtc = DateTime.UtcNow;
+        }
+
         order.Status = OrderStatus.Delivered;
         order.DeliveredAtUtc = DateTime.UtcNow;
         order.Notes.Add(new OrderNote
         {
-            Body = $"Delivered {order.CrateCount} crates and {order.DollyCount} dollies.",
+            Body = $"Delivered {order.CrateCount} totes with lids, {order.DollyCount} custom-fit dollies" +
+                   (order.RequiresIndexCard
+                       ? $", and 1 package of {InventoryService.IndexCardsPerPack} color-coded 3x5 cards."
+                       : "."),
             AuthorName = user.DisplayName,
             AuthorUserId = user.Id
         });
@@ -131,7 +150,12 @@ public sealed class WorkerController : Controller
 
     [HttpPost("order/{id}/picked-up")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkPickedUp(string id, int cratesReturned, string? date, CancellationToken ct)
+    public async Task<IActionResult> MarkPickedUp(
+        string id,
+        int cratesReturned,
+        int dolliesReturned,
+        string? date,
+        CancellationToken ct)
     {
         var order = await LoadInScopeAsync(id, ct);
         if (order is null)
@@ -147,13 +171,16 @@ public sealed class WorkerController : Controller
 
         var user = await RequireUserAsync();
         var returned = Math.Clamp(cratesReturned, 0, order.CrateCount);
+        var returnedDollies = Math.Clamp(dolliesReturned, 0, order.DollyCount);
 
         order.Status = OrderStatus.Completed;
         order.PickedUpAtUtc = DateTime.UtcNow;
         order.CratesReturned = returned;
+        order.DolliesReturned = returnedDollies;
         order.Notes.Add(new OrderNote
         {
-            Body = $"Collected. {returned} of {order.CrateCount} crates returned.",
+            Body = $"Collected. {returned} of {order.CrateCount} totes with lids and " +
+                   $"{returnedDollies} of {order.DollyCount} custom-fit dollies returned.",
             AuthorName = user.DisplayName,
             AuthorUserId = user.Id
         });
@@ -161,6 +188,7 @@ public sealed class WorkerController : Controller
         // Short count is the most common charge, so raise it here rather than making the driver
         // remember to file it separately.
         var missing = order.CrateCount - returned;
+        var missingDollies = order.DollyCount - returnedDollies;
         if (missing > 0)
         {
             var region = await _regions.GetByIdAsync(order.RegionId, ct);
@@ -172,7 +200,25 @@ public sealed class WorkerController : Controller
                 Kind = DamageKinds.Crate,
                 Quantity = missing,
                 UnitAmountCents = unit,
-                Description = $"{missing} crate{(missing == 1 ? "" : "s")} not returned at pickup",
+                Description = $"{missing} tote{(missing == 1 ? "" : "s")} with lid not returned at pickup",
+                Status = DamageChargeStatus.PendingReview,
+                ReportedByUserId = user.Id,
+                ReportedByName = user.DisplayName
+            });
+        }
+
+        if (missingDollies > 0)
+        {
+            var region = await _regions.GetByIdAsync(order.RegionId, ct);
+            var unit = DamageKinds.UnitAmountCents(
+                DamageKinds.Dolly, order.Terms, region?.DamageFees ?? new DamageFeeSchedule());
+
+            order.Damages.Add(new DamageLine
+            {
+                Kind = DamageKinds.Dolly,
+                Quantity = missingDollies,
+                UnitAmountCents = unit,
+                Description = $"{missingDollies} custom-fit dolly/dollies not returned at pickup",
                 Status = DamageChargeStatus.PendingReview,
                 ReportedByUserId = user.Id,
                 ReportedByName = user.DisplayName
@@ -180,10 +226,11 @@ public sealed class WorkerController : Controller
         }
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.RecordMissingAssetsAsync(order.RegionId, missing, missingDollies, ct);
 
-        TempData["Success"] = missing > 0
-            ? $"{order.OrderNumber} collected. {missing} missing crate{(missing == 1 ? "" : "s")} queued for admin review."
-            : $"{order.OrderNumber} collected, all crates accounted for.";
+        TempData["Success"] = missing > 0 || missingDollies > 0
+            ? $"{order.OrderNumber} collected. Missing assets were queued for admin review and inventory replenishment."
+            : $"{order.OrderNumber} collected, all totes, lids, and dollies accounted for.";
 
         return RedirectToAction(nameof(Index), new { date });
     }
@@ -242,6 +289,44 @@ public sealed class WorkerController : Controller
             $"Reported {count} \u00d7 {damageKind.Label} ({Money.Format(count * unit)}). An admin reviews it before anything is charged.";
 
         return RedirectToAction(nameof(Order), new { id, pickup = true });
+    }
+
+    [HttpPost("inventory/{taskId}/complete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompleteRestock(
+        string taskId,
+        string regionId,
+        int totesReceived,
+        int dolliesReceived,
+        int cardHolderPacksReceived,
+        int cardPacksReceived,
+        string? date,
+        CancellationToken ct)
+    {
+        var (region, _) = await ResolveRegionAsync(regionId, ct);
+        if (region is null || region.Id != regionId)
+        {
+            return NotFound();
+        }
+
+        var user = await RequireUserAsync();
+        var completed = await _inventory.CompleteRestockTaskAsync(
+            regionId,
+            taskId,
+            totesReceived,
+            dolliesReceived,
+            cardHolderPacksReceived,
+            cardPacksReceived,
+            user.Id,
+            user.DisplayName,
+            ct);
+
+        TempData[completed ? "Success" : "Info"] = completed
+            ? $"Inventory received: {Math.Max(0, totesReceived)} totes, {Math.Max(0, dolliesReceived)} dollies, " +
+              $"{Math.Max(0, cardHolderPacksReceived)} holder pack(s), and {Math.Max(0, cardPacksReceived)} card pack(s). " +
+              "Only totes equipped with holders were added to usable stock."
+            : "That inventory task was already completed or cancelled.";
+        return RedirectToAction(nameof(Index), new { date, region = regionId });
     }
 
     // ---------- helpers ----------

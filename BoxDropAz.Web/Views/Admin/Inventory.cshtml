@@ -1,0 +1,231 @@
+@model BoxDropAz.Web.Models.Admin.InventoryViewModel
+@{
+    ViewData["Title"] = "Inventory";
+    var assessment = Model.Assessment;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Inventory</h1>
+                <p class="text-muted mb-0">
+                    @(Model.Region?.Name ?? "No region selected") &middot; owned, deployed, and projected stock
+                </p>
+            </div>
+            @await Html.PartialAsync("_RegionSwitcher", (Model.Region, Model.AllRegions, Model.CanSwitchRegion))
+        </div>
+        @await Html.PartialAsync("_AdminNav", Model.Region)
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (Model.Region is null || assessment is null)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-geo-alt"></i>
+            <p class="mb-0">Select or assign a region to manage its inventory.</p>
+        </div>
+    }
+    else
+    {
+        @if (!assessment.StorageReady)
+        {
+            <div class="alert alert-danger">
+                <strong>Inventory storage is unavailable.</strong>
+                The Inventory table does not exist for this environment, so totals cannot be saved
+                and no restock tasks can be created. Provision it and reload this page.
+            </div>
+        }
+        else if (!assessment.Inventory.IsConfigured)
+        {
+            <div class="alert alert-warning">
+                Enter the region's actual owned inventory before shortage tasks are created.
+            </div>
+        }
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="bd-metric-card">
+                    <div class="bd-metric-label">Owned totes</div>
+                    <div class="bd-metric-value">@assessment.Inventory.TotalTotes</div>
+                    <div class="small text-muted">27-gallon totes with snap-fit lids</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="bd-metric-card">
+                    <div class="bd-metric-label">Colored index cards</div>
+                    <div class="bd-metric-value">@assessment.IndexCardsAvailableNow</div>
+                    <div class="small text-muted">1 package of @InventoryService.IndexCardsPerPack cards is issued with each new order</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="bd-metric-card">
+                    <div class="bd-metric-label">Loose card holders</div>
+                    <div class="bd-metric-value">@assessment.Inventory.TotalCardHolders</div>
+                    <div class="small text-muted">One holder is permanently attached to each new tote</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="bd-metric-card">
+                    <div class="bd-metric-label">Totes available now</div>
+                    <div class="bd-metric-value @(assessment.TotesAvailableNow < 0 ? "text-danger" : "")">
+                        @assessment.TotesAvailableNow
+                    </div>
+                    <div class="small text-muted">@assessment.TotesInField currently with customers</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="bd-metric-card">
+                    <div class="bd-metric-label">Owned custom-fit dollies</div>
+                    <div class="bd-metric-value">@assessment.Inventory.TotalDollies</div>
+                    <div class="small text-muted">Custom-fit wheeled tote bases</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="bd-metric-card">
+                    <div class="bd-metric-label">Dollies available now</div>
+                    <div class="bd-metric-value @(assessment.DolliesAvailableNow < 0 ? "text-danger" : "")">
+                        @assessment.DolliesAvailableNow
+                    </div>
+                    <div class="small text-muted">@assessment.DolliesInField currently with customers</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-5">
+                <div class="bd-panel h-100">
+                    <div class="bd-panel-title">Set owned inventory</div>
+                    <form asp-action="UpdateInventory" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="region" value="@Model.Region.Id" />
+                        <div class="mb-3">
+                            <label class="form-label" for="totalTotes">Total 27-gallon totes with lids</label>
+                            <input class="form-control" id="totalTotes" name="TotalTotes" type="number" min="0"
+                                   value="@assessment.Inventory.TotalTotes" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="totalDollies">Total custom-fit dollies</label>
+                            <input class="form-control" id="totalDollies" name="TotalDollies" type="number" min="0"
+                                   value="@assessment.Inventory.TotalDollies" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="totalIndexCards">Loose colored 3x5 index cards</label>
+                            <input class="form-control" id="totalIndexCards" name="TotalIndexCards" type="number" min="0"
+                                   value="@assessment.Inventory.TotalIndexCards" required />
+                            <div class="form-text">The specified product contains @InventoryService.IndexCardsPerPack cards per pack.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="totalCardHolders">Loose self-adhesive 3x5 card holders</label>
+                            <input class="form-control" id="totalCardHolders" name="TotalCardHolders" type="number" min="0"
+                                   value="@assessment.Inventory.TotalCardHolders" required />
+                            <div class="form-text">The specified product contains @InventoryService.CardHoldersPerPack holders per pack.</div>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Save and recalculate</button>
+                    </form>
+                    <hr />
+                    <div class="small">
+                        <a href="@InventoryService.ToteProductUrl" target="_blank" rel="noopener">27-gallon tote</a>
+                        <span class="text-muted">&middot;</span>
+                        <a href="@InventoryService.DollyProductUrl" target="_blank" rel="noopener">Custom-fit dolly</a>
+                        <span class="text-muted">&middot;</span>
+                        <a href="@InventoryService.IndexCardProductUrl" target="_blank" rel="noopener">Colored index cards</a>
+                        <span class="text-muted">&middot;</span>
+                        <a href="@InventoryService.CardHolderProductUrl" target="_blank" rel="noopener">Adhesive card holders</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="bd-panel h-100">
+                    <div class="bd-panel-title">Open restock tasks</div>
+                    @if (Model.OpenTasks.Count == 0)
+                    {
+                        <div class="bd-empty py-4">
+                            <i class="bi bi-check2-circle"></i>
+                            <p class="mb-0 small">No projected shortages.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var task in Model.OpenTasks)
+                        {
+                            <div class="alert alert-danger mb-2">
+                                <strong>Order by @(task.ActionByDate ?? task.NeededByDate) for @task.NeededByDate</strong>
+                                <div>
+                                    @task.RequestedTotes totes with lids,
+                                    @task.RequestedDollies custom-fit dollies,
+                                    @task.RequestedCardHolders adhesive card holders
+                                    (@task.RequestedCardHolderPacks pack(s) of @InventoryService.CardHoldersPerPack),
+                                    and @task.RequestedCardPacks pack(s) of colored index cards
+                                </div>
+                                <div class="small mt-1">This task is on the worker manifest.</div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="bd-table">
+            <div class="px-3 py-3 border-bottom">
+                <strong class="small text-uppercase text-muted">Projected inventory by activity date</strong>
+            </div>
+            @if (assessment.Projection.Count == 0)
+            {
+                <div class="bd-empty py-4">
+                    <i class="bi bi-calendar-check"></i>
+                    <p class="mb-0 small">No scheduled inventory movement.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-end">Totes out / back</th>
+                            <th class="text-end">Projected totes</th>
+                            <th class="text-end">Dollies out / back</th>
+                            <th class="text-end">Projected dollies</th>
+                            <th class="text-end">Cards used / projected</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var row in assessment.Projection)
+                        {
+                            <tr class="@(row.ToteShortage > 0 || row.DollyShortage > 0 || row.IndexCardShortage > 0 ? "table-danger" : "")">
+                                <td>@row.Date.ToString("ddd, MMM d")</td>
+                                <td class="text-end">@row.TotesGoingOut / @row.TotesReturning</td>
+                                <td class="text-end">
+                                    @row.ProjectedTotes
+                                    @if (row.ToteShortage > 0)
+                                    {
+                                        <div class="small text-danger">Short @row.ToteShortage before returns</div>
+                                    }
+                                </td>
+                                <td class="text-end">@row.DolliesGoingOut / @row.DolliesReturning</td>
+                                <td class="text-end">
+                                    @row.ProjectedDollies
+                                    @if (row.DollyShortage > 0)
+                                    {
+                                        <div class="small text-danger">Short @row.DollyShortage before returns</div>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @row.IndexCardsGoingOut / @row.ProjectedIndexCards
+                                    @if (row.IndexCardShortage > 0)
+                                    {
+                                        <div class="small text-danger">Short @row.IndexCardShortage card(s)</div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>

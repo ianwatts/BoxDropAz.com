@@ -55,10 +55,12 @@
                         <div class="bd-review-row">
                             <span class="bd-review-label">Equipment</span>
                             <span class="bd-review-value">
-                                @order.CrateCount crates &middot; @order.DollyCount dollies
+                                @order.CrateCount totes with lids &middot; @order.DollyCount custom-fit dollies
                                 @if (order.CratesReturned is { } returned)
                                 {
-                                    <span class="text-muted small d-block fw-normal">@returned returned</span>
+                                    <span class="text-muted small d-block fw-normal">
+                                        @returned totes and @(order.DolliesReturned ?? 0) dollies returned
+                                    </span>
                                 }
                             </span>
                         </div>
@@ -187,9 +189,12 @@
                             <form asp-action="MarkPickedUp" asp-route-id="@order.OrderId" method="post" data-submit-once>
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="date" value="@dateString" />
-                                <label class="form-label small" for="cratesReturned">Crates returned</label>
+                                <label class="form-label small" for="cratesReturned">Totes with lids returned</label>
                                 <input type="number" name="cratesReturned" id="cratesReturned" class="form-control mb-2"
                                        value="@order.CrateCount" min="0" max="@order.CrateCount" />
+                                <label class="form-label small" for="dolliesReturned">Custom-fit dollies returned</label>
+                                <input type="number" name="dolliesReturned" id="dolliesReturned" class="form-control mb-2"
+                                       value="@order.DollyCount" min="0" max="@order.DollyCount" />
                                 <button type="submit" class="btn btn-outline-primary w-100">Mark collected</button>
                             </form>
                         }

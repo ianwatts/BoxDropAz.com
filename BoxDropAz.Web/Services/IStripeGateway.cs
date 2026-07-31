@@ -25,15 +25,14 @@ public interface IStripeGateway
     Task<string> EnsureCustomerAsync(ApplicationUser user, CancellationToken ct = default);
 
     /// <summary>
-    /// Hosted redirect Checkout in payment mode. Retains the card off-session so extensions and
-    /// damage fees can be charged later without the customer present.
+    /// Embedded Checkout in payment mode. Retains the card off-session so extensions and damage
+    /// fees can be charged later without the customer present.
     /// </summary>
     Task<Session> CreatePaymentSessionAsync(
         string customerId,
         string clientReferenceId,
         IReadOnlyList<CheckoutLine> lines,
-        string successUrl,
-        string cancelUrl,
+        string returnUrl,
         IDictionary<string, string> metadata,
         CancellationToken ct = default);
 
@@ -44,8 +43,7 @@ public interface IStripeGateway
     Task<Session> CreateSetupSessionAsync(
         string customerId,
         string clientReferenceId,
-        string successUrl,
-        string cancelUrl,
+        string returnUrl,
         IDictionary<string, string> metadata,
         CancellationToken ct = default);
 

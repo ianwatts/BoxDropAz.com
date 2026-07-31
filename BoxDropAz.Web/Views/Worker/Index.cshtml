@@ -82,14 +82,79 @@
                             <div class="bd-metric-value">@(Model.Deliveries.Count + Model.Pickups.Count)</div>
                         </div>
                         <div class="col-4">
-                            <div class="bd-metric-label">Crates out</div>
-                            <div class="bd-metric-value">@Model.TotalCrates</div>
+                            <div class="bd-metric-label">Totes out</div>
+                            <div class="bd-metric-value">@Model.TotalTotes</div>
                         </div>
                         <div class="col-4">
                             <div class="bd-metric-label">Dollies out</div>
                             <div class="bd-metric-value">@Model.TotalDollies</div>
                         </div>
                     </div>
+                </div>
+            }
+
+            @if (Model.RestockTasks.Count > 0)
+            {
+                <h2 class="h5 fw-bold mb-3 text-danger">
+                    <i class="bi bi-cart-plus me-1"></i>Inventory pickups (@Model.RestockTasks.Count)
+                </h2>
+                <div class="row g-3 mb-5">
+                    @foreach (var task in Model.RestockTasks)
+                    {
+                        <div class="col-lg-6">
+                            <div class="bd-card border-danger">
+                                <div class="bd-card-body">
+                                    <h3 class="h6 fw-bold">
+                                        Order by @(task.ActionByDate ?? task.NeededByDate) &middot; needed @task.NeededByDate
+                                    </h3>
+                                    <p class="mb-2">
+                                        <strong>@task.RequestedTotes</strong> 27-gallon totes with lids<br />
+                                        <strong>@task.RequestedDollies</strong> custom-fit dollies<br />
+                                        <strong>@task.RequestedCardHolders</strong> self-adhesive 3x5 card holders
+                                        (@task.RequestedCardHolderPacks pack(s) of @InventoryService.CardHoldersPerPack)<br />
+                                        <strong>@task.RequestedCardPacks</strong> pack(s) of colored 3x5 index cards
+                                    </p>
+                                    <div class="small mb-3">
+                                        <a href="@InventoryService.ToteProductUrl" target="_blank" rel="noopener">Open tote product</a>
+                                        <span class="text-muted">&middot;</span>
+                                        <a href="@InventoryService.DollyProductUrl" target="_blank" rel="noopener">Open dolly product</a>
+                                        <span class="text-muted">&middot;</span>
+                                        <a href="@InventoryService.CardHolderProductUrl" target="_blank" rel="noopener">Open adhesive holders</a>
+                                        <span class="text-muted">&middot;</span>
+                                        <a href="@InventoryService.IndexCardProductUrl" target="_blank" rel="noopener">Open index cards</a>
+                                    </div>
+                                    <form asp-action="CompleteRestock" asp-route-taskId="@task.RecordId" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="regionId" value="@task.RegionId" />
+                                        <input type="hidden" name="date" value="@dateString" />
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label small">Totes received</label>
+                                                <input class="form-control" type="number" name="totesReceived" min="0"
+                                                       value="@task.RequestedTotes" required />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">Dollies received</label>
+                                                <input class="form-control" type="number" name="dolliesReceived" min="0"
+                                                       value="@task.RequestedDollies" required />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">Holder packs received</label>
+                                                <input class="form-control" type="number" name="cardHolderPacksReceived" min="0"
+                                                       value="@task.RequestedCardHolderPacks" required />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">Card packs received</label>
+                                                <input class="form-control" type="number" name="cardPacksReceived" min="0"
+                                                       value="@task.RequestedCardPacks" required />
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary w-100" type="submit">Mark inventory received</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
             }
 

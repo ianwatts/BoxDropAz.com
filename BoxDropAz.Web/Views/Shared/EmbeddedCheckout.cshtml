@@ -1,0 +1,68 @@
+@using System.Text.Json
+@model BoxDropAz.Web.Models.Payments.EmbeddedCheckoutViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <h1>@Model.Title</h1>
+        <p class="text-muted mb-0">@Model.Description</p>
+    </div>
+</div>
+
+<section class="bd-section">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-8">
+                <div class="bd-card">
+                    <div class="bd-card-body">
+                        <div id="checkout"></div>
+                        <div id="checkout-error" class="alert alert-danger mt-3 d-none" role="alert"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="bd-card bd-summary-card">
+                    <div class="bd-card-body">
+                        @if (!string.IsNullOrWhiteSpace(Model.SummaryTitle))
+                        {
+                            <h2 class="h6 fw-bold">@Model.SummaryTitle</h2>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.SummaryText))
+                        {
+                            <p class="text-muted">@Model.SummaryText</p>
+                        }
+                        <p class="small text-muted">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Payment details are securely handled by Stripe without leaving BoxDrop AZ.
+                        </p>
+                        <a class="btn btn-outline-secondary w-100" href="@Model.CancelUrl">@Model.CancelLabel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        (async function () {
+            const errorElement = document.getElementById('checkout-error');
+
+            try {
+                const stripe = Stripe(@Html.Raw(JsonSerializer.Serialize(Model.PublishableKey)));
+                const checkout = await stripe.initEmbeddedCheckout({
+                    clientSecret: @Html.Raw(JsonSerializer.Serialize(Model.ClientSecret))
+                });
+                checkout.mount('#checkout');
+            } catch (error) {
+                errorElement.textContent = 'We could not load the secure payment form. Please refresh the page or try again.';
+                errorElement.classList.remove('d-none');
+                console.error('Embedded Checkout failed to initialize.', error);
+            }
+        })();
+    </script>
+}

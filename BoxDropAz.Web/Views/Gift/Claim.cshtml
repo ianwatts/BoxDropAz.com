@@ -14,11 +14,11 @@
                 <h1 class="mt-3 mb-3">
                     @gift.RealtorName sent you
                     <span style="color:var(--bd-teal);">@Money.FormatCompact(gift.GiftAmountCents)</span>
-                    of moving crates
+                    of reusable moving totes
                 </h1>
                 <p class="lead mx-auto">
                     Congratulations on @gift.PropertyAddressLine1@(string.IsNullOrWhiteSpace(gift.PropertyCity) ? "" : ", " + gift.PropertyCity).
-                    Stackable, reusable crates delivered to your door &mdash; no cardboard, no tape,
+                    27-gallon totes with lids delivered to your door &mdash; no cardboard, no tape,
                     no last minute run to the store.
                 </p>
 
@@ -32,7 +32,7 @@
 
                 <a class="btn btn-primary btn-lg mt-3"
                    asp-controller="Booking" asp-action="Schedule" asp-route-gift="@gift.ClaimToken">
-                    Claim my crates <i class="bi bi-arrow-right ms-1"></i>
+                    Claim my totes <i class="bi bi-arrow-right ms-1"></i>
                 </a>
                 <p class="text-muted small mt-3 mb-0">
                     Takes about two minutes. Your gift is applied automatically at checkout.
@@ -52,7 +52,7 @@
                     <text>
                         @Money.FormatCompact(gift.GiftAmountCents) covers the
                         <strong>@Model.FullyCoveredPackage.Name</strong> bundle outright.
-                        Want more crates or longer than a week? You just pay the difference.
+                        Want more totes or longer than a week? You just pay the difference.
                     </text>
                 }
                 else
@@ -132,7 +132,7 @@
                 <div class="bd-step-mark">2</div>
                 <h3 class="h6 fw-bold mt-3">We deliver, you pack</h3>
                 <p class="text-muted small">
-                    Crates and dollies arrive stacked and ready. Pack at your own pace over the week.
+                    Totes, lids, and custom-fit dollies arrive stacked and ready. Pack at your own pace over the week.
                 </p>
             </div>
             <div class="col text-center">

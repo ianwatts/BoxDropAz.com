@@ -91,7 +91,7 @@
                     <div class="col-sm-6">
                         <div class="text-muted">Equipment</div>
                         <div class="fw-semibold">@order.PackageName</div>
-                        <div>@order.CrateCount crates, @order.DollyCount dollies</div>
+                        <div>@order.CrateCount totes with lids, @order.DollyCount custom-fit dollies</div>
                         @if (order.AddOns.Count > 0)
                         {
                             <div class="text-muted">
@@ -438,7 +438,7 @@
                     @if (order.CratesReturned is not null)
                     {
                         <li class="d-flex justify-content-between">
-                            <span class="text-muted">Crates returned</span>
+                            <span class="text-muted">Totes with lids returned</span>
                             <span>@order.CratesReturned of @order.CrateCount</span>
                         </li>
                     }

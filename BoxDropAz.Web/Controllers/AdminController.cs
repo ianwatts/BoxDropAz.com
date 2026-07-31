@@ -24,6 +24,7 @@ public sealed class AdminController : Controller
     private readonly IGiftService _gifts;
     private readonly RentalExtensionService _extensions;
     private readonly DamageChargeService _damages;
+    private readonly InventoryService _inventory;
     private readonly DynamoDbDataHelper _data;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly OrderNotifier _notifier;
@@ -35,6 +36,7 @@ public sealed class AdminController : Controller
         IGiftService gifts,
         RentalExtensionService extensions,
         DamageChargeService damages,
+        InventoryService inventory,
         DynamoDbDataHelper data,
         UserManager<ApplicationUser> userManager,
         OrderNotifier notifier,
@@ -45,6 +47,7 @@ public sealed class AdminController : Controller
         _gifts = gifts;
         _extensions = extensions;
         _damages = damages;
+        _inventory = inventory;
         _data = data;
         _userManager = userManager;
         _notifier = notifier;
@@ -125,6 +128,181 @@ public sealed class AdminController : Controller
             .ToList();
 
         return View(model);
+    }
+
+    // ---------- inventory ----------
+
+    [HttpGet("inventory")]
+    public async Task<IActionResult> Inventory(string? region, CancellationToken ct)
+    {
+        ViewData["Title"] = "Inventory";
+        var (scoped, canSwitch) = await ResolveRegionAsync(region, ct);
+        var model = new InventoryViewModel
+        {
+            Region = scoped,
+            AllRegions = await _regions.GetAllAsync(ct),
+            CanSwitchRegion = canSwitch
+        };
+
+        if (scoped is not null)
+        {
+            model.Assessment = await _inventory.GetAssessmentAsync(scoped.Id, reconcileTasks: true, ct);
+            model.OpenTasks = model.Assessment.OpenRestockTasks;
+        }
+
+        return View(model);
+    }
+
+    [HttpPost("inventory")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateInventory(
+        string region,
+        InventoryUpdateModel form,
+        CancellationToken ct)
+    {
+        var (scoped, _) = await ResolveRegionAsync(region, ct);
+        if (scoped is null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Inventory totals must be zero or greater.";
+            return RedirectToAction(nameof(Inventory), new { region = scoped.Id });
+        }
+
+        await _inventory.SetTotalsAsync(
+            scoped.Id,
+            form.TotalTotes,
+            form.TotalDollies,
+            form.TotalIndexCards,
+            form.TotalCardHolders,
+            ct);
+        TempData["Success"] = "Inventory totals updated and future shortages recalculated.";
+        return RedirectToAction(nameof(Inventory), new { region = scoped.Id });
+    }
+
+    // ---------- scheduling ----------
+
+    [HttpGet("schedule")]
+    public async Task<IActionResult> Schedule(string? region, CancellationToken ct)
+    {
+        ViewData["Title"] = "Delivery and pickup schedule";
+        var (scoped, canSwitch) = await ResolveRegionAsync(region, ct);
+        return View(new ScheduleSettingsViewModel
+        {
+            Region = scoped,
+            AllRegions = await _regions.GetAllAsync(ct),
+            CanSwitchRegion = canSwitch,
+            Settings = scoped?.Scheduling ?? new SchedulingSettings()
+        });
+    }
+
+    [HttpPost("schedule/settings")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateScheduleSettings(
+        string region,
+        ScheduleSettingsUpdateModel form,
+        CancellationToken ct)
+    {
+        var (scoped, _) = await ResolveRegionAsync(region, ct);
+        if (scoped is null)
+        {
+            return NotFound();
+        }
+
+        var groups = new[]
+        {
+            form.WeekdayDeliveryWindows,
+            form.WeekdayPickupWindows,
+            form.WeekendDeliveryWindows,
+            form.WeekendPickupWindows
+        };
+        if (!ModelState.IsValid || groups.Any(group => NormalizeWindows(group).Count == 0))
+        {
+            TempData["Error"] = "Select at least one valid window for each delivery and pickup group.";
+            return RedirectToAction(nameof(Schedule), new { region = scoped.Id });
+        }
+
+        var settings = scoped.Scheduling ?? new SchedulingSettings();
+        settings.MinimumNoticeDays = Math.Clamp(form.MinimumNoticeDays, 0, 30);
+        settings.WeekdayDeliveryWindows = NormalizeWindows(form.WeekdayDeliveryWindows);
+        settings.WeekdayPickupWindows = NormalizeWindows(form.WeekdayPickupWindows);
+        settings.WeekendDeliveryWindows = NormalizeWindows(form.WeekendDeliveryWindows);
+        settings.WeekendPickupWindows = NormalizeWindows(form.WeekendPickupWindows);
+        scoped.Scheduling = settings;
+        await _regions.SaveAsync(scoped, ct);
+
+        TempData["Success"] = "Delivery and pickup availability updated.";
+        return RedirectToAction(nameof(Schedule), new { region = scoped.Id });
+    }
+
+    [HttpPost("schedule/blackouts")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddScheduleBlackout(
+        string region,
+        ScheduleBlackoutModel form,
+        CancellationToken ct)
+    {
+        var (scoped, _) = await ResolveRegionAsync(region, ct);
+        if (scoped is null)
+        {
+            return NotFound();
+        }
+
+        if (!DateOnly.TryParse(form.Date, out var date)
+            || date < DeliveryWindows.TodayInArizona()
+            || !ScheduleOperations.IsValid(form.Operation)
+            || (form.Window != DeliveryWindows.AllDay && !DeliveryWindows.IsValid(form.Window)))
+        {
+            TempData["Error"] = "Choose a future date, operation, and valid time window.";
+            return RedirectToAction(nameof(Schedule), new { region = scoped.Id });
+        }
+
+        var settings = scoped.Scheduling ?? new SchedulingSettings();
+        var duplicate = settings.Blackouts.Any(b =>
+            b.Date == date.ToString("yyyy-MM-dd")
+            && b.Operation == form.Operation
+            && b.Window == form.Window);
+        if (!duplicate)
+        {
+            settings.Blackouts.Add(new ScheduleBlackout
+            {
+                Date = date.ToString("yyyy-MM-dd"),
+                Operation = form.Operation,
+                Window = form.Window,
+                Reason = form.Reason?.Trim()
+            });
+            scoped.Scheduling = settings;
+            await _regions.SaveAsync(scoped, ct);
+        }
+
+        TempData[duplicate ? "Info" : "Success"] = duplicate
+            ? "That unavailable slot is already listed."
+            : "Unavailable slot added.";
+        return RedirectToAction(nameof(Schedule), new { region = scoped.Id });
+    }
+
+    [HttpPost("schedule/blackouts/{id}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteScheduleBlackout(
+        string id,
+        string region,
+        CancellationToken ct)
+    {
+        var (scoped, _) = await ResolveRegionAsync(region, ct);
+        if (scoped is null)
+        {
+            return NotFound();
+        }
+
+        var settings = scoped.Scheduling ?? new SchedulingSettings();
+        settings.Blackouts.RemoveAll(b => b.Id == id);
+        scoped.Scheduling = settings;
+        await _regions.SaveAsync(scoped, ct);
+        TempData["Success"] = "Unavailable slot removed.";
+        return RedirectToAction(nameof(Schedule), new { region = scoped.Id });
     }
 
     // ---------- orders ----------
@@ -256,8 +434,8 @@ public sealed class AdminController : Controller
         Track("ZIP", order.DeliveryZip, edit.Zip);
         Track("Name", order.CustomerName, edit.CustomerName);
         Track("Phone", order.CustomerPhone, edit.CustomerPhone);
-        Track("Crates", order.CrateCount.ToString(), edit.CrateCount.ToString());
-        Track("Dollies", order.DollyCount.ToString(), edit.DollyCount.ToString());
+        Track("Totes with lids", order.CrateCount.ToString(), edit.CrateCount.ToString());
+        Track("Custom-fit dollies", order.DollyCount.ToString(), edit.DollyCount.ToString());
 
         order.DeliveryDate = edit.DeliveryDate;
         order.DeliveryWindow = DeliveryWindows.Normalize(edit.DeliveryWindow);
@@ -290,6 +468,7 @@ public sealed class AdminController : Controller
         }
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
 
         TempData["Success"] = changes.Count > 0
             ? $"Saved {changes.Count} change{(changes.Count == 1 ? "" : "s")}."
@@ -366,6 +545,7 @@ public sealed class AdminController : Controller
         });
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
 
         TempData["Success"] = $"Status set to {StatusBadge.LabelFor(status)}.";
         return RedirectToAction(nameof(Order), new { id });
@@ -401,6 +581,7 @@ public sealed class AdminController : Controller
         });
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
 
         if (notifyCustomer)
         {
@@ -659,6 +840,13 @@ public sealed class AdminController : Controller
     }
 
     // ---------- helpers ----------
+
+    private static List<string> NormalizeWindows(IEnumerable<string>? windows)
+        => (windows ?? Array.Empty<string>())
+            .Where(DeliveryWindows.IsValid)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(window => Array.IndexOf(DeliveryWindows.All, window))
+            .ToList();
 
     private static bool IsOverduePickup(RentalOrder order, DateOnly today)
         => order.PickedUpAtUtc is null

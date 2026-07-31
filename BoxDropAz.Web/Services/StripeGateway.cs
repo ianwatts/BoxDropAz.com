@@ -50,8 +50,7 @@ public sealed class StripeGateway : IStripeGateway
         string customerId,
         string clientReferenceId,
         IReadOnlyList<CheckoutLine> lines,
-        string successUrl,
-        string cancelUrl,
+        string returnUrl,
         IDictionary<string, string> metadata,
         CancellationToken ct = default)
     {
@@ -60,10 +59,11 @@ public sealed class StripeGateway : IStripeGateway
         var options = new SessionCreateOptions
         {
             Mode = "payment",
+            UiMode = "embedded_page",
+            IntegrationIdentifier = "boxdropaz_rental_nqzptkfw",
             Customer = customerId,
             ClientReferenceId = clientReferenceId,
-            SuccessUrl = successUrl,
-            CancelUrl = cancelUrl,
+            ReturnUrl = returnUrl,
             LineItems = lines.Select(ToLineItem).ToList(),
             Metadata = new Dictionary<string, string>(metadata),
             PaymentIntentData = new SessionPaymentIntentDataOptions
@@ -80,8 +80,7 @@ public sealed class StripeGateway : IStripeGateway
     public async Task<Session> CreateSetupSessionAsync(
         string customerId,
         string clientReferenceId,
-        string successUrl,
-        string cancelUrl,
+        string returnUrl,
         IDictionary<string, string> metadata,
         CancellationToken ct = default)
     {
@@ -90,10 +89,12 @@ public sealed class StripeGateway : IStripeGateway
         var options = new SessionCreateOptions
         {
             Mode = "setup",
+            UiMode = "embedded_page",
+            IntegrationIdentifier = "boxdropaz_cardsetup_nqzptkfw",
+            Currency = "usd",
             Customer = customerId,
             ClientReferenceId = clientReferenceId,
-            SuccessUrl = successUrl,
-            CancelUrl = cancelUrl,
+            ReturnUrl = returnUrl,
             Metadata = new Dictionary<string, string>(metadata),
             SetupIntentData = new SessionSetupIntentDataOptions
             {
@@ -117,7 +118,8 @@ public sealed class StripeGateway : IStripeGateway
         var options = new SessionCreateOptions
         {
             Mode = "subscription",
-            UiMode = "embedded",
+            UiMode = "embedded_page",
+            IntegrationIdentifier = "boxdropaz_subscription_nqzptkfw",
             Customer = customerId,
             ClientReferenceId = clientReferenceId,
             ReturnUrl = returnUrl,

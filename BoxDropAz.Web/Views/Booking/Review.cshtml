@@ -38,7 +38,6 @@
             <input type="hidden" name="PickupCity" value="@form.PickupCity" />
             <input type="hidden" name="PickupZip" value="@form.PickupZip" />
             <input type="hidden" name="ExtraCrateQty" value="@form.ExtraCrateQty" />
-            <input type="hidden" name="PackingPaperQty" value="@form.PackingPaperQty" />
             <input type="hidden" name="WardrobeCrateQty" value="@form.WardrobeCrateQty" />
             <input type="hidden" name="DeliveryNotes" value="@form.DeliveryNotes" />
             <input type="hidden" name="GiftToken" value="@form.GiftToken" />
@@ -62,7 +61,8 @@
                                 <span class="bd-review-value">
                                     @Model.Package.Name<br />
                                     <span class="text-muted small">
-                                        @Model.Package.CrateCount crates &middot; @Model.Package.DollyCount dollies
+                                        @Model.Package.CrateCount totes with lids &middot;
+                                        @Model.Package.DollyCount custom-fit dollies
                                     </span>
                                 </span>
                             </div>
@@ -146,11 +146,11 @@
                             </p>
 
                             <div class="bd-review-row">
-                                <span class="bd-review-label">Damaged or missing crate</span>
+                                <span class="bd-review-label">Damaged or missing tote/lid</span>
                                 <span class="bd-review-value">@Money.Format(fees.CrateReplacementCents) each</span>
                             </div>
                             <div class="bd-review-row">
-                                <span class="bd-review-label">Damaged or missing dolly</span>
+                                <span class="bd-review-label">Damaged or missing custom-fit dolly</span>
                                 <span class="bd-review-value">@Money.Format(fees.DollyReplacementCents) each</span>
                             </div>
                             <div class="bd-review-row">
@@ -159,7 +159,7 @@
                             </div>
                             <div class="bd-review-row">
                                 <span class="bd-review-label">Deep clean</span>
-                                <span class="bd-review-value">@Money.Format(fees.DeepCleanPerCrateCents) per crate</span>
+                                <span class="bd-review-value">@Money.Format(fees.DeepCleanPerCrateCents) per tote</span>
                             </div>
                             <div class="bd-review-row">
                                 <span class="bd-review-label">Extra week</span>

@@ -2,6 +2,7 @@ using BoxDropAz.Core.Models.Orders;
 using BoxDropAz.Core.Services;
 using BoxDropAz.Web.Models.Dashboard;
 using BoxDropAz.Web.Models.Identity;
+using BoxDropAz.Web.Models.Payments;
 using BoxDropAz.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,6 +21,8 @@ public sealed class DashboardController : Controller
     private readonly RentalExtensionService _extensions;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly OrderNotifier _notifier;
+    private readonly InventoryService _inventory;
+    private readonly IConfiguration _config;
     private readonly ILogger<DashboardController> _logger;
 
     public DashboardController(
@@ -29,6 +32,8 @@ public sealed class DashboardController : Controller
         RentalExtensionService extensions,
         UserManager<ApplicationUser> userManager,
         OrderNotifier notifier,
+        InventoryService inventory,
+        IConfiguration config,
         ILogger<DashboardController> logger)
     {
         _orders = orders;
@@ -37,6 +42,8 @@ public sealed class DashboardController : Controller
         _extensions = extensions;
         _userManager = userManager;
         _notifier = notifier;
+        _inventory = inventory;
+        _config = config;
         _logger = logger;
     }
 
@@ -134,6 +141,7 @@ public sealed class DashboardController : Controller
         });
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
         await _notifier.SendCancellationAsync(order, order.CancellationReason, ct);
 
         TempData["Success"] =
@@ -143,8 +151,8 @@ public sealed class DashboardController : Controller
     }
 
     /// <summary>
-    /// Sends the customer to Stripe in setup mode to replace the stored card. The webhook writes the
-    /// new card back to their account.
+    /// Displays embedded Stripe Checkout in setup mode to replace the stored card. The webhook
+    /// writes the new card back to their account.
     /// </summary>
     [HttpPost("payment-method")]
     [ValidateAntiForgeryToken]
@@ -167,7 +175,6 @@ public sealed class DashboardController : Controller
                 customerId,
                 user.Id,
                 returnUrl,
-                returnUrl,
                 new Dictionary<string, string>
                 {
                     ["kind"] = CheckoutKind.PaymentMethodUpdate,
@@ -175,7 +182,17 @@ public sealed class DashboardController : Controller
                 },
                 ct);
 
-            return Redirect(session.Url);
+            return View("EmbeddedCheckout", new EmbeddedCheckoutViewModel
+            {
+                Title = "Update payment method",
+                Description = "Securely add or replace the card saved to your account.",
+                ClientSecret = session.ClientSecret,
+                PublishableKey = _config["Stripe:PublishableKey"] ?? string.Empty,
+                CancelUrl = returnUrl,
+                CancelLabel = "Back to my rentals",
+                SummaryTitle = "Card on file",
+                SummaryText = "Your card details go directly to Stripe and are never stored on BoxDrop AZ servers."
+            });
         }
         catch (Exception ex)
         {

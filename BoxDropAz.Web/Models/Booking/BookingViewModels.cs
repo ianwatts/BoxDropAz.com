@@ -91,15 +91,11 @@ public class BookingFormModel
     public string? PickupZip { get; set; }
 
     [Range(0, 40)]
-    [Display(Name = "Extra crates")]
+    [Display(Name = "Extra totes with lids")]
     public int ExtraCrateQty { get; set; }
 
-    [Range(0, 10)]
-    [Display(Name = "Packing paper bundles")]
-    public int PackingPaperQty { get; set; }
-
     [Range(0, 15)]
-    [Display(Name = "Wardrobe crates")]
+    [Display(Name = "Wardrobe totes")]
     public int WardrobeCrateQty { get; set; }
 
     [Display(Name = "Anything the driver should know?")]
@@ -131,7 +127,6 @@ public class BookingFormModel
         }
 
         Add(AddOnCatalog.ExtraCrate, ExtraCrateQty);
-        Add(AddOnCatalog.PackingPaper, PackingPaperQty);
         Add(AddOnCatalog.WardrobeCrate, WardrobeCrateQty);
 
         return lines;
@@ -167,6 +162,14 @@ public sealed class ScheduleViewModel
     public int GiftCreditCents { get; set; }
 
     public string? GiftingAgentName { get; set; }
+
+    public DateOnly EarliestDeliveryDate { get; set; }
+
+    public int MinimumNoticeDays { get; set; } = 3;
+
+    public IReadOnlyList<string> AvailableDeliveryWindows { get; set; } = Array.Empty<string>();
+
+    public IReadOnlyList<string> AvailablePickupWindows { get; set; } = Array.Empty<string>();
 }
 
 public sealed class ReviewViewModel

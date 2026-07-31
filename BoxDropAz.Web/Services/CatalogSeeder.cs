@@ -32,6 +32,13 @@ public static class CatalogSeeder
                 }
                 Console.WriteLine($"Seeded crate catalog for {region.Name}");
             }
+            else
+            {
+                foreach (var package in packages.Where(MigratePackageWording))
+                {
+                    await catalogService.SavePackageAsync(package, ct);
+                }
+            }
         }
     }
 
@@ -103,7 +110,7 @@ public static class CatalogSeeder
             Id = "tucson",
             Name = "Tucson",
             Slug = "tucson",
-            Description = "Crates delivered across metro Tucson, Oro Valley, Marana, and the Vail corridor.",
+            Description = "Reusable moving totes delivered across metro Tucson, Oro Valley, Marana, and the Vail corridor.",
             TimeZoneId = "US/Arizona",
             SupportPhone = "(520) 555-0188",
             IsActive = true,
@@ -152,7 +159,7 @@ public static class CatalogSeeder
             BasePriceCents = 8900,
             ExtraWeekPriceCents = 4500,
             SortOrder = 1,
-            IncludedItems = new List<string> { "20 stackable crates", "1 rolling dolly", "20 reusable labels", "Free delivery and pickup in Zone A" }
+            IncludedItems = IncludedItems(20, 1)
         };
 
         yield return new CratePackage
@@ -166,7 +173,7 @@ public static class CatalogSeeder
             BasePriceCents = 12900,
             ExtraWeekPriceCents = 6500,
             SortOrder = 2,
-            IncludedItems = new List<string> { "35 stackable crates", "2 rolling dollies", "35 reusable labels", "Free delivery and pickup in Zone A" }
+            IncludedItems = IncludedItems(35, 2)
         };
 
         yield return new CratePackage
@@ -181,7 +188,7 @@ public static class CatalogSeeder
             ExtraWeekPriceCents = 8500,
             Badge = "Most popular",
             SortOrder = 3,
-            IncludedItems = new List<string> { "50 stackable crates", "2 rolling dollies", "50 reusable labels", "3 lbs packing paper", "Free delivery and pickup in Zone A" }
+            IncludedItems = IncludedItems(50, 2)
         };
 
         yield return new CratePackage
@@ -195,7 +202,7 @@ public static class CatalogSeeder
             BasePriceCents = 21900,
             ExtraWeekPriceCents = 11000,
             SortOrder = 4,
-            IncludedItems = new List<string> { "75 stackable crates", "3 rolling dollies", "75 reusable labels", "3 lbs packing paper", "Free delivery and pickup in Zone A" }
+            IncludedItems = IncludedItems(75, 3)
         };
 
         yield return new CratePackage
@@ -209,7 +216,71 @@ public static class CatalogSeeder
             BasePriceCents = 29900,
             ExtraWeekPriceCents = 15000,
             SortOrder = 5,
-            IncludedItems = new List<string> { "100 stackable crates", "4 rolling dollies", "100 reusable labels", "6 lbs packing paper", "Free delivery and pickup in Zone A" }
+            IncludedItems = IncludedItems(100, 4)
         };
+    }
+
+    private static List<string> IncludedItems(int totes, int dollies) =>
+    [
+        $"{totes} 27-gallon totes with snap-fit lids",
+        $"{dollies} custom-fit doll{(dollies == 1 ? "y" : "ies")}",
+        $"{totes} reusable labels",
+        "1 package of 300 color-coded 3x5 cards",
+        "Free delivery and pickup in Zone A"
+    ];
+
+    private static bool MigratePackageWording(CratePackage package)
+    {
+        var migrated = new List<string>();
+        foreach (var item in package.IncludedItems)
+        {
+            if (item.Contains("packing paper", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (item.Contains("3x5", StringComparison.OrdinalIgnoreCase)
+                || item.Contains("index card", StringComparison.OrdinalIgnoreCase)
+                || item.Contains("move card", StringComparison.OrdinalIgnoreCase))
+            {
+                migrated.Add("1 package of 300 color-coded 3x5 cards");
+            }
+            else if (item.Contains("crate", StringComparison.OrdinalIgnoreCase)
+                || item.Contains("tote", StringComparison.OrdinalIgnoreCase))
+            {
+                migrated.Add($"{package.CrateCount} 27-gallon totes with snap-fit lids");
+            }
+            else if (item.Contains("doll", StringComparison.OrdinalIgnoreCase))
+            {
+                migrated.Add($"{package.DollyCount} custom-fit doll{(package.DollyCount == 1 ? "y" : "ies")}");
+            }
+            else
+            {
+                migrated.Add(item);
+            }
+        }
+
+        if (!migrated.Any(i => i.Contains("tote", StringComparison.OrdinalIgnoreCase)))
+        {
+            migrated.Insert(0, $"{package.CrateCount} 27-gallon totes with snap-fit lids");
+        }
+
+        if (!migrated.Any(i => i.Contains("doll", StringComparison.OrdinalIgnoreCase)))
+        {
+            migrated.Insert(1, $"{package.DollyCount} custom-fit doll{(package.DollyCount == 1 ? "y" : "ies")}");
+        }
+
+        if (!migrated.Any(i => i.Contains("3x5", StringComparison.OrdinalIgnoreCase)))
+        {
+            migrated.Add("1 package of 300 color-coded 3x5 cards");
+        }
+
+        if (package.IncludedItems.SequenceEqual(migrated, StringComparer.Ordinal))
+        {
+            return false;
+        }
+
+        package.IncludedItems = migrated;
+        return true;
     }
 }

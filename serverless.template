@@ -304,6 +304,24 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  InventoryTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub "${TablePrefix}Inventory"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: RegionId
+          AttributeType: S
+        - AttributeName: RecordId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: RegionId
+          KeyType: HASH
+        - AttributeName: RecordId
+          KeyType: RANGE
+
   # ---------- Realtor gifting ----------
 
   RealtorSubscriptionTable:

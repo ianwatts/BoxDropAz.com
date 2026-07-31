@@ -1,3 +1,4 @@
+using BoxDropAz.Core.Models.Inventory;
 using BoxDropAz.Core.Models.Orders;
 using BoxDropAz.Core.Models.Regions;
 
@@ -15,9 +16,11 @@ public sealed class ManifestViewModel
 
     public List<RentalOrder> Pickups { get; set; } = new();
 
+    public List<InventoryRecord> RestockTasks { get; set; } = new();
+
     public bool CanSwitchRegion { get; set; }
 
-    public int TotalCrates => Deliveries.Sum(o => o.CrateCount);
+    public int TotalTotes => Deliveries.Sum(o => o.CrateCount);
 
     public int TotalDollies => Deliveries.Sum(o => o.DollyCount);
 

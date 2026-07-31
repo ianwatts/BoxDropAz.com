@@ -17,10 +17,10 @@ public static class DamageKinds
 
     public static IReadOnlyList<DamageKind> All { get; } = new[]
     {
-        new DamageKind(Crate, "Damaged or missing crate", "Cracked walls, broken lid, or not returned", true),
-        new DamageKind(Dolly, "Damaged or missing dolly", "Bent frame, seized wheel, or not returned", true),
-        new DamageKind(MissedPickup, "Missed pickup", "Nobody home and the crates weren't accessible", false),
-        new DamageKind(DeepClean, "Deep clean needed", "Paint, food, pet waste or odour inside the crate", true)
+        new DamageKind(Crate, "Damaged or missing tote/lid", "Cracked tote, missing or broken lid, or not returned", true),
+        new DamageKind(Dolly, "Damaged or missing custom-fit dolly", "Bent base, seized wheel, or not returned", true),
+        new DamageKind(MissedPickup, "Missed pickup", "Nobody home and the totes weren't accessible", false),
+        new DamageKind(DeepClean, "Deep clean needed", "Paint, food, pet waste or odour inside the tote", true)
     };
 
     public static DamageKind? FromCode(string? code)

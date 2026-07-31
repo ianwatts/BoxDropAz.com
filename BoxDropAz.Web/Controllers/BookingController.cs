@@ -7,6 +7,7 @@ using BoxDropAz.Core.Models.Regions;
 using BoxDropAz.Core.Services;
 using BoxDropAz.Web.Models.Booking;
 using BoxDropAz.Web.Models.Identity;
+using BoxDropAz.Web.Models.Payments;
 using BoxDropAz.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,7 @@ public sealed class BookingController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly OrderNotifier _notifier;
     private readonly OrderCheckoutService _checkout;
+    private readonly IConfiguration _config;
     private readonly ILogger<BookingController> _logger;
 
     public BookingController(
@@ -37,6 +39,7 @@ public sealed class BookingController : Controller
         UserManager<ApplicationUser> userManager,
         OrderNotifier notifier,
         OrderCheckoutService checkout,
+        IConfiguration config,
         ILogger<BookingController> logger)
     {
         _regions = regions;
@@ -48,6 +51,7 @@ public sealed class BookingController : Controller
         _userManager = userManager;
         _notifier = notifier;
         _checkout = checkout;
+        _config = config;
         _logger = logger;
     }
 
@@ -55,7 +59,7 @@ public sealed class BookingController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(string? region, string? package, string? zip, CancellationToken ct)
     {
-        ViewData["Title"] = "Book your crates";
+        ViewData["Title"] = "Book your moving totes";
 
         var all = await _regions.GetActiveAsync(ct);
 
@@ -115,11 +119,18 @@ public sealed class BookingController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        var earliestDelivery = FindFirstBookableDeliveryDate(selectedRegion, 1);
+        var deliveryWindows = SchedulingRules.GetAvailableWindows(
+            selectedRegion, earliestDelivery, ScheduleOperations.Delivery);
+        var pickupWindows = SchedulingRules.GetAvailableWindows(
+            selectedRegion, earliestDelivery.AddDays(RentalTerms.BaseRentalDays), ScheduleOperations.Pickup);
         var form = new BookingFormModel
         {
             RegionId = selectedRegion.Id,
             PackageId = selectedPackage.PackageId,
-            DeliveryDate = DeliveryWindows.EarliestDeliveryDate().ToString("yyyy-MM-dd"),
+            DeliveryDate = earliestDelivery.ToString("yyyy-MM-dd"),
+            DeliveryWindow = deliveryWindows.FirstOrDefault() ?? DeliveryWindows.Default,
+            PickupWindow = pickupWindows.FirstOrDefault() ?? DeliveryWindows.Default,
             Zip = zip ?? giftOrder?.PropertyZip ?? string.Empty,
             City = giftOrder?.PropertyCity ?? string.Empty,
             AddressLine1 = giftOrder?.PropertyAddressLine1 ?? string.Empty,
@@ -172,6 +183,32 @@ public sealed class BookingController : Controller
             regionName = region.Name,
             zoneName = zone.Name,
             surchargeCents = zone.SurchargeCents
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Availability(
+        string regionId,
+        string date,
+        int weeks = 1,
+        CancellationToken ct = default)
+    {
+        var region = await ResolveRegionAsync(regionId, ct);
+        if (region is null || !DateOnly.TryParse(date, out var deliveryDate))
+        {
+            return BadRequest();
+        }
+
+        weeks = PricingService.ClampWeeks(weeks);
+        var pickupDate = deliveryDate.AddDays(RentalTerms.BaseRentalDays * weeks);
+        return Json(new
+        {
+            deliveryDate = deliveryDate.ToString("yyyy-MM-dd"),
+            pickupDate = pickupDate.ToString("yyyy-MM-dd"),
+            deliveryWindows = SchedulingRules.GetAvailableWindows(
+                region, deliveryDate, ScheduleOperations.Delivery),
+            pickupWindows = SchedulingRules.GetAvailableWindows(
+                region, pickupDate, ScheduleOperations.Pickup)
         });
     }
 
@@ -260,7 +297,7 @@ public sealed class BookingController : Controller
             var customerId = await _stripe.EnsureCustomerAsync(user, ct);
             order.StripeCustomerId = customerId;
 
-            var successUrl = Url.Action(nameof(Complete), "Booking",
+            var returnUrl = Url.Action(nameof(Complete), "Booking",
                 new { orderId = order.OrderId, accountCreated }, Request.Scheme) + "&session_id={CHECKOUT_SESSION_ID}";
             var cancelUrl = Url.Action(nameof(Cancelled), "Booking", new { orderId = order.OrderId }, Request.Scheme)!;
 
@@ -283,18 +320,30 @@ public sealed class BookingController : Controller
                 // Stripe rejects a zero-amount payment, but the agreement still requires a card
                 // on file for extensions and damages, so switch to setup mode.
                 metadata["kind"] = CheckoutKind.GiftSetup;
-                session = await _stripe.CreateSetupSessionAsync(customerId, user.Id, successUrl, cancelUrl, metadata, ct);
+                session = await _stripe.CreateSetupSessionAsync(customerId, user.Id, returnUrl, metadata, ct);
             }
             else
             {
                 session = await _stripe.CreatePaymentSessionAsync(
-                    customerId, user.Id, BuildCheckoutLines(context), successUrl, cancelUrl, metadata, ct);
+                    customerId, user.Id, BuildCheckoutLines(context), returnUrl, metadata, ct);
             }
 
             order.StripeCheckoutSessionId = session.Id;
             await _orders.SaveAsync(order, ct);
 
-            return Redirect(session.Url);
+            return View("EmbeddedCheckout", new EmbeddedCheckoutViewModel
+            {
+                Title = context.Quote.IsFullyCoveredByCredit ? "Secure your booking" : "Complete payment",
+                Description = $"Order {order.OrderNumber} · {context.Package.Name}",
+                ClientSecret = session.ClientSecret,
+                PublishableKey = _config["Stripe:PublishableKey"] ?? string.Empty,
+                CancelUrl = cancelUrl,
+                CancelLabel = "Cancel booking",
+                SummaryTitle = "Due today",
+                SummaryText = context.Quote.IsFullyCoveredByCredit
+                    ? "Your gift credit covers the rental. Stripe will securely save a card for extensions or agreement fees."
+                    : Money.Format(context.Quote.TotalDueCents)
+            });
         }
         catch (Exception ex)
         {
@@ -404,19 +453,33 @@ public sealed class BookingController : Controller
         {
             ModelState.AddModelError(nameof(form.DeliveryDate), "Choose a delivery date.");
         }
-        else if (deliveryDate < DeliveryWindows.EarliestDeliveryDate())
+        else if (deliveryDate < SchedulingRules.EarliestDeliveryDate(region))
         {
             ModelState.AddModelError(nameof(form.DeliveryDate),
-                $"The earliest we can deliver is {DeliveryWindows.EarliestDeliveryDate():MMMM d, yyyy}.");
+                $"The earliest we can deliver is {SchedulingRules.EarliestDeliveryDate(region):MMMM d, yyyy}.");
         }
         else if (deliveryDate > DeliveryWindows.LatestDeliveryDate())
         {
             ModelState.AddModelError(nameof(form.DeliveryDate), "That date is too far out to schedule yet.");
         }
 
-        form.DeliveryWindow = DeliveryWindows.Normalize(form.DeliveryWindow);
-        form.PickupWindow = DeliveryWindows.Normalize(form.PickupWindow);
         form.RentalWeeks = PricingService.ClampWeeks(form.RentalWeeks);
+        if (deliveryDate is not null
+            && !SchedulingRules.IsWindowAvailable(
+                region, deliveryDate.Value, ScheduleOperations.Delivery, form.DeliveryWindow))
+        {
+            ModelState.AddModelError(nameof(form.DeliveryWindow),
+                "That delivery window is unavailable. Choose another time.");
+        }
+
+        var candidateDelivery = deliveryDate ?? SchedulingRules.EarliestDeliveryDate(region);
+        var candidatePickup = candidateDelivery.AddDays(RentalTerms.BaseRentalDays * form.RentalWeeks);
+        if (!SchedulingRules.IsWindowAvailable(
+                region, candidatePickup, ScheduleOperations.Pickup, form.PickupWindow))
+        {
+            ModelState.AddModelError(nameof(form.PickupWindow),
+                "That pickup window is unavailable. Choose another time or delivery date.");
+        }
 
         if (!form.PickupSameAsDelivery && string.IsNullOrWhiteSpace(form.PickupAddressLine1))
         {
@@ -426,7 +489,7 @@ public sealed class BookingController : Controller
         var giftCredit = gift?.GiftAmountCents ?? 0;
         var quote = _pricing.Quote(package, zone, form.RentalWeeks, form.ToAddOnLines(), giftCredit);
 
-        var resolvedDelivery = deliveryDate ?? DeliveryWindows.EarliestDeliveryDate();
+        var resolvedDelivery = deliveryDate ?? SchedulingRules.EarliestDeliveryDate(region);
 
         return new BookingContext
         {
@@ -478,6 +541,7 @@ public sealed class BookingController : Controller
             PackageName = context.Package.Name,
             CrateCount = context.Package.CrateCount + form.ExtraCrateQty + form.WardrobeCrateQty,
             DollyCount = context.Package.DollyCount,
+            RequiresIndexCard = true,
             RentalWeeks = form.RentalWeeks,
 
             PackageBaseCents = context.Quote.PackageBaseCents,
@@ -524,8 +588,8 @@ public sealed class BookingController : Controller
         var lines = new List<CheckoutLine>
         {
             new(
-                $"{context.Package.Name} crate bundle",
-                $"{context.Package.CrateCount} crates and {context.Package.DollyCount} dollies for {RentalTerms.BaseRentalDays} days",
+                $"{context.Package.Name} moving tote bundle",
+                $"{context.Package.CrateCount} totes with lids and {context.Package.DollyCount} custom-fit dollies for {RentalTerms.BaseRentalDays} days",
                 context.Quote.PackageBaseCents,
                 1)
         };
@@ -659,6 +723,9 @@ public sealed class BookingController : Controller
         var package = packages.FirstOrDefault(p => p.PackageId == form.PackageId) ?? packages.FirstOrDefault();
         var zone = region.FindZoneForZip(form.Zip);
         var giftCredit = gift?.GiftAmountCents ?? 0;
+        var earliest = FindFirstBookableDeliveryDate(region, form.RentalWeeks);
+        var deliveryDate = form.ParseDeliveryDate() ?? earliest;
+        var pickupDate = deliveryDate.AddDays(RentalTerms.BaseRentalDays * PricingService.ClampWeeks(form.RentalWeeks));
 
         return new ScheduleViewModel
         {
@@ -671,7 +738,33 @@ public sealed class BookingController : Controller
                 ? null
                 : _pricing.Quote(package, zone, form.RentalWeeks, form.ToAddOnLines(), giftCredit),
             GiftCreditCents = giftCredit,
-            GiftingAgentName = gift?.RealtorName
+            GiftingAgentName = gift?.RealtorName,
+            EarliestDeliveryDate = earliest,
+            MinimumNoticeDays = region.Scheduling?.MinimumNoticeDays ?? 3,
+            AvailableDeliveryWindows = SchedulingRules.GetAvailableWindows(
+                region, deliveryDate, ScheduleOperations.Delivery),
+            AvailablePickupWindows = SchedulingRules.GetAvailableWindows(
+                region, pickupDate, ScheduleOperations.Pickup)
         };
+    }
+
+    private static DateOnly FindFirstBookableDeliveryDate(Region region, int rentalWeeks)
+    {
+        var date = SchedulingRules.EarliestDeliveryDate(region);
+        var latest = DeliveryWindows.LatestDeliveryDate();
+        var weeks = PricingService.ClampWeeks(rentalWeeks);
+        while (date <= latest)
+        {
+            var pickupDate = date.AddDays(RentalTerms.BaseRentalDays * weeks);
+            if (SchedulingRules.GetAvailableWindows(region, date, ScheduleOperations.Delivery).Count > 0
+                && SchedulingRules.GetAvailableWindows(region, pickupDate, ScheduleOperations.Pickup).Count > 0)
+            {
+                return date;
+            }
+
+            date = date.AddDays(1);
+        }
+
+        return SchedulingRules.EarliestDeliveryDate(region);
     }
 }

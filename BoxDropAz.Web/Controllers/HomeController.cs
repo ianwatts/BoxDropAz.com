@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Net;
+using System.Text;
+using System.Xml.Linq;
 using BoxDropAz.Core.Models.Catalog;
 using BoxDropAz.Core.Models.Regions;
 using BoxDropAz.Web.Models;
@@ -46,14 +48,14 @@ public sealed class HomeController : Controller
     public IActionResult HowItWorks()
     {
         ViewData["Title"] = "How it works";
-        ViewData["Description"] = "Book online, we drop off stackable crates and dollies, you pack at your own pace, then we pick everything up. No cardboard, no tape, no cleanup.";
+        ViewData["Description"] = "Book online, we drop off 27-gallon totes with lids and custom-fit dollies, you pack at your own pace, then we pick everything up.";
         return View();
     }
 
     public async Task<IActionResult> Pricing(string? region, CancellationToken ct)
     {
         ViewData["Title"] = "Pricing";
-        ViewData["Description"] = "Flat rate crate rental bundles from $89 for a one week rental, including free delivery and pickup in our core service zone.";
+        ViewData["Description"] = "Flat rate moving tote rental bundles from $89 for one week, including lids, dollies, delivery, and pickup in our core service zone.";
 
         var (selected, all) = await ResolveRegionAsync(region, ct);
 
@@ -92,8 +94,61 @@ public sealed class HomeController : Controller
     public IActionResult Faq()
     {
         ViewData["Title"] = "Frequently asked questions";
-        ViewData["Description"] = "Answers about crate sizes, rental length, delivery windows, damage fees, and how to extend a rental.";
+        ViewData["Description"] = "Answers about tote sizes, lids, rental length, delivery windows, damage fees, and how to extend a rental.";
         return View();
+    }
+
+    [HttpGet("/robots.txt")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    public IActionResult Robots()
+    {
+        var configuredBaseUrl = _config["Site:BaseUrl"]?.TrimEnd('/');
+        var productionHost = Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var productionUri)
+            ? productionUri.Host
+            : null;
+        var isProductionHost = !string.IsNullOrWhiteSpace(productionHost)
+            && string.Equals(Request.Host.Host, productionHost, StringComparison.OrdinalIgnoreCase);
+
+        var body = isProductionHost
+            ? $"User-agent: *\nAllow: /\nDisallow: /Account/\nDisallow: /Admin/\nDisallow: /Agent/\nDisallow: /Booking/\nDisallow: /Dashboard/\nDisallow: /Gift/\nDisallow: /SaaSAdmin/\nDisallow: /Worker/\n\nSitemap: {configuredBaseUrl}/sitemap.xml\n"
+            : "User-agent: *\nDisallow: /\n";
+
+        return Content(body, "text/plain", Encoding.UTF8);
+    }
+
+    [HttpGet("/sitemap.xml")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    public IActionResult Sitemap()
+    {
+        var configuredBaseUrl = _config["Site:BaseUrl"]?.TrimEnd('/');
+        var baseUrl = string.IsNullOrWhiteSpace(configuredBaseUrl)
+            ? $"{Request.Scheme}://{Request.Host}"
+            : configuredBaseUrl;
+
+        var pages = new (string Path, string ChangeFrequency, decimal Priority)[]
+        {
+            ("/", "weekly", 1.0m),
+            ("/Home/HowItWorks", "monthly", 0.8m),
+            ("/Home/Pricing", "weekly", 0.9m),
+            ("/Home/ServiceAreas", "weekly", 0.9m),
+            ("/Home/Faq", "monthly", 0.7m),
+            ("/Home/Contact", "yearly", 0.5m),
+            ("/Realtors", "monthly", 0.7m),
+            ("/Realtors/Plans", "monthly", 0.7m),
+            ("/legal/rental-terms", "yearly", 0.3m),
+            ("/legal/privacy", "yearly", 0.3m)
+        };
+
+        XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+        var document = new XDocument(
+            new XElement(ns + "urlset",
+                pages.Select(page =>
+                    new XElement(ns + "url",
+                        new XElement(ns + "loc", $"{baseUrl}{page.Path}"),
+                        new XElement(ns + "changefreq", page.ChangeFrequency),
+                        new XElement(ns + "priority", page.Priority.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))))));
+
+        return Content(document.ToString(), "application/xml", Encoding.UTF8);
     }
 
     [HttpGet]

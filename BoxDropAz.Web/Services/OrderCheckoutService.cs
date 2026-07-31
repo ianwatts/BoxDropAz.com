@@ -17,6 +17,7 @@ public sealed class OrderCheckoutService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly OrderNotifier _notifier;
     private readonly GiftNotifier _giftNotifier;
+    private readonly InventoryService _inventory;
     private readonly SiteUrls _urls;
     private readonly ILogger<OrderCheckoutService> _logger;
 
@@ -27,6 +28,7 @@ public sealed class OrderCheckoutService
         UserManager<ApplicationUser> userManager,
         OrderNotifier notifier,
         GiftNotifier giftNotifier,
+        InventoryService inventory,
         SiteUrls urls,
         ILogger<OrderCheckoutService> logger)
     {
@@ -36,6 +38,7 @@ public sealed class OrderCheckoutService
         _userManager = userManager;
         _notifier = notifier;
         _giftNotifier = giftNotifier;
+        _inventory = inventory;
         _urls = urls;
         _logger = logger;
     }
@@ -63,6 +66,7 @@ public sealed class OrderCheckoutService
         order.ConfirmedAtUtc = DateTime.UtcNow;
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
 
         await StoreCardOnUserAsync(order.UserId, paymentMethodId, brand, last4, ct);
 

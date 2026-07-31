@@ -21,31 +21,22 @@ public static class AddOnCatalog
     public static readonly AddOnOption ExtraCrate = new()
     {
         Code = "extra-crate",
-        Name = "Extra crate",
-        Description = "Add individual crates on top of your bundle.",
+        Name = "Extra 27-gallon tote with lid",
+        Description = "Add an individual 27-gallon tote with its snap-fit lid.",
         UnitAmountCents = 400,
         MaxQuantity = 40
-    };
-
-    public static readonly AddOnOption PackingPaper = new()
-    {
-        Code = "packing-paper",
-        Name = "Packing paper bundle",
-        Description = "3 lbs of recycled newsprint, about 100 sheets.",
-        UnitAmountCents = 1500,
-        MaxQuantity = 10
     };
 
     public static readonly AddOnOption WardrobeCrate = new()
     {
         Code = "wardrobe-crate",
-        Name = "Wardrobe crate",
-        Description = "Hanging rail so closets move straight across.",
+        Name = "Wardrobe tote",
+        Description = "A reusable wardrobe container with a hanging rail.",
         UnitAmountCents = 600,
         MaxQuantity = 15
     };
 
-    public static IReadOnlyList<AddOnOption> All { get; } = new[] { ExtraCrate, PackingPaper, WardrobeCrate };
+    public static IReadOnlyList<AddOnOption> All { get; } = new[] { ExtraCrate, WardrobeCrate };
 
     public static AddOnOption? FromCode(string? code)
         => All.FirstOrDefault(a => string.Equals(a.Code, code, StringComparison.OrdinalIgnoreCase));

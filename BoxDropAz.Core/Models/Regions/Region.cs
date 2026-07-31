@@ -36,6 +36,9 @@ public sealed class Region
     [DynamoDBProperty(typeof(JsonPropertyConverter<DamageFeeSchedule>))]
     public DamageFeeSchedule DamageFees { get; set; } = new();
 
+    [DynamoDBProperty(typeof(JsonPropertyConverter<SchedulingSettings>))]
+    public SchedulingSettings Scheduling { get; set; } = new();
+
     [DynamoDBProperty("CreatedAtUtc")]
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 

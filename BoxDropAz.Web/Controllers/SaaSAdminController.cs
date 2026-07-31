@@ -337,7 +337,7 @@ public sealed class SaaSAdminController : Controller
         {
             RegionId = region.Id,
             SortOrder = existing.Count == 0 ? 10 : existing.Max(p => p.SortOrder) + 10,
-            IncludedItems = "Delivery and pickup\nStackable, lidded crates\n7 day rental"
+            IncludedItems = "Delivery and pickup\n27-gallon totes with snap-fit lids\nCustom-fit dollies\n1 package of 300 color-coded 3x5 cards\n7 day rental"
         });
     }
 

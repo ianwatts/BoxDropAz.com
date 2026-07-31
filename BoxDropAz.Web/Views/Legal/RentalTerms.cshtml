@@ -7,7 +7,7 @@
     <div class="container">
         <div class="bd-legal mx-auto">
             <span class="bd-eyebrow"><i class="bi bi-file-earmark-text"></i> Version @RentalTerms.CurrentVersion</span>
-            <h1 class="h2 fw-bold mt-3 mb-2">Crate rental agreement</h1>
+            <h1 class="h2 fw-bold mt-3 mb-2">Moving tote rental agreement</h1>
             <p class="text-muted">
                 This is the agreement you accept at checkout. Fee amounts below are the ones in force for
                 @(Model.Region?.Name ?? "your region"), and a copy of the schedule is stored with your order
@@ -28,7 +28,8 @@
 
             <h2>1. What you're renting</h2>
             <p>
-                BoxDrop AZ rents reusable plastic moving crates, rolling dollies, and reusable labels. The
+                BoxDrop AZ rents 27-gallon moving totes with matching snap-fit lids, custom-fit dollies,
+                and reusable labels. The
                 equipment remains our property at all times. You are renting the use of it for the period
                 below, not buying it.
             </p>
@@ -86,16 +87,16 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td>Crate not returned, cracked, or otherwise unusable</td>
-                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.CrateReplacementCents) per crate</td>
+                        <td>Tote or matching lid not returned, cracked, or otherwise unusable</td>
+                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.CrateReplacementCents) per tote/lid set</td>
                     </tr>
                     <tr>
-                        <td>Dolly not returned or damaged beyond repair</td>
+                        <td>Custom-fit dolly not returned or damaged beyond repair</td>
                         <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.DollyReplacementCents) per dolly</td>
                     </tr>
                     <tr>
-                        <td>Crate requires deep cleaning (spills, pet waste, paint, chemicals)</td>
-                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.DeepCleanPerCrateCents) per crate</td>
+                        <td>Tote requires deep cleaning (spills, pet waste, paint, chemicals)</td>
+                        <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(fees.DeepCleanPerCrateCents) per tote</td>
                     </tr>
                     <tr>
                         <td>Nothing available at the scheduled pickup</td>
@@ -112,8 +113,8 @@
 
             <h2>6. Acceptable use</h2>
             <ul>
-                <li>Do not exceed 50 lbs per crate.</li>
-                <li>Do not transport hazardous, flammable, corrosive, or perishable materials in the crates.</li>
+                <li>Do not exceed the tote manufacturer's rated load.</li>
+                <li>Do not transport hazardous, flammable, corrosive, or perishable materials in the totes.</li>
                 <li>Do not modify, drill, paint, or apply adhesive labels to any equipment. Reusable labels are provided.</li>
                 <li>Do not sublet, sell, or move the equipment outside Arizona.</li>
             </ul>
@@ -140,7 +141,7 @@
 
             <h2>9. Liability</h2>
             <p>
-                BoxDrop AZ is not responsible for damage to the contents you place in the crates. The
+                BoxDrop AZ is not responsible for damage to the contents you place in the totes. The
                 equipment is provided as-is for transporting household goods. Our total liability under this
                 agreement is limited to the amount you paid for the rental.
             </p>

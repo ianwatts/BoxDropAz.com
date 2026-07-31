@@ -32,12 +32,12 @@ public sealed class GiftNotifier
             $"{gift.RealtorName} sent you {Money.FormatCompact(gift.GiftAmountCents)} toward your move",
             $"<p>Congratulations on {gift.PropertyAddressLine1}{(string.IsNullOrWhiteSpace(gift.PropertyCity) ? "" : ", " + gift.PropertyCity)}.</p>" +
             message +
-            $"<p>{fromLine} has covered {Money.FormatCompact(gift.GiftAmountCents)} of reusable moving crates for you. " +
-            "No cardboard, no tape, no trip to the store. We deliver stacked crates and dollies to your door, " +
+            $"<p>{fromLine} has covered {Money.FormatCompact(gift.GiftAmountCents)} of reusable moving totes for you. " +
+            "No cardboard, no tape, no trip to the store. We deliver totes with lids and custom-fit dollies to your door, " +
             "then collect them when you're unpacked.</p>" +
             "<p>Pick your bundle and your dates whenever you're ready. If you choose something larger than the " +
             "gift covers, you just pay the difference.</p>",
-            "Claim your crates",
+            "Claim your totes",
             claimUrl);
 
         await _email.SendAsync(gift.ClientEmail, $"{gift.RealtorName} sent you a closing gift", body, ct);
@@ -66,7 +66,7 @@ public sealed class GiftNotifier
     {
         var body = EmailTemplates.Wrap(
             "Your client claimed their gift",
-            $"<p>{gift.ClientName} booked their crates. Delivery is set for {deliveryDate}.</p>" +
+            $"<p>{gift.ClientName} booked their moving totes. Delivery is set for {deliveryDate}.</p>" +
             (gift.IncludeCoBrandingInsert
                 ? "<p>Your co-branded insert goes out with the delivery.</p>"
                 : ""),

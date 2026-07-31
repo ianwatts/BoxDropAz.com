@@ -20,6 +20,7 @@ public sealed class RentalExtensionService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly PricingService _pricing;
     private readonly OrderNotifier _notifier;
+    private readonly InventoryService _inventory;
     private readonly ILogger<RentalExtensionService> _logger;
 
     public RentalExtensionService(
@@ -29,6 +30,7 @@ public sealed class RentalExtensionService
         UserManager<ApplicationUser> userManager,
         PricingService pricing,
         OrderNotifier notifier,
+        InventoryService inventory,
         ILogger<RentalExtensionService> logger)
     {
         _orders = orders;
@@ -37,6 +39,7 @@ public sealed class RentalExtensionService
         _userManager = userManager;
         _pricing = pricing;
         _notifier = notifier;
+        _inventory = inventory;
         _logger = logger;
     }
 
@@ -164,6 +167,7 @@ public sealed class RentalExtensionService
         order.PickupDate = charge.NewPickupDate;
 
         await _orders.SaveAsync(order, ct);
+        await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
         await _notifier.SendExtensionReceiptAsync(order, charge, ct);
 
         return new ExtensionResult(true,

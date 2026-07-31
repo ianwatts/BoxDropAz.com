@@ -60,7 +60,7 @@
                         <div class="bd-review-row">
                             <span class="bd-review-label">Equipment</span>
                             <span class="bd-review-value">
-                                @order.CrateCount crates &middot; @order.DollyCount dollies
+                                @order.CrateCount totes with lids &middot; @order.DollyCount custom-fit dollies
                             </span>
                         </div>
                         @if (order.DeliveredAtUtc is { } delivered)
@@ -271,7 +271,7 @@
                             </p>
 
                             <div class="bd-review-row">
-                                <span class="bd-review-label">Damaged or missing crate</span>
+                                <span class="bd-review-label">Damaged or missing tote/lid</span>
                                 <span class="bd-review-value">@Money.Format(fees.CrateReplacementCents)</span>
                             </div>
                             <div class="bd-review-row">
@@ -284,7 +284,7 @@
                             </div>
                             <div class="bd-review-row">
                                 <span class="bd-review-label">Deep clean</span>
-                                <span class="bd-review-value">@Money.Format(fees.DeepCleanPerCrateCents) per crate</span>
+                                <span class="bd-review-value">@Money.Format(fees.DeepCleanPerCrateCents) per tote</span>
                             </div>
 
                             <a class="small" asp-controller="Legal" asp-action="RentalTerms"

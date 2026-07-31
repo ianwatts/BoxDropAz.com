@@ -147,6 +147,7 @@ public sealed class Startup
         services.AddScoped<OrderCheckoutService>();
         services.AddScoped<RentalExtensionService>();
         services.AddScoped<DamageChargeService>();
+        services.AddScoped<InventoryService>();
         services.AddSingleton<SiteUrls>();
         services.AddSingleton<PricingService>();
         services.AddScoped<RoleStore>();

@@ -27,7 +27,7 @@
                         @(Model.HasCardOnFile ? "Update card" : "Add a card")
                     </button>
                 </form>
-                <a class="btn btn-primary" asp-controller="Booking" asp-action="Index">Book more crates</a>
+                <a class="btn btn-primary" asp-controller="Booking" asp-action="Index">Book more totes</a>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
                     <i class="bi bi-box-seam"></i>
                     Nothing active right now.
                     <div class="mt-3">
-                        <a class="btn btn-primary" asp-controller="Booking" asp-action="Index">Book crates</a>
+                        <a class="btn btn-primary" asp-controller="Booking" asp-action="Index">Book totes</a>
                     </div>
                 </div>
             </div>
@@ -86,9 +86,9 @@
                                     </span>
                                 </div>
                                 <div class="bd-review-row">
-                                    <span class="bd-review-label">Crates</span>
+                                    <span class="bd-review-label">Equipment</span>
                                     <span class="bd-review-value">
-                                        @order.CrateCount crates &middot; @order.DollyCount dollies
+                                        @order.CrateCount totes with lids &middot; @order.DollyCount custom-fit dollies
                                     </span>
                                 </div>
 

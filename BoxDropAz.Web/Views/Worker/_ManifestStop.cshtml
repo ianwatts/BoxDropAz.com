@@ -46,8 +46,12 @@
         </p>
 
         <div class="d-flex gap-3 small text-muted mb-3">
-            <span><strong>@order.CrateCount</strong> crates</span>
-            <span><strong>@order.DollyCount</strong> dollies</span>
+            <span><strong>@order.CrateCount</strong> totes + lids</span>
+            <span><strong>@order.DollyCount</strong> custom-fit dollies</span>
+            @if (order.RequiresIndexCard && order.IndexCardIssuedAtUtc is null && !Model.IsPickup)
+            {
+                <span class="text-danger"><strong>1</strong> pack of 300 color-coded cards</span>
+            }
             <span>@order.PackageName</span>
         </div>
 
@@ -74,12 +78,17 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="date" value="@dateString" />
                     <div class="row g-2 align-items-end">
-                        <div class="col-5">
-                            <label class="form-label small" for="crates-@order.OrderId">Crates back</label>
+                        <div class="col-4">
+                            <label class="form-label small" for="crates-@order.OrderId">Totes back</label>
                             <input type="number" name="cratesReturned" id="crates-@order.OrderId"
                                    class="form-control" value="@order.CrateCount" min="0" max="@order.CrateCount" />
                         </div>
-                        <div class="col-7">
+                        <div class="col-4">
+                            <label class="form-label small" for="dollies-@order.OrderId">Dollies back</label>
+                            <input type="number" name="dolliesReturned" id="dollies-@order.OrderId"
+                                   class="form-control" value="@order.DollyCount" min="0" max="@order.DollyCount" />
+                        </div>
+                        <div class="col-4">
                             <button type="submit" class="btn btn-primary w-100">Mark collected</button>
                         </div>
                     </div>

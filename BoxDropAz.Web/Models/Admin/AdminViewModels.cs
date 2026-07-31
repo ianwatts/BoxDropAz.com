@@ -1,10 +1,76 @@
 using System.ComponentModel.DataAnnotations;
+using BoxDropAz.Core.Models.Inventory;
 using BoxDropAz.Core.Models.Orders;
 using BoxDropAz.Core.Models.Realtors;
 using BoxDropAz.Core.Models.Regions;
+using BoxDropAz.Core.Services;
 using BoxDropAz.Web.Models.Identity;
+using BoxDropAz.Web.Services;
 
 namespace BoxDropAz.Web.Models.Admin;
+
+public sealed class InventoryViewModel
+{
+    public Region? Region { get; set; }
+    public List<Region> AllRegions { get; set; } = new();
+    public bool CanSwitchRegion { get; set; }
+    public InventoryAssessment? Assessment { get; set; }
+    public List<InventoryRecord> OpenTasks { get; set; } = new();
+}
+
+public sealed class InventoryUpdateModel
+{
+    [Range(0, 100000)]
+    [Display(Name = "Total 27-gallon totes with lids")]
+    public int TotalTotes { get; set; }
+
+    [Range(0, 10000)]
+    [Display(Name = "Total custom-fit dollies")]
+    public int TotalDollies { get; set; }
+
+    [Range(0, 100000)]
+    [Display(Name = "Loose colored 3x5 index cards")]
+    public int TotalIndexCards { get; set; }
+
+    [Range(0, 100000)]
+    [Display(Name = "Loose self-adhesive 3x5 card holders")]
+    public int TotalCardHolders { get; set; }
+}
+
+public sealed class ScheduleSettingsViewModel
+{
+    public Region? Region { get; set; }
+    public List<Region> AllRegions { get; set; } = new();
+    public bool CanSwitchRegion { get; set; }
+    public SchedulingSettings Settings { get; set; } = new();
+}
+
+public sealed class ScheduleSettingsUpdateModel
+{
+    [Range(0, 30)]
+    [Display(Name = "Minimum booking notice (days)")]
+    public int MinimumNoticeDays { get; set; } = 3;
+
+    public List<string> WeekdayDeliveryWindows { get; set; } = new();
+    public List<string> WeekdayPickupWindows { get; set; } = new();
+    public List<string> WeekendDeliveryWindows { get; set; } = new();
+    public List<string> WeekendPickupWindows { get; set; } = new();
+}
+
+public sealed class ScheduleBlackoutModel
+{
+    [Required]
+    public string Date { get; set; } = string.Empty;
+
+    [Required]
+    public string Operation { get; set; } = ScheduleOperations.Both;
+
+    [Required]
+    public string Window { get; set; } = DeliveryWindows.AllDay;
+
+    [StringLength(200)]
+    public string? Reason { get; set; }
+}
 
 /// <summary>One bucket on the revenue chart.</summary>
 public sealed record RevenuePoint(string Label, int RevenueCents, int OrderCount);
@@ -120,11 +186,11 @@ public sealed class OrderEditModel
     [Display(Name = "Phone")]
     public string CustomerPhone { get; set; } = string.Empty;
 
-    [Display(Name = "Crates")]
+    [Display(Name = "27-gallon totes with lids")]
     [Range(1, 200)]
     public int CrateCount { get; set; }
 
-    [Display(Name = "Dollies")]
+    [Display(Name = "Custom-fit dollies")]
     [Range(0, 50)]
     public int DollyCount { get; set; }
 

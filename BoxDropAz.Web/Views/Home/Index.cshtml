@@ -1,7 +1,57 @@
 @model BoxDropAz.Web.Models.Public.LandingViewModel
+@inject IConfiguration Configuration
 @{
     ViewData["Title"] = null;
-    ViewData["Description"] = "Rent stackable, reusable moving crates in the Phoenix East Valley, Pinal County, and Tucson. We deliver, you pack, we pick up. From $89 for a full week.";
+    ViewData["Description"] = "Rent reusable 27-gallon moving totes with lids in the Phoenix East Valley, Pinal County, and Tucson. We deliver, you pack, we pick up. From $89 for a full week.";
+    var siteBaseUrl = (Configuration["Site:BaseUrl"] ?? $"{Context.Request.Scheme}://{Context.Request.Host}")
+        .TrimEnd('/');
+    var businessId = $"{siteBaseUrl}/#organization";
+    var localBusinessSchema = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@graph"] = new object[]
+        {
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "Organization",
+                ["@id"] = businessId,
+                ["name"] = "BoxDrop AZ",
+                ["url"] = siteBaseUrl,
+                ["logo"] = $"{siteBaseUrl}/images/hero_right.webp",
+                ["image"] = $"{siteBaseUrl}/images/hero_right.webp",
+                ["description"] = ViewData["Description"],
+                ["telephone"] = Configuration["Site:SupportPhone"],
+                ["email"] = Configuration["Site:SupportEmail"]
+            },
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "Service",
+                ["@id"] = $"{siteBaseUrl}/#tote-rental",
+                ["name"] = "Reusable moving tote rental and delivery",
+                ["serviceType"] = "Moving tote rental",
+                ["provider"] = new Dictionary<string, string> { ["@id"] = businessId },
+                ["areaServed"] = new[]
+                {
+                    "Phoenix East Valley",
+                    "Pinal County",
+                    "Tucson, Arizona"
+                },
+                ["offers"] = new Dictionary<string, object>
+                {
+                    ["@type"] = "Offer",
+                    ["priceCurrency"] = "USD",
+                    ["price"] = "89",
+                    ["url"] = $"{siteBaseUrl}/Home/Pricing"
+                }
+            }
+        }
+    };
+}
+
+@section Head {
+    <script type="application/ld+json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(localBusinessSchema))
+    </script>
 }
 
 <!-- Hero Section -->
@@ -11,15 +61,15 @@
             <div class="col-lg-6">
                 <span class="bd-eyebrow"><i class="bi bi-recycle"></i> ZERO CARDBOARD MOVING</span>
                 <h1 class="mt-4 mb-3 fw-black text-ink" style="font-size: clamp(2.5rem, 5vw, 3.8rem); line-height: 1.15;">
-                    Moving crates,<br />dropped at your door.
+                    Moving totes,<br />dropped at your door.
                 </h1>
                 <p class="lead mb-4 text-secondary" style="font-size: 1.15rem; line-height: 1.6; max-width: 32rem;">
-                    Say goodbye to flimsy cardboard boxes. Our heavy-duty, waterproof plastic crates are strong, secure, and reusable, delivered with dollies.
+                    Say goodbye to flimsy cardboard boxes. Our heavy-duty 27-gallon totes include snap-fit lids and custom-fit dollies.
                 </p>
 
                 <div class="d-flex flex-wrap gap-3 mb-4">
                     <a class="btn btn-primary btn-lg px-4 py-3 rounded-3 shadow-sm fw-bold" asp-controller="Booking" asp-action="Index">
-                        Book your crates
+                        Book your totes
                     </a>
                     <a class="btn btn-outline-primary btn-lg px-4 py-3 rounded-3 fw-bold" asp-action="HowItWorks">
                         See how it works
@@ -45,11 +95,11 @@
     </div>
 </section>
 
-<!-- Why Choose Crates Section -->
+<!-- Why Choose Totes Section -->
 <section class="bd-section bg-white">
     <div class="container">
         <div class="text-center mb-5 max-w-2xl mx-auto">
-            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Why renters keep choosing crates</h2>
+            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Why renters keep choosing totes</h2>
             <p class="text-muted" style="font-size: 1.05rem;">
                 Cardboard is cheap right up until you count the tape, the time, and the trips to the recycling center.
             </p>
@@ -66,7 +116,7 @@
                             </div>
                             <h3 class="h5 fw-bold mb-2">No assembly, ever</h3>
                             <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                Crates arrive ready to pack. Drop the lid and it stays closed, no tape required, no bottom falling out on the stairs.
+                                Every tote arrives with its snap-fit lid, ready to pack with no tape and no cardboard bottom falling out on the stairs.
                             </p>
                         </div>
                         <div class="mt-auto pt-2">
@@ -106,7 +156,7 @@
                             </div>
                             <h3 class="h5 fw-bold mb-2">Stack without crushing</h3>
                             <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                Uniform, interlocking crates load a truck tighter than mismatched boxes and won't collapse under the weight of the stack above.
+                                Uniform totes stack securely and load a truck tighter than mismatched boxes without collapsing under the stack above.
                             </p>
                         </div>
                         <div class="mt-auto pt-2">
@@ -126,7 +176,7 @@
                             </div>
                             <h3 class="h5 fw-bold mb-2">Reused, not recycled</h3>
                             <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                Every crate makes hundreds of moves before retirement. Nothing to break down, nothing to haul to the dump.
+                                Every tote makes repeated moves before retirement. Nothing to break down, nothing to haul to the dump.
                             </p>
                         </div>
                         <div class="mt-auto pt-2">
@@ -171,7 +221,7 @@
                             <div class="bd-step-number mx-auto mb-3 shadow">2</div>
                             <h3 class="h5 fw-bold mb-2">We drop off</h3>
                             <p class="text-muted small mb-3" style="line-height: 1.5;">
-                                Crates, dollies, and reusable labels arrive in your delivery window for 7 full days.
+                                Totes, lids, custom-fit dollies, and reusable labels arrive in your delivery window for 7 full days.
                             </p>
                         </div>
                     </div>
@@ -200,7 +250,7 @@
         <div class="text-center mb-4 max-w-2xl mx-auto">
             <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Pick the bundle that fits your home</h2>
             <p class="text-muted">
-                Every bundle includes crates, dollies, reusable labels, and a full seven day rental.
+                Every bundle includes 27-gallon totes with lids, custom-fit dollies, reusable labels, and a full seven day rental.
                 @if (Model.Region is not null)
                 {
                     <text>Prices shown for <strong>@Model.Region.Name</strong>.</text>
@@ -239,7 +289,7 @@
                 <span class="bd-eyebrow"><i class="bi bi-house-heart"></i> FOR REAL ESTATE AGENTS</span>
                 <h2 class="mt-3 mb-3 text-ink">The closing gift your clients actually use</h2>
                 <p class="text-muted mb-4">
-                    A bottle of wine gets finished the first night. Crates show up the week your client is
+                    A bottle of wine gets finished the first night. Moving totes show up the week your client is
                     most stressed, with your name on the delivery. Subscribe monthly, gift in two clicks,
                     and we handle everything from the claim link to the pickup.
                 </p>
@@ -255,7 +305,7 @@
                     <i class="bi bi-check-circle-fill"></i>
                     <div>
                         <strong>Your client picks their own dates.</strong>
-                        <div class="text-muted small">They get a claim link and upgrade at their own cost if they want more crates.</div>
+                        <div class="text-muted small">They get a claim link and upgrade at their own cost if they want more totes.</div>
                     </div>
                 </div>
                 <div class="bd-check-row">
@@ -279,10 +329,10 @@
                         <div class="border rounded-3 p-4" style="background:var(--bd-teal-50);">
                             <p class="mb-2 fw-semibold">Congratulations on your new home!</p>
                             <p class="text-muted small mb-3">
-                                Your agent has covered <strong>$175</strong> toward reusable moving crates
+                                Your agent has covered <strong>$175</strong> toward reusable moving totes
                                 delivered to your door. Choose your dates and we'll handle the rest.
                             </p>
-                            <span class="btn btn-primary btn-sm disabled">Claim your crates</span>
+                            <span class="btn btn-primary btn-sm disabled">Claim your totes</span>
                         </div>
                         <p class="text-muted small mt-3 mb-0">
                             If they want a bigger bundle than the credit covers, they pay the difference at
@@ -339,7 +389,7 @@
                             <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
                         </div>
                         <p class="mb-3">
-                            "My agent gifted the crates at closing. I upgraded to the bigger bundle for
+                            "My agent gifted the totes at closing. I upgraded to the bigger bundle for
                             forty dollars and it still felt like a steal."
                         </p>
                         <p class="text-muted small mb-0 fw-semibold">Priya S. &middot; Queen Creek</p>
@@ -355,7 +405,7 @@
     <div class="container text-center text-white py-3">
         <h2 class="text-white mb-3">Ready to move without the cardboard?</h2>
         <p class="mb-4 opacity-75">Book in two minutes. Change your dates free up to 48 hours before delivery.</p>
-        <a class="btn btn-light btn-lg fw-semibold" asp-controller="Booking" asp-action="Index">Book your crates</a>
+        <a class="btn btn-light btn-lg fw-semibold" asp-controller="Booking" asp-action="Index">Book your totes</a>
     </div>
 </section>
 

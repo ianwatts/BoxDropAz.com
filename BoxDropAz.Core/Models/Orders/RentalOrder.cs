@@ -107,6 +107,12 @@ public sealed class RentalOrder
     [DynamoDBProperty("DollyCount")]
     public int DollyCount { get; set; }
 
+    [DynamoDBProperty("RequiresIndexCard")]
+    public bool RequiresIndexCard { get; set; } = true;
+
+    [DynamoDBProperty("IndexCardIssuedAtUtc")]
+    public DateTime? IndexCardIssuedAtUtc { get; set; }
+
     [DynamoDBProperty("RentalWeeks")]
     public int RentalWeeks { get; set; } = 1;
 
@@ -194,6 +200,9 @@ public sealed class RentalOrder
 
     [DynamoDBProperty("CratesReturned")]
     public int? CratesReturned { get; set; }
+
+    [DynamoDBProperty("DolliesReturned")]
+    public int? DolliesReturned { get; set; }
 
     [DynamoDBProperty("CancelledAtUtc")]
     public DateTime? CancelledAtUtc { get; set; }

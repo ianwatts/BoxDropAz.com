@@ -1,0 +1,196 @@
+@model BoxDropAz.Web.Models.Admin.ScheduleSettingsViewModel
+@{
+    ViewData["Title"] = "Delivery and pickup schedule";
+    var settings = Model.Settings;
+    var today = DeliveryWindows.TodayInArizona().ToString("yyyy-MM-dd");
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Delivery and pickup schedule</h1>
+                <p class="text-muted mb-0">@(Model.Region?.Name ?? "No region selected")</p>
+            </div>
+            @await Html.PartialAsync("_RegionSwitcher", (Model.Region, Model.AllRegions, Model.CanSwitchRegion))
+        </div>
+        @await Html.PartialAsync("_AdminNav", Model.Region)
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (Model.Region is null)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-geo-alt"></i>
+            <p class="mb-0">Select or assign a region to manage its schedule.</p>
+        </div>
+    }
+    else
+    {
+        <form asp-action="UpdateScheduleSettings" method="post" class="mb-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="region" value="@Model.Region.Id" />
+
+            <div class="bd-panel mb-4">
+                <div class="bd-panel-title">Booking notice</div>
+                <div class="row align-items-end g-3">
+                    <div class="col-sm-4">
+                        <label class="form-label" for="minimumNoticeDays">Minimum notice in days</label>
+                        <input class="form-control" id="minimumNoticeDays" name="MinimumNoticeDays"
+                               type="number" min="0" max="30" value="@settings.MinimumNoticeDays" required />
+                    </div>
+                    <div class="col-sm-8">
+                        <p class="small text-muted mb-2">
+                            Customers cannot select an earlier delivery date. Inventory purchase tasks use the
+                            same lead time so supplies are requested before a projected shortage.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="bd-panel h-100">
+                        <div class="bd-panel-title">Weekdays</div>
+                        <p class="small text-muted">Defaults to after 5 PM.</p>
+                        <h2 class="h6">Delivery windows</h2>
+                        @foreach (var window in DeliveryWindows.All)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="WeekdayDeliveryWindows"
+                                       id="weekday-delivery-@window.GetHashCode()" value="@window"
+                                       checked="@settings.WeekdayDeliveryWindows.Contains(window)" />
+                                <label class="form-check-label" for="weekday-delivery-@window.GetHashCode()">@window</label>
+                            </div>
+                        }
+                        <h2 class="h6 mt-4">Pickup windows</h2>
+                        @foreach (var window in DeliveryWindows.All)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="WeekdayPickupWindows"
+                                       id="weekday-pickup-@window.GetHashCode()" value="@window"
+                                       checked="@settings.WeekdayPickupWindows.Contains(window)" />
+                                <label class="form-check-label" for="weekday-pickup-@window.GetHashCode()">@window</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="bd-panel h-100">
+                        <div class="bd-panel-title">Weekends</div>
+                        <p class="small text-muted">Defaults to all existing daytime windows.</p>
+                        <h2 class="h6">Delivery windows</h2>
+                        @foreach (var window in DeliveryWindows.All)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="WeekendDeliveryWindows"
+                                       id="weekend-delivery-@window.GetHashCode()" value="@window"
+                                       checked="@settings.WeekendDeliveryWindows.Contains(window)" />
+                                <label class="form-check-label" for="weekend-delivery-@window.GetHashCode()">@window</label>
+                            </div>
+                        }
+                        <h2 class="h6 mt-4">Pickup windows</h2>
+                        @foreach (var window in DeliveryWindows.All)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="WeekendPickupWindows"
+                                       id="weekend-pickup-@window.GetHashCode()" value="@window"
+                                       checked="@settings.WeekendPickupWindows.Contains(window)" />
+                                <label class="form-check-label" for="weekend-pickup-@window.GetHashCode()">@window</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary mt-3" type="submit">Save schedule settings</button>
+        </form>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="bd-panel">
+                    <div class="bd-panel-title">Mark a slot unavailable</div>
+                    <form asp-action="AddScheduleBlackout" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="region" value="@Model.Region.Id" />
+                        <div class="mb-3">
+                            <label class="form-label" for="blackoutDate">Date</label>
+                            <input class="form-control" id="blackoutDate" name="Date" type="date"
+                                   min="@today" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="blackoutOperation">Applies to</label>
+                            <select class="form-select" id="blackoutOperation" name="Operation">
+                                <option value="@ScheduleOperations.Delivery">Delivery</option>
+                                <option value="@ScheduleOperations.Pickup">Pickup</option>
+                                <option value="@ScheduleOperations.Both">Delivery and pickup</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="blackoutWindow">Window</label>
+                            <select class="form-select" id="blackoutWindow" name="Window">
+                                <option value="@DeliveryWindows.AllDay">Entire day</option>
+                                @foreach (var window in DeliveryWindows.All)
+                                {
+                                    <option value="@window">@window</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="blackoutReason">Reason (optional)</label>
+                            <input class="form-control" id="blackoutReason" name="Reason" maxlength="200"
+                                   placeholder="Holiday, vehicle service, staffing..." />
+                        </div>
+                        <button class="btn btn-outline-primary" type="submit">Mark unavailable</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="bd-table">
+                    <div class="px-3 py-3 border-bottom">
+                        <strong class="small text-uppercase text-muted">Unavailable slots</strong>
+                    </div>
+                    @if (settings.Blackouts.Count == 0)
+                    {
+                        <div class="bd-empty py-4">
+                            <i class="bi bi-calendar-check"></i>
+                            <p class="mb-0 small">No dates or windows are blocked.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="table align-middle mb-0">
+                            <tbody>
+                            @foreach (var blackout in settings.Blackouts.OrderBy(b => b.Date).ThenBy(b => b.Window))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@blackout.Date</strong>
+                                        <div class="small text-muted">
+                                            @(blackout.Operation == ScheduleOperations.Both ? "Delivery and pickup" : blackout.Operation)
+                                            &middot;
+                                            @(blackout.Window == DeliveryWindows.AllDay ? "Entire day" : blackout.Window)
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(blackout.Reason))
+                                        {
+                                            <div class="small">@blackout.Reason</div>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <form asp-action="DeleteScheduleBlackout" asp-route-id="@blackout.Id" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="region" value="@Model.Region.Id" />
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

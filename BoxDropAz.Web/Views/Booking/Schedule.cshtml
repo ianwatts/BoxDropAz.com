@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Schedule your delivery";
     var form = Model.Form;
-    var minDate = DeliveryWindows.EarliestDeliveryDate().ToString("yyyy-MM-dd");
+    var minDate = Model.EarliestDeliveryDate.ToString("yyyy-MM-dd");
     var maxDate = DeliveryWindows.LatestDeliveryDate().ToString("yyyy-MM-dd");
 }
 
@@ -70,7 +70,7 @@
                                             <span class="bd-option-body">
                                                 <span class="bd-option-title">@package.Name</span>
                                                 <span class="bd-option-meta">
-                                                    @package.CrateCount crates &middot; @package.DollyCount dollies
+                                                    @package.CrateCount totes with lids &middot; @package.DollyCount custom-fit dollies
                                                 </span>
                                             </span>
                                             <span class="bd-option-price">@Money.FormatCompact(package.BasePriceCents)</span>
@@ -86,7 +86,8 @@
                         <div class="bd-card-body">
                             <h2 class="h5 fw-bold mb-1">Dates and windows</h2>
                             <p class="text-muted small mb-3">
-                                We need two days' notice. Your pickup date follows from the rental length.
+                                We need at least @Model.MinimumNoticeDays day@(Model.MinimumNoticeDays == 1 ? "" : "s") notice.
+                                Your pickup date follows from the rental length.
                             </p>
 
                             <div class="row g-3">
@@ -99,7 +100,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="deliveryWindow">Delivery window</label>
                                     <select name="DeliveryWindow" id="deliveryWindow" class="form-select">
-                                        @foreach (var window in DeliveryWindows.All)
+                                        @foreach (var window in Model.AvailableDeliveryWindows)
                                         {
                                             <option value="@window" selected="@(form.DeliveryWindow == window)">@window</option>
                                         }
@@ -119,7 +120,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="pickupWindow">Pickup window</label>
                                     <select name="PickupWindow" id="pickupWindow" class="form-select">
-                                        @foreach (var window in DeliveryWindows.All)
+                                        @foreach (var window in Model.AvailablePickupWindows)
                                         {
                                             <option value="@window" selected="@(form.PickupWindow == window)">@window</option>
                                         }
@@ -137,7 +138,7 @@
                     <div class="bd-card mb-4">
                         <div class="bd-card-body">
                             <h2 class="h5 fw-bold mb-1">Delivery address</h2>
-                            <p class="text-muted small mb-3">Where should we drop the crates?</p>
+                            <p class="text-muted small mb-3">Where should we drop the totes and lids?</p>
 
                             <div class="row g-3">
                                 <div class="col-12">
@@ -174,7 +175,7 @@
                                        id="pickupSame" checked="@form.PickupSameAsDelivery" />
                                 <input type="hidden" name="PickupSameAsDelivery" value="false" />
                                 <label class="form-check-label" for="pickupSame">
-                                    Pick the crates up from this same address
+                                    Pick the totes, lids, and dollies up from this same address
                                 </label>
                             </div>
 
@@ -209,22 +210,15 @@
                             <p class="text-muted small mb-3">Leave these at zero if you don't need them.</p>
 
                             <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label" for="extraCrateQty">Extra crates</label>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="extraCrateQty">Extra 27-gallon totes with lids</label>
                                     <input type="number" name="ExtraCrateQty" id="extraCrateQty" class="form-control addon-qty"
                                            value="@form.ExtraCrateQty" min="0" max="@AddOnCatalog.ExtraCrate.MaxQuantity"
                                            data-unit="@AddOnCatalog.ExtraCrate.UnitAmountCents" />
                                     <div class="form-text">@Money.FormatCompact(AddOnCatalog.ExtraCrate.UnitAmountCents) each</div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label" for="packingPaperQty">Packing paper bundles</label>
-                                    <input type="number" name="PackingPaperQty" id="packingPaperQty" class="form-control addon-qty"
-                                           value="@form.PackingPaperQty" min="0" max="@AddOnCatalog.PackingPaper.MaxQuantity"
-                                           data-unit="@AddOnCatalog.PackingPaper.UnitAmountCents" />
-                                    <div class="form-text">@Money.FormatCompact(AddOnCatalog.PackingPaper.UnitAmountCents) each</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label" for="wardrobeCrateQty">Wardrobe crates</label>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="wardrobeCrateQty">Wardrobe totes</label>
                                     <input type="number" name="WardrobeCrateQty" id="wardrobeCrateQty" class="form-control addon-qty"
                                            value="@form.WardrobeCrateQty" min="0" max="@AddOnCatalog.WardrobeCrate.MaxQuantity"
                                            data-unit="@AddOnCatalog.WardrobeCrate.UnitAmountCents" />
@@ -265,7 +259,7 @@
                                     <label class="form-label" for="deliveryNotes">Anything the driver should know?</label>
                                     <textarea name="DeliveryNotes" id="deliveryNotes" class="form-control" rows="2"
                                               maxlength="500"
-                                              placeholder="Gate code, where to leave the crates, dog in the yard...">@form.DeliveryNotes</textarea>
+                                              placeholder="Gate code, where to leave the totes, dog in the yard...">@form.DeliveryNotes</textarea>
                                 </div>
                             </div>
                         </div>
@@ -328,6 +322,7 @@
             var zoneSurchargeCents = @(Model.Zone?.SurchargeCents ?? 0);
             var zoneKnown = @((Model.Zone is not null).ToString().ToLowerInvariant());
             var zoneLookupUrl = '@Url.Action("ZoneLookup", "Booking")';
+            var availabilityUrl = '@Url.Action("Availability", "Booking")';
             var scheduleUrl = '@Url.Action("Schedule", "Booking")';
 
             function money(cents) {
@@ -384,6 +379,58 @@
                 });
             }
 
+            function populateWindows(select, windows, emptyMessage) {
+                var selected = select.value;
+                select.innerHTML = '';
+                if (!windows.length) {
+                    var unavailable = document.createElement('option');
+                    unavailable.value = '';
+                    unavailable.textContent = emptyMessage;
+                    select.appendChild(unavailable);
+                    select.disabled = true;
+                    return;
+                }
+
+                windows.forEach(function (window) {
+                    var option = document.createElement('option');
+                    option.value = window;
+                    option.textContent = window;
+                    option.selected = window === selected;
+                    select.appendChild(option);
+                });
+                select.disabled = false;
+            }
+
+            function refreshAvailability() {
+                var date = document.getElementById('deliveryDate').value;
+                var weeks = parseInt(document.getElementById('rentalWeeks').value, 10) || 1;
+                if (!date) { return; }
+
+                var url = availabilityUrl +
+                    '?regionId=' + encodeURIComponent(document.getElementById('regionId').value) +
+                    '&date=' + encodeURIComponent(date) +
+                    '&weeks=' + encodeURIComponent(weeks);
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        populateWindows(
+                            document.getElementById('deliveryWindow'),
+                            data.deliveryWindows,
+                            'No delivery windows available');
+                        populateWindows(
+                            document.getElementById('pickupWindow'),
+                            data.pickupWindows,
+                            'No pickup windows available');
+
+                        var pickup = data.pickupDate.split('-');
+                        var pickupDate = new Date(pickup[0], pickup[1] - 1, pickup[2]);
+                        document.getElementById('pickupDatePreview').textContent =
+                            pickupDate.toLocaleDateString(undefined, {
+                                weekday: 'long', month: 'long', day: 'numeric'
+                            });
+                    });
+            }
+
             function checkZip() {
                 var zip = document.getElementById('zip').value.trim();
                 var feedback = document.getElementById('zoneFeedback');
@@ -429,6 +476,8 @@
                 el.addEventListener('change', recalc);
                 el.addEventListener('input', recalc);
             });
+            document.getElementById('deliveryDate').addEventListener('change', refreshAvailability);
+            document.getElementById('rentalWeeks').addEventListener('change', refreshAvailability);
 
             var zipTimer;
             document.getElementById('zip').addEventListener('input', function () {
@@ -441,6 +490,7 @@
             });
 
             recalc();
+            refreshAvailability();
             checkZip();
         })();
     </script>

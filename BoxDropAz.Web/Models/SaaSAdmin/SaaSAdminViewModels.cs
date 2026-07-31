@@ -88,7 +88,7 @@ public sealed class RegionEditModel
 
     public List<ZoneEditModel> Zones { get; set; } = new();
 
-    [Display(Name = "Crate replacement")]
+    [Display(Name = "Tote/lid set replacement")]
     [Range(0, 100000)]
     public int CrateReplacementCents { get; set; } = 4000;
 
@@ -100,7 +100,7 @@ public sealed class RegionEditModel
     [Range(0, 100000)]
     public int MissedPickupCents { get; set; } = 2500;
 
-    [Display(Name = "Deep clean, per crate")]
+    [Display(Name = "Deep clean, per tote")]
     [Range(0, 100000)]
     public int DeepCleanPerCrateCents { get; set; } = 300;
 
@@ -178,7 +178,7 @@ public sealed class PackageEditModel
     [StringLength(160)]
     public string Subtitle { get; set; } = string.Empty;
 
-    [Display(Name = "Crates")]
+    [Display(Name = "27-gallon totes with lids")]
     [Range(1, 500)]
     public int CrateCount { get; set; } = 10;
 

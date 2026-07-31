@@ -22,12 +22,12 @@ public sealed class OrderNotifier
     public async Task SendOrderConfirmationAsync(RentalOrder order, string? dashboardUrl, CancellationToken ct = default)
     {
         var intro = order.Source == OrderSource.RealtorGift && !string.IsNullOrWhiteSpace(order.GiftingRealtorName)
-            ? $"<p>Your crates are booked, courtesy of {order.GiftingRealtorName}. Here are the details.</p>"
-            : "<p>Your crates are booked. Here's everything you need for delivery day.</p>";
+            ? $"<p>Your moving totes are booked, courtesy of {order.GiftingRealtorName}. Here are the details.</p>"
+            : "<p>Your moving totes are booked. Here's everything you need for delivery day.</p>";
 
         var rows = EmailTemplates.DetailRows(
             ("Order", order.OrderNumber),
-            ("Bundle", $"{order.PackageName} ({order.CrateCount} crates, {order.DollyCount} dollies)"),
+            ("Bundle", $"{order.PackageName} ({order.CrateCount} totes with lids, {order.DollyCount} custom-fit dollies)"),
             ("Delivery", $"{FormatDate(order.DeliveryDate)}, {order.DeliveryWindow}"),
             ("Pickup", $"{FormatDate(order.PickupDate)}, {order.PickupWindow}"),
             ("Address", $"{order.DeliveryAddressLine1}, {order.DeliveryCity} {order.DeliveryZip}"),
@@ -36,9 +36,9 @@ public sealed class OrderNotifier
             ("Total paid", Money.Format(order.AmountPaidCents)));
 
         var body = EmailTemplates.Wrap(
-            "Your crates are on the way",
+            "Your moving totes are on the way",
             intro + rows +
-            "<p>Someone needs to be home at delivery so we can place the crates and hand over the dollies. " +
+            "<p>Someone needs to be home at delivery so we can place the totes and hand over the lids and custom-fit dollies. " +
             "You don't need to be there for pickup &mdash; just leave everything stacked and accessible.</p>" +
             "<p>Need longer? You can extend by the week from your dashboard at any time.</p>",
             dashboardUrl is null ? null : "View my rental",
@@ -74,7 +74,7 @@ public sealed class OrderNotifier
 
         var body = EmailTemplates.Wrap(
             "Equipment charge applied",
-            "<p>After collecting your crates we applied the following charge to the card on file, " +
+            "<p>After collecting your rental equipment we applied the following charge to the card on file, " +
             "under section 5 of the rental agreement you accepted at checkout.</p>" +
             $"<ul>{lines}</ul>" +
             $"<p><strong>Total charged: {Money.Format(totalCents)}</strong></p>" +

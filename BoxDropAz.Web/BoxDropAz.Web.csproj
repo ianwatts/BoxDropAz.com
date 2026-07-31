@@ -29,7 +29,7 @@
     <PackageReference Include="AWSSDK.S3" Version="4.0.17.3" />
     <PackageReference Include="AWSSDK.SimpleEmail" Version="4.0.2.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.0" />
-    <PackageReference Include="Stripe.net" Version="50.2.0" />
+    <PackageReference Include="Stripe.net" Version="52.2.0" />
   </ItemGroup>
 
 </Project>

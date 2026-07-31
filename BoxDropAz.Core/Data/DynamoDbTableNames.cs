@@ -16,6 +16,7 @@ public static class DynamoDbTableNames
 
     // Orders and fulfillment
     public const string RentalOrder = "RentalOrder";
+    public const string Inventory = "Inventory";
 
     // Realtor gifting
     public const string RealtorSubscription = "RealtorSubscription";

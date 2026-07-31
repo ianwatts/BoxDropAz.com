@@ -19,7 +19,7 @@ public sealed class LegalController : Controller
     public async Task<IActionResult> RentalTerms(string? region, CancellationToken ct)
     {
         ViewData["Title"] = "Rental agreement";
-        ViewData["Description"] = "The BoxDrop AZ crate rental agreement, including the rental period, extension pricing, damage and replacement fees, and cancellation policy.";
+        ViewData["Description"] = "The BoxDrop AZ moving tote rental agreement, including the rental period, extension pricing, damage and replacement fees, and cancellation policy.";
 
         var all = await _regions.GetActiveAsync(ct);
         var selected = string.IsNullOrWhiteSpace(region)

@@ -28,7 +28,7 @@ public static class EmailTemplates
               <div style="max-width:600px;margin:0 auto;padding:24px;">
                 <div style="background:#0f766e;border-radius:12px 12px 0 0;padding:20px 28px;">
                   <span style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.5px;">BoxDrop AZ</span>
-                  <span style="color:#99f6e4;font-size:13px;margin-left:10px;">Reusable moving crates</span>
+                  <span style="color:#99f6e4;font-size:13px;margin-left:10px;">Reusable moving totes</span>
                 </div>
                 <div style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;color:#111827;font-size:15px;line-height:1.6;">
                   <h1 style="margin:0 0 16px;font-size:22px;color:#111827;">{WebUtility.HtmlEncode(heading)}</h1>
