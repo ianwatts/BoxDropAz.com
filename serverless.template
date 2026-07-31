@@ -306,6 +306,7 @@ Resources:
 
   InventoryTable:
     Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:

@@ -17,6 +17,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="TestPlan.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BoxDropAz.Core\BoxDropAz.Core.csproj" />
   </ItemGroup>
 
