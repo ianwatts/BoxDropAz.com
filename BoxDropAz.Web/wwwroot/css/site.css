@@ -388,6 +388,34 @@ a:hover {
     border-radius: 16px;
 }
 
+.auth-divider {
+    display: flex;
+    align-items: center;
+    color: var(--bd-slate);
+    font-size: .85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--bd-line);
+}
+
+.auth-divider span {
+    padding: 0 .85rem;
+}
+
+.auth-social-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
 .account-type-toggle .nav-link {
     border-radius: 10px;
     color: var(--bd-slate);

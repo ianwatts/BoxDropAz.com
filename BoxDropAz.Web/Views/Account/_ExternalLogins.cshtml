@@ -1,0 +1,39 @@
+@using Microsoft.AspNetCore.Authentication
+@{
+    var externalLogins = ViewData["ExternalLogins"] as IList<AuthenticationScheme> ?? new List<AuthenticationScheme>();
+    var returnUrl = ViewData["ExternalReturnUrl"] as string;
+    var accountType = ViewData["ExternalAccountType"] as string;
+}
+
+@if (externalLogins.Count > 0)
+{
+    <div class="auth-divider my-4"><span>or continue with</span></div>
+
+    <div class="d-grid gap-2 mb-2">
+        @foreach (var provider in externalLogins)
+        {
+            <form asp-action="ExternalLogin" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="provider" value="@provider.Name" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <input type="hidden" name="accountType" value="@accountType" />
+                <button type="submit" class="btn btn-outline-secondary btn-lg w-100 auth-social-btn">
+                    @if (string.Equals(provider.Name, "Google", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <i class="bi bi-google me-2" aria-hidden="true"></i>
+                        <span>Continue with Google</span>
+                    }
+                    else if (string.Equals(provider.Name, "Facebook", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <i class="bi bi-facebook me-2" aria-hidden="true"></i>
+                        <span>Continue with Facebook</span>
+                    }
+                    else
+                    {
+                        <span>Continue with @provider.DisplayName</span>
+                    }
+                </button>
+            </form>
+        }
+    </div>
+}

@@ -116,6 +116,22 @@ else {
     Write-Warning "$stripeSettingsFile not found. Deploying without Stripe keys; checkout will not work."
 }
 
+$authSettingsFile = "auth-settings.$Environment.json"
+if (Test-Path $authSettingsFile) {
+    $auth = (Get-Content $authSettingsFile -Raw | ConvertFrom-Json).Authentication
+    if ($auth.Google) {
+        $templateParams += "GoogleClientId=$($auth.Google.ClientId)"
+        $templateParams += "GoogleClientSecret=$($auth.Google.ClientSecret)"
+    }
+    if ($auth.Facebook) {
+        $templateParams += "FacebookAppId=$($auth.Facebook.AppId)"
+        $templateParams += "FacebookAppSecret=$($auth.Facebook.AppSecret)"
+    }
+}
+else {
+    Write-Warning "$authSettingsFile not found. Deploying without Google/Facebook login credentials; social buttons will be hidden."
+}
+
 Write-Host "--- Deploying BoxDropAz to $Environment ---" -ForegroundColor Cyan
 Write-Host "Stack:        $stackName"
 Write-Host "Stage:        $stageName"

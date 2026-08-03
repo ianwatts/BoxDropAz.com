@@ -1,0 +1,25 @@
+{
+  "_comment": "Copy to auth-settings.dev.json / auth-settings.prod.json (gitignored) and fill in. Deploy reads these for CloudFormation parameters.",
+  "Authentication": {
+    "Google": {
+      "ClientId": "",
+      "ClientSecret": ""
+    },
+    "Facebook": {
+      "AppId": "",
+      "AppSecret": ""
+    }
+  },
+  "_redirectUris": {
+    "Google": [
+      "https://dev.boxdropaz.com/signin-google",
+      "https://www.boxdropaz.com/signin-google",
+      "https://localhost:7021/signin-google"
+    ],
+    "Facebook": [
+      "https://dev.boxdropaz.com/signin-facebook",
+      "https://www.boxdropaz.com/signin-facebook",
+      "https://localhost:7021/signin-facebook"
+    ]
+  }
+}

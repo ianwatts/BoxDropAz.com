@@ -39,6 +39,13 @@ public class Program
                 config.AddJsonFile(stripeFile, optional: true, reloadOnChange: true);
                 config.AddJsonFile(Path.Combine(rootPath, stripeFile), optional: true, reloadOnChange: true);
 
+                string authFile = env.IsDevelopment()
+                    ? "auth-settings.dev.json"
+                    : "auth-settings.prod.json";
+
+                config.AddJsonFile(authFile, optional: true, reloadOnChange: true);
+                config.AddJsonFile(Path.Combine(rootPath, authFile), optional: true, reloadOnChange: true);
+
                 config.Build();
             })
             .ConfigureWebHostDefaults(webBuilder =>

@@ -11,7 +11,8 @@ public sealed class UserStore :
     IUserPasswordStore<ApplicationUser>,
     IUserPhoneNumberStore<ApplicationUser>,
     IUserRoleStore<ApplicationUser>,
-    IUserLoginStore<ApplicationUser>
+    IUserLoginStore<ApplicationUser>,
+    IUserSecurityStampStore<ApplicationUser>
 {
     private readonly DynamoDbDataHelper _data;
 
@@ -258,6 +259,17 @@ public sealed class UserStore :
 
         return await _data.GetUserByIdAsync(login.UserId, cancellationToken);
     }
+
+    // IUserSecurityStampStore
+
+    public Task SetSecurityStampAsync(ApplicationUser user, string stamp, CancellationToken cancellationToken)
+    {
+        user.SecurityStamp = stamp;
+        return Task.CompletedTask;
+    }
+
+    public Task<string?> GetSecurityStampAsync(ApplicationUser user, CancellationToken cancellationToken)
+        => Task.FromResult(user.SecurityStamp);
 
     public void Dispose()
     {

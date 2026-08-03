@@ -29,6 +29,12 @@ public class ApplicationUser : IdentityUser
     [DynamoDBProperty("PasswordHash")]
     public override string? PasswordHash { get; set; }
 
+    [DynamoDBProperty("SecurityStamp")]
+    public override string? SecurityStamp { get; set; }
+
+    [DynamoDBProperty("ConcurrencyStamp")]
+    public override string? ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+
     [DynamoDBProperty("PhoneNumber")]
     public override string? PhoneNumber { get; set; }
 

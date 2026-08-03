@@ -181,6 +181,42 @@ public sealed class Startup
             options.SlidingExpiration = true;
         });
 
+        // External providers are optional: buttons only appear when credentials are configured.
+        var googleClientId = Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
+        var facebookAppId = Configuration["Authentication:Facebook:AppId"];
+        var facebookAppSecret = Configuration["Authentication:Facebook:AppSecret"];
+
+        var authBuilder = services.AddAuthentication();
+        if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+        {
+            authBuilder.AddGoogle(options =>
+            {
+                options.ClientId = googleClientId;
+                options.ClientSecret = googleClientSecret;
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(facebookAppId) && !string.IsNullOrWhiteSpace(facebookAppSecret))
+        {
+            authBuilder.AddFacebook(options =>
+            {
+                options.AppId = facebookAppId;
+                options.AppSecret = facebookAppSecret;
+                options.Fields.Add("name");
+                options.Fields.Add("email");
+            });
+        }
+
+        // OAuth correlation cookies must survive the round-trip back from Google/Facebook.
+        services.ConfigureExternalCookie(options =>
+        {
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = IsLambdaEnvironment()
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
+        });
+
         services.AddAuthorization(options =>
         {
             options.AddPolicy("SaaSAdmin", p => p.RequireRole(Roles.SaaSAdmin));

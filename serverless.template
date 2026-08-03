@@ -86,6 +86,20 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
+  GoogleClientId:
+    Type: String
+    Default: ""
+  GoogleClientSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+  FacebookAppId:
+    Type: String
+    Default: ""
+  FacebookAppSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
 
 Conditions:
   ShouldCreateTables: !Equals [ !Ref ManageTables, "true" ]
@@ -306,6 +320,7 @@ Resources:
 
   InventoryTable:
     Type: AWS::DynamoDB::Table
+    Condition: ShouldCreateTables
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
@@ -510,6 +525,10 @@ Resources:
           SEED_REALTOR_PASSWORD: !Ref SeedRealtorPassword
           SEED_CUSTOMER_EMAIL: !Ref SeedCustomerEmail
           SEED_CUSTOMER_PASSWORD: !Ref SeedCustomerPassword
+          Authentication__Google__ClientId: !Ref GoogleClientId
+          Authentication__Google__ClientSecret: !Ref GoogleClientSecret
+          Authentication__Facebook__AppId: !Ref FacebookAppId
+          Authentication__Facebook__AppSecret: !Ref FacebookAppSecret
       Events:
         RootResource:
           Type: Api

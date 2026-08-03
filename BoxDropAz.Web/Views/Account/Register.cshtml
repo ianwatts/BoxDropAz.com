@@ -76,6 +76,12 @@
                         <button type="submit" class="btn btn-primary btn-lg w-100">Create account</button>
                     </form>
 
+                    @{
+                        ViewData["ExternalReturnUrl"] = Model.ReturnUrl;
+                        ViewData["ExternalAccountType"] = Model.AccountType;
+                    }
+                    <partial name="_ExternalLogins" />
+
                     <p class="text-center text-muted mt-4 mb-0">
                         Already have an account? <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
                     </p>

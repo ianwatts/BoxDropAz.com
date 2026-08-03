@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using BoxDropAz.Core.Services;
 using BoxDropAz.Web.Models.Account;
@@ -30,10 +31,11 @@ public sealed class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Login(string? returnUrl = null, string? message = null)
+    public async Task<IActionResult> Login(string? returnUrl = null, string? message = null)
     {
         ViewData["Title"] = "Sign in";
         ViewData["Message"] = message;
+        await PopulateExternalProvidersAsync();
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
@@ -42,6 +44,7 @@ public sealed class AccountController : Controller
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         ViewData["Title"] = "Sign in";
+        await PopulateExternalProvidersAsync();
 
         if (!ModelState.IsValid)
         {
@@ -77,13 +80,145 @@ public sealed class AccountController : Controller
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
 
-        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+        return await RedirectAfterSignInAsync(user, model.ReturnUrl);
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public IActionResult ExternalLogin(string provider, string? returnUrl = null, string? accountType = null)
+    {
+        var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl, accountType });
+        var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+        properties.Items["accountType"] = NormalizeAccountType(accountType);
+        return Challenge(properties, provider);
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginCallback(
+        string? returnUrl = null,
+        string? accountType = null,
+        string? remoteError = null)
+    {
+        if (!string.IsNullOrWhiteSpace(remoteError))
         {
-            return Redirect(model.ReturnUrl);
+            _logger.LogWarning("External login provider returned an error: {Error}", remoteError);
+            return RedirectToAction(nameof(Login), new { returnUrl, message = "ExternalLoginFailed" });
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
-        return Redirect(RoleHome.ForRoles(roles));
+        var info = await _signInManager.GetExternalLoginInfoAsync();
+        if (info is null)
+        {
+            return RedirectToAction(nameof(Login), new { returnUrl, message = "ExternalLoginFailed" });
+        }
+
+        var existingSignIn = await _signInManager.ExternalLoginSignInAsync(
+            info.LoginProvider,
+            info.ProviderKey,
+            isPersistent: true,
+            bypassTwoFactor: true);
+
+        if (existingSignIn.Succeeded)
+        {
+            var signedInUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (signedInUser is null || signedInUser.IsDisabled)
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction(nameof(Login), new { returnUrl, message = "AccountDisabled" });
+            }
+
+            signedInUser.LastLoginAtUtc = DateTime.UtcNow;
+            await _userManager.UpdateAsync(signedInUser);
+            return await RedirectAfterSignInAsync(signedInUser, returnUrl);
+        }
+
+        var email = info.Principal.FindFirstValue(ClaimTypes.Email)
+                    ?? info.Principal.FindFirstValue("email");
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return RedirectToAction(nameof(Login), new { returnUrl, message = "ExternalLoginEmailRequired" });
+        }
+
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is not null)
+        {
+            if (user.IsDisabled)
+            {
+                return RedirectToAction(nameof(Login), new { returnUrl, message = "AccountDisabled" });
+            }
+
+            var linkResult = await _userManager.AddLoginAsync(user, info);
+            if (!linkResult.Succeeded)
+            {
+                _logger.LogWarning(
+                    "Failed to link {Provider} login to existing user {Email}: {Errors}",
+                    info.LoginProvider,
+                    email,
+                    string.Join("; ", linkResult.Errors.Select(e => e.Description)));
+                return RedirectToAction(nameof(Login), new { returnUrl, message = "ExternalLoginFailed" });
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                user.EmailConfirmed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(user.FullName))
+            {
+                user.FullName = ResolveFullName(info.Principal, email);
+            }
+
+            user.LastLoginAtUtc = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+            await _signInManager.SignInAsync(user, isPersistent: true);
+            return await RedirectAfterSignInAsync(user, returnUrl);
+        }
+
+        var roleSource = accountType;
+        if (info.AuthenticationProperties?.Items is { } items
+            && items.TryGetValue("accountType", out var itemAccountType)
+            && !string.IsNullOrWhiteSpace(itemAccountType))
+        {
+            roleSource = itemAccountType;
+        }
+
+        var role = NormalizeAccountType(roleSource);
+
+        user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            FullName = ResolveFullName(info.Principal, email),
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+
+        var createResult = await _userManager.CreateAsync(user);
+        if (!createResult.Succeeded)
+        {
+            _logger.LogWarning(
+                "Failed to create user from {Provider} login for {Email}: {Errors}",
+                info.LoginProvider,
+                email,
+                string.Join("; ", createResult.Errors.Select(e => e.Description)));
+            return RedirectToAction(nameof(Login), new { returnUrl, message = "ExternalLoginFailed" });
+        }
+
+        await _userManager.AddToRoleAsync(user, role);
+        await _userManager.AddLoginAsync(user, info);
+
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _userManager.UpdateAsync(user);
+        await _signInManager.SignInAsync(user, isPersistent: true);
+
+        _logger.LogInformation(
+            "Registered new {AccountType} via {Provider}: {Email}",
+            role,
+            info.LoginProvider,
+            email);
+
+        return await RedirectAfterSignInAsync(user, returnUrl);
     }
 
     [HttpPost]
@@ -96,9 +231,10 @@ public sealed class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Register(string? returnUrl = null, string? accountType = null)
+    public async Task<IActionResult> Register(string? returnUrl = null, string? accountType = null)
     {
         ViewData["Title"] = "Create your account";
+        await PopulateExternalProvidersAsync();
         return View(new RegisterViewModel
         {
             ReturnUrl = returnUrl,
@@ -112,6 +248,7 @@ public sealed class AccountController : Controller
     {
         ViewData["Title"] = "Create your account";
         model.AccountType = NormalizeAccountType(model.AccountType);
+        await PopulateExternalProvidersAsync();
 
         if (!ModelState.IsValid)
         {
@@ -132,7 +269,8 @@ public sealed class AccountController : Controller
             FullName = model.FullName,
             PhoneNumber = model.Phone,
             CompanyName = model.CompanyName,
-            EmailConfirmed = false
+            EmailConfirmed = false,
+            SecurityStamp = Guid.NewGuid().ToString()
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -300,6 +438,43 @@ public sealed class AccountController : Controller
     {
         ViewData["Title"] = "Access denied";
         return View();
+    }
+
+    private async Task PopulateExternalProvidersAsync()
+    {
+        var providers = await _signInManager.GetExternalAuthenticationSchemesAsync();
+        ViewData["ExternalLogins"] = providers.ToList();
+    }
+
+    private async Task<IActionResult> RedirectAfterSignInAsync(ApplicationUser user, string? returnUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return Redirect(RoleHome.ForRoles(roles));
+    }
+
+    private static string ResolveFullName(ClaimsPrincipal principal, string email)
+    {
+        var name = principal.FindFirstValue(ClaimTypes.Name)
+                   ?? principal.FindFirstValue("name");
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return name.Trim();
+        }
+
+        var given = principal.FindFirstValue(ClaimTypes.GivenName);
+        var family = principal.FindFirstValue(ClaimTypes.Surname);
+        var combined = $"{given} {family}".Trim();
+        if (!string.IsNullOrWhiteSpace(combined))
+        {
+            return combined;
+        }
+
+        return email.Split('@')[0];
     }
 
     private async Task<string> BuildConfirmationLinkAsync(ApplicationUser user, string? returnUrl)
