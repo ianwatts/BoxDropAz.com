@@ -33,6 +33,14 @@
     var isIndexable = indexableActions.TryGetValue(currentController, out var publicActions)
         && publicActions.Contains(currentAction);
 
+    // GA only on customer-facing surfaces — not staff portals (Admin / SaaS / Worker / Agent).
+    var customerFacingControllers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Home", "Booking", "Gift", "Legal", "Realtors", "Account", "Dashboard"
+    };
+    var loadGoogleAnalytics = !string.IsNullOrWhiteSpace(googleAnalyticsId)
+        && customerFacingControllers.Contains(currentController);
+
     string NavClass(params string[] controllers)
         => controllers.Contains(currentController, StringComparer.OrdinalIgnoreCase) ? "nav-link active" : "nav-link";
 }
@@ -69,8 +77,9 @@
     {
         <meta name="msvalidate.01" content="@bingSiteVerification" />
     }
-    @if (!string.IsNullOrWhiteSpace(googleAnalyticsId))
+    @if (loadGoogleAnalytics)
     {
+        <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=@googleAnalyticsId"></script>
         <script>
             window.dataLayer = window.dataLayer || [];

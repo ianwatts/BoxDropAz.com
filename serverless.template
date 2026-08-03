@@ -508,6 +508,7 @@ Resources:
           Site__SupportEmail: !Ref SupportEmail
           Site__AdminEmail: !Ref AdminEmail
           Site__SupportPhone: !Ref SupportPhone
+          Seo__GoogleAnalyticsMeasurementId: "G-B8RNZHVKLZ"
           STRIPE_SECRET_KEY: !Ref StripeSecretKey
           STRIPE_SECRETKEY: !Ref StripeSecretKey
           STRIPE_PUBLISHABLEKEY: !Ref StripePublishableKey
