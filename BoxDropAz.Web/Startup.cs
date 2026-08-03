@@ -315,6 +315,28 @@ public sealed class Startup
 
         app.UseEndpoints(endpoints =>
         {
+            if (env.IsDevelopment())
+            {
+                endpoints.MapGet("/_testplan", async context =>
+                {
+                    context.Response.ContentType = "text/html; charset=utf-8";
+                    var testPlanPath = Path.Combine(env.ContentRootPath, "TestPlan.html");
+                    if (!System.IO.File.Exists(testPlanPath))
+                    {
+                        testPlanPath = Path.Combine(env.ContentRootPath, "..", "TestPlan.html");
+                    }
+
+                    if (System.IO.File.Exists(testPlanPath))
+                    {
+                        await context.Response.SendFileAsync(testPlanPath);
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 404;
+                    }
+                });
+            }
+
             endpoints.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");

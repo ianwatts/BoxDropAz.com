@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoxDrop AZ - Complete Role-Based Test Plan & Credentials</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #475569;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger-bg: #fef2f2;
+            --danger-text: #991b1b;
+            --danger-border: #fecaca;
+            --warning-bg: #fffbe2;
+            --warning-text: #854d0e;
+            --warning-border: #fef08a;
+            --success-bg: #f0fdf4;
+            --success-text: #166534;
+            --success-border: #bbf7d0;
+            --badge-admin: #7c3aed;
+            --badge-region: #0284c7;
+            --badge-worker: #d97706;
+            --badge-realtor: #059669;
+            --badge-customer: #2563eb;
+            --badge-public: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #334155;
+        }
+
+        .meta-item {
+            font-size: 0.875rem;
+        }
+
+        .meta-item label {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .meta-item span {
+            color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .alert-box {
+            background-color: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: var(--warning-text);
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.925rem;
+        }
+
+        .alert-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            color: #ffffff;
+        }
+
+        .badge-saasadmin { background-color: var(--badge-admin); }
+        .badge-regionaladmin { background-color: var(--badge-region); }
+        .badge-worker { background-color: var(--badge-worker); }
+        .badge-realtor { background-color: var(--badge-realtor); }
+        .badge-customer { background-color: var(--badge-customer); }
+        .badge-public { background-color: var(--badge-public); }
+
+        code {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.85em;
+            border: 1px solid #e2e8f0;
+        }
+
+        .credentials-table code {
+            font-weight: 600;
+            color: #0369a1;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .role-section {
+            display: block;
+        }
+
+        .test-case {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .test-case-header {
+            background-color: #f8fafc;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .test-case-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .test-case-body {
+            padding: 1.25rem;
+        }
+
+        .test-case-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .test-steps ol {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .test-steps li {
+            margin-bottom: 0.4rem;
+        }
+
+        .expected-result {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: var(--success-bg);
+            border: 1px solid var(--success-border);
+            border-radius: 6px;
+            color: var(--success-text);
+            font-size: 0.9rem;
+        }
+
+        .expected-result strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .print-btn {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .print-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        @media print {
+            body {
+                background-color: #ffffff;
+                padding: 0;
+            }
+            .container {
+                max-width: 100%;
+            }
+            .nav-tabs, .print-btn {
+                display: none;
+            }
+            .card, .test-case {
+                box-shadow: none;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>BoxDrop AZ - Master Test Plan</h1>
+            <p>Comprehensive Quality Assurance & Role-Based Verification Specification</p>
+
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <label>Application</label>
+                    <span>BoxDropAZ.com (Moving Crate Rental)</span>
+                </div>
+                <div class="meta-item">
+                    <label>Target Framework</label>
+                    <span>.NET 10 ASP.NET Core MVC</span>
+                </div>
+                <div class="meta-item">
+                    <label>Architecture</label>
+                    <span>Serverless AWS Lambda / DynamoDB / Stripe</span>
+                </div>
+                <div class="meta-item">
+                    <label>Last Updated</label>
+                    <span>July 31, 2026</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- PRIVILEGED & SYSTEM USER CREDENTIALS -->
+        <div class="card">
+            <h2>
+                <span>Privileged & Demo Account Credentials</span>
+                <button class="print-btn" onclick="window.print()">Print / Export PDF</button>
+            </h2>
+
+            <div class="alert-box">
+                <strong>Notice for Test Environment:</strong>
+                These seeded credentials are generated automatically in the Development environment from <code>appsettings.Development.json</code> when <code>DynamoDB:AutoCreateTables = true</code>. All accounts are pre-confirmed and associated with the default <code>phoenix</code> region where applicable.
+            </div>
+
+            <table class="credentials-table">
+                <thead>
+                    <tr>
+                        <th>Role Name</th>
+                        <th>Access Policy / Scope</th>
+                        <th>User Name (Email)</th>
+                        <th>Password</th>
+                        <th>Primary Entry Route</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-saasadmin">SaaSAdmin</span></td>
+                        <td><strong>Privileged:</strong> Full platform control across all markets, region creation, pricing, Stripe logs & global user impersonation.</td>
+                        <td><code>admin@boxdropaz.com</code></td>
+                        <td><code>Passw0rd!Admin</code></td>
+                        <td><code>/saasadmin</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-regionaladmin">RegionalAdmin</span></td>
+                        <td><strong>Privileged:</strong> Full operational control scoped to assigned region (Phoenix). Inventory, scheduling, order edits, damage charges & impersonation.</td>
+                        <td><code>phoenix.admin@boxdropaz.com</code></td>
+                        <td><code>Passw0rd!Region</code></td>
+                        <td><code>/admin</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-worker">Worker</span></td>
+                        <td><strong>Standard:</strong> Delivery & pickup drivers. Mobile manifest access, delivery confirmation, damage reporting & restock fulfillment.</td>
+                        <td><code>worker@boxdropaz.com</code></td>
+                        <td><code>Passw0rd!Worker</code></td>
+                        <td><code>/worker</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-realtor">Realtor</span></td>
+                        <td><strong>Standard:</strong> B2B Subscribed real estate agents. Credit balance management, client gift order submission & co-branding inserts.</td>
+                        <td><code>agent@example.com</code></td>
+                        <td><code>Passw0rd!Agent</code></td>
+                        <td><code>/agent</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-customer">Customer</span></td>
+                        <td><strong>Standard:</strong> Direct renters and homebuyers. Active rental tracking, self-service extensions, cancellation & card-on-file management.</td>
+                        <td><code>customer@example.com</code></td>
+                        <td><code>Passw0rd!Customer</code></td>
+                        <td><code>/dashboard</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ROLE PERMISSION MATRIX -->
+        <div class="card">
+            <h2>Role Permission Matrix</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature / Module</th>
+                        <th>Anonymous</th>
+                        <th>Customer</th>
+                        <th>Realtor</th>
+                        <th>Worker</th>
+                        <th>RegionalAdmin</th>
+                        <th>SaaSAdmin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Public Marketing & Landing Pages</td>
+                        <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>D2C Crate Booking & Checkout</td>
+                        <td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Realtor Subscription & Gift Portal</td>
+                        <td>No</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Customer Dashboard & Rental Extensions</td>
+                        <td>No</td><td>Yes</td><td>No</td><td>No</td><td>Yes (Impersonated)</td><td>Yes (Impersonated)</td>
+                    </tr>
+                    <tr>
+                        <td>Driver Manifest & Damage Reporting</td>
+                        <td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Regional Inventory, Schedule & Orders</td>
+                        <td>No</td><td>No</td><td>No</td><td>No</td><td>Yes (Own Region)</td><td>Yes (All Regions)</td>
+                    </tr>
+                    <tr>
+                        <td>Region CRUD & Crate Package Pricing</td>
+                        <td>No</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>User Impersonation</td>
+                        <td>No</td><td>No</td><td>No</td><td>No</td><td>Yes (Non-Admins)</td><td>Yes (All Users)</td>
+                    </tr>
+                    <tr>
+                        <td>Stripe Event Store Monitoring</td>
+                        <td>No</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TEST SUITES BY ROLE -->
+        <div class="card">
+            <h2>Role-Based Test Cases</h2>
+
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('all')">All Tests</button>
+                <button class="tab-btn" onclick="switchTab('saasadmin')">1. SaaSAdmin</button>
+                <button class="tab-btn" onclick="switchTab('regionaladmin')">2. RegionalAdmin</button>
+                <button class="tab-btn" onclick="switchTab('worker')">3. Worker</button>
+                <button class="tab-btn" onclick="switchTab('realtor')">4. Realtor</button>
+                <button class="tab-btn" onclick="switchTab('customer')">5. Customer</button>
+                <button class="tab-btn" onclick="switchTab('public')">6. Public & Booking</button>
+            </div>
+
+            <!-- 1. SAASADMIN TEST CASES -->
+            <div id="sec-saasadmin" class="role-section">
+                <h3 style="margin-bottom: 1rem; color: var(--badge-admin);">1. SaaSAdmin (Platform Admin) Test Cases</h3>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-SA-01: Global Platform Rollup & Multi-Region Revenue Analytics</span>
+                        <span class="badge badge-saasadmin">SaaSAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/saasadmin</code></div>
+                            <div><strong>Policy Required:</strong> <code>SaaSAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Signed in as <code>admin@boxdropaz.com</code></div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Navigate to <code>/saasadmin</code> after signing in as SaaSAdmin.</li>
+                                <li>Verify that the platform overview displays total revenue figures for the current month and previous month.</li>
+                                <li>Check the Region Rollup table listing active regions (e.g., Phoenix, Tucson).</li>
+                                <li>Validate active subscriber counts, monthly recurring revenue (MRR), and outstanding gift credit totals.</li>
+                                <li>Ensure the 12-month revenue chart renders properly across all regions.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> System renders global financial metrics, aggregate active rental counts, active subscription metrics, and regional break-downs without throwing HTTP 403 or missing region data.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-SA-02: Region Management - Create New Region with Delivery Zones</span>
+                        <span class="badge badge-saasadmin">SaaSAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/saasadmin/regions/new</code></div>
+                            <div><strong>Policy Required:</strong> <code>SaaSAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Admin session active</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Navigate to <code>/saasadmin/regions/new</code>.</li>
+                                <li>Fill in Name (e.g., "Tucson Market"), Slug ("tucson"), Time Zone ("US/Arizona"), Support Phone.</li>
+                                <li>Add delivery zones: Zone A (Surcharge $0, Zip Codes: 85701, 85702), Zone B (Surcharge $25, Zip Codes: 85710, 85711).</li>
+                                <li>Configure default damage fees: Crate Replacement ($40.00), Dolly Replacement ($95.00), Missed Pickup ($25.00), Deep Clean ($3.00).</li>
+                                <li>Click <strong>Save Region</strong>.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Region record and delivery zones are persisted in DynamoDB. User is redirected to package configuration for the new region with a success notification.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-SA-03: Package Catalog Management - Add & Edit Crate Bundles</span>
+                        <span class="badge badge-saasadmin">SaaSAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/saasadmin/packages</code></div>
+                            <div><strong>Policy Required:</strong> <code>SaaSAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Existing region selected</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Select a region from the packages drop-down menu.</li>
+                                <li>Click <strong>New Package</strong>.</li>
+                                <li>Enter Name: "Mega Mansion Bundle", Crate Count: 120, Dolly Count: 5, Base Price: $349.00, Extra Week Price: $175.00.</li>
+                                <li>Save package and verify it appears in the active catalog listing.</li>
+                                <li>Toggle the package status to "Inactive" and verify it is hidden from the public booking wizard.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Package pricing is updated dynamically in DynamoDB. Inactive packages are hidden from D2C booking flows immediately.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-SA-04: Global User Management & Privileged Role Assignment</span>
+                        <span class="badge badge-saasadmin">SaaSAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin/users</code></div>
+                            <div><strong>Policy Required:</strong> <code>SaaSAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> SaaSAdmin session active</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Navigate to User Management at <code>/admin/users</code>.</li>
+                                <li>Search for a registered user by email or name.</li>
+                                <li>Change the user's role to <code>RegionalAdmin</code> or <code>Worker</code>.</li>
+                                <li>Assign or update the user's primary assigned <code>RegionId</code>.</li>
+                                <li>Toggle "Disable Account" on a test user and verify they cannot sign in at <code>/account/login</code>.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Role changes take effect immediately in Identity stores. Disabled users receive a clean "account disabled" error upon login attempts.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-SA-05: Stripe Event Store Audit & Webhook Diagnostics</span>
+                        <span class="badge badge-saasadmin">SaaSAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/saasadmin/stripe-events</code></div>
+                            <div><strong>Policy Required:</strong> <code>SaaSAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Webhooks received or local CLI forwarding enabled</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open <code>/saasadmin/stripe-events</code>.</li>
+                                <li>Filter by Event Type (e.g., <code>checkout.session.completed</code>, <code>invoice.paid</code>).</li>
+                                <li>Filter by Outcome ("Failed", "Unprocessed", "Success").</li>
+                                <li>Verify raw payload details, timestamp, and error messages if signature validation or processing fails.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Full log of received Stripe webhooks is rendered with filter capabilities and status indicators.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. REGIONALADMIN TEST CASES -->
+            <div id="sec-regionaladmin" class="role-section">
+                <h3 style="margin-bottom: 1rem; color: var(--badge-region);">2. RegionalAdmin (Market Operator) Test Cases</h3>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RA-01: Regional Dashboard Overview & Market Scope Verification</span>
+                        <span class="badge badge-regionaladmin">RegionalAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin</code></div>
+                            <div><strong>Policy Required:</strong> <code>AnyAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Signed in as <code>phoenix.admin@boxdropaz.com</code></div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Log in as RegionalAdmin.</li>
+                                <li>Verify that the dashboard automatically scopes all metrics to Phoenix.</li>
+                                <li>Check active rentals count, crates currently in the field, upcoming deliveries, and pending damage charges.</li>
+                                <li>Attempt to manually append <code>?region=other-region-id</code> to the URL.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> RegionalAdmin is strictly restricted to their assigned region. Appending external region query parameters is ignored and pinned back to their home region.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RA-02: Inventory Stock Totals & Automated Shortage Recalculation</span>
+                        <span class="badge badge-regionaladmin">RegionalAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin/inventory</code></div>
+                            <div><strong>Policy Required:</strong> <code>AnyAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> RegionalAdmin session</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Navigate to <code>/admin/inventory</code>.</li>
+                                <li>Inspect current counts for Total Totes, Custom-fit Dollies, Index Card Packs, and Card Holder Packs.</li>
+                                <li>Update total physical tote stock (e.g., from 500 to 450).</li>
+                                <li>Submit form and verify future booking availability is reconciled against physical asset capacity.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Inventory totals update in DynamoDB, and any predicted future asset shortages automatically generate open restock tasks.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RA-03: Delivery & Pickup Scheduling & Blackout Date Rules</span>
+                        <span class="badge badge-regionaladmin">RegionalAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin/schedule</code></div>
+                            <div><strong>Policy Required:</strong> <code>AnyAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> RegionalAdmin session</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open <code>/admin/schedule</code>.</li>
+                                <li>Set Minimum Notice Days (e.g., 2 days).</li>
+                                <li>Select active delivery windows for Weekdays (e.g., 8am-12pm, 12pm-4pm) and Weekends.</li>
+                                <li>Add a Blackout Date for an upcoming holiday (e.g., Christmas Day - All Day).</li>
+                                <li>Go to public booking wizard and verify that the blacked-out date cannot be selected for delivery or pickup.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Blackout dates and window availability rules are immediately reflected in public customer scheduling calendars.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RA-04: Order Management, Status Overrides & Internal Notes</span>
+                        <span class="badge badge-regionaladmin">RegionalAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin/orders</code></div>
+                            <div><strong>Policy Required:</strong> <code>AnyAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Active orders present</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open <code>/admin/orders</code> and search for an order by Order Number or Customer Name.</li>
+                                <li>Click on an order to view full details at <code>/admin/orders/{id}</code>.</li>
+                                <li>Add an internal staff note ("Customer requested gate code 1234").</li>
+                                <li>Override order status (e.g., set status from "Confirmed" to "Out For Delivery").</li>
+                                <li>Verify the status badge updates and the change is logged with author name and timestamp.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Order updates save properly and audit notes maintain a complete history of administrative actions.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RA-05: Damage Fee Review, Stripe Card Charging & Waiving</span>
+                        <span class="badge badge-regionaladmin">RegionalAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin/orders/{id}</code></div>
+                            <div><strong>Policy Required:</strong> <code>AnyAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Order with reported damage line items</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Locate an order with pending damage items reported by a worker (e.g., 2 missing crates @ $40 each = $80).</li>
+                                <li>Review the damage description and reported photo/note.</li>
+                                <li>Test Action A: Select line item and click <strong>Approve & Charge Card</strong>. Verify Stripe PaymentIntent is triggered against card on file.</li>
+                                <li>Test Action B: On another line item, click <strong>Waive Fee</strong> and enter a reason ("Curtsied fee as courtesy").</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Approved charges attempt payment against stored payment method via Stripe API. Waived fees update status to "Waived" without touching customer card.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RA-06: Regional User Impersonation & Security Boundary Check</span>
+                        <span class="badge badge-regionaladmin">RegionalAdmin</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/admin/users</code></div>
+                            <div><strong>Policy Required:</strong> <code>AnyAdmin</code></div>
+                            <div><strong>Prerequisites:</strong> Users in region</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Navigate to <code>/admin/users</code>.</li>
+                                <li>Locate a <code>Customer</code> or <code>Realtor</code> user in Phoenix.</li>
+                                <li>Click <strong>Impersonate User</strong>. Verify header banner displays "Impersonating [User Email]" with a "Stop Impersonation" button.</li>
+                                <li>Attempt to impersonate another <code>RegionalAdmin</code> or <code>SaaSAdmin</code> account.</li>
+                                <li>Click <strong>Stop Impersonation</strong> and verify returning seamlessly to original RegionalAdmin account.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> RegionalAdmin can impersonate non-admin users in their region. System rejects attempting to impersonate peer admins or platform admins.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. WORKER TEST CASES -->
+            <div id="sec-worker" class="role-section">
+                <h3 style="margin-bottom: 1rem; color: var(--badge-worker);">3. Worker (Delivery Driver) Test Cases</h3>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-WK-01: Daily Mobile Manifest Inspection & Stop Grouping</span>
+                        <span class="badge badge-worker">Worker</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/worker</code></div>
+                            <div><strong>Policy Required:</strong> <code>Fulfillment</code></div>
+                            <div><strong>Prerequisites:</strong> Signed in as <code>worker@boxdropaz.com</code></div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Log in as Worker on a mobile browser or viewport.</li>
+                                <li>Verify today's manifest displays separate tabs or cards for <strong>Deliveries</strong> and <strong>Pickups</strong>.</li>
+                                <li>Ensure stops are sorted logically by time window (e.g. 8am-12pm) and ZIP code.</li>
+                                <li>Check that unpaid or cancelled orders do NOT appear on the driving manifest.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Clean, one-handed mobile interface listing confirmed deliveries and active pickups for the selected manifest date.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-WK-02: Delivery Completion & Index Card Consumable Deduction</span>
+                        <span class="badge badge-worker">Worker</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/worker/order/{id}?pickup=false</code></div>
+                            <div><strong>Policy Required:</strong> <code>Fulfillment</code></div>
+                            <div><strong>Prerequisites:</strong> Unfulfilled delivery scheduled for today</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open a scheduled delivery stop on the manifest.</li>
+                                <li>Verify order summary details: Customer Name, Delivery Address, Tote Count, Dolly Count, Index Cards required.</li>
+                                <li>Click <strong>Mark Delivered</strong>.</li>
+                                <li>Verify that inventory deducts 1 pack of 300 color-coded index cards from regional stock.</li>
+                                <li>Verify order status transitions to <code>Delivered</code> and sets <code>DeliveredAtUtc</code> timestamp.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Order is marked delivered, delivery timestamp is saved, and index card consumables stock is decremented cleanly.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-WK-03: Pickup Collection & Asset Shortage Auto-Queuing</span>
+                        <span class="badge badge-worker">Worker</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/worker/order/{id}?pickup=true</code></div>
+                            <div><strong>Policy Required:</strong> <code>Fulfillment</code></div>
+                            <div><strong>Prerequisites:</strong> Order out for pickup</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open a scheduled pickup stop.</li>
+                                <li>Enter returned asset quantities: Expected 50 crates / 2 dollies; Driver inputs 48 crates / 2 dollies returned.</li>
+                                <li>Click <strong>Mark Picked Up</strong>.</li>
+                                <li>Verify order status transitions to <code>Completed</code>.</li>
+                                <li>Inspect admin area for the order to confirm that 2 missing crates ($80 total) were automatically added as a pending damage line item for admin review.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Pickup is recorded, inventory reflects returned counts, and short counts auto-create pending damage charges without charging the customer immediately.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-WK-04: On-Site Damage Reporting (Deep Clean / Damaged Equipment)</span>
+                        <span class="badge badge-worker">Worker</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/worker/order/{id}/report</code></div>
+                            <div><strong>Policy Required:</strong> <code>Fulfillment</code></div>
+                            <div><strong>Prerequisites:</strong> Active pickup stop open</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>On a pickup order screen, select <strong>Report Damage / Cleaning Fee</strong>.</li>
+                                <li>Choose Damage Kind: "Deep Clean Required". Enter Quantity: 5 crates. Description: "Heavy oil/paint residue inside totes".</li>
+                                <li>Submit report.</li>
+                                <li>Verify driver sees confirmation alert that report was queued for admin review.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Damage report is stored under the order with unit calculation ($3/crate x 5 = $15) pending admin authorization.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-WK-05: Restock Task Fulfillment & Usable Stock Addition</span>
+                        <span class="badge badge-worker">Worker</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/worker</code> (Restock section)</div>
+                            <div><strong>Policy Required:</strong> <code>Fulfillment</code></div>
+                            <div><strong>Prerequisites:</strong> Open restock task present</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Locate an open inventory restock task on the worker manifest.</li>
+                                <li>Enter received equipment: 50 new totes, 50 card holder label clips, 2 dollies, 5 index card packs.</li>
+                                <li>Click <strong>Complete Restock Task</strong>.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> System verifies totes are paired with label holder clips before adding to usable tote stock. Restock task is closed.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. REALTOR TEST CASES -->
+            <div id="sec-realtor" class="role-section">
+                <h3 style="margin-bottom: 1rem; color: var(--badge-realtor);">4. Realtor (B2B Subscriber) Test Cases</h3>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RT-01: Agent Dashboard & Monthly Gift Credit Ledger</span>
+                        <span class="badge badge-realtor">Realtor</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/agent/dashboard</code></div>
+                            <div><strong>Role Required:</strong> <code>Realtor</code></div>
+                            <div><strong>Prerequisites:</strong> Signed in as <code>agent@example.com</code></div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Log in as Realtor and navigate to <code>/agent/dashboard</code>.</li>
+                                <li>Verify current active subscription plan (Starter, Professional, or Brokerage).</li>
+                                <li>Verify available credit balance (e.g. $175.00 available credit).</li>
+                                <li>Inspect 12-month credit ledger table displaying monthly credit allocations, gift debits, and rollover history.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Dashboard renders active tier, rolling credit balance, co-branding settings, and ledger transaction entries.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RT-02: Plan Subscription Flow & Stripe Checkout Integration</span>
+                        <span class="badge badge-realtor">Realtor</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/realtors</code> or <code>/agent/subscribe</code></div>
+                            <div><strong>Role Required:</strong> <code>Realtor</code></div>
+                            <div><strong>Prerequisites:</strong> Realtor account without active sub</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Browse subscription plans at <code>/realtors</code> ($59/mo Starter -> $75 credit; $129/mo Pro -> $175 credit; $299/mo Brokerage -> $425 credit).</li>
+                                <li>Click <strong>Subscribe Now</strong> on Professional Plan.</li>
+                                <li>Verify redirect to embedded Stripe Checkout session.</li>
+                                <li>Complete checkout with Stripe test card (4242...).</li>
+                                <li>Verify return redirect to <code>/agent/subscribe/return</code> and confirmation alert.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Subscription is activated in Stripe and local DynamoDB state. Monthly gift credit is deposited instantly.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RT-03: Send Closing Gift & Coverage Verification</span>
+                        <span class="badge badge-realtor">Realtor</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/agent/gifts/new</code></div>
+                            <div><strong>Role Required:</strong> <code>Realtor</code></div>
+                            <div><strong>Prerequisites:</strong> Active plan & positive credit balance</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Navigate to <code>/agent/gifts/new</code>.</li>
+                                <li>Fill client info: Client Name ("Jane Doe"), Email, Phone, Property Address, Closing Date.</li>
+                                <li>Enter Property ZIP code. (Test out-of-service ZIP to verify validation warning).</li>
+                                <li>Select Gift Amount ($169.00 - covers 2-3 Bedroom package).</li>
+                                <li>Include Personal Message and ensure <strong>Include Co-Branding Insert</strong> checkbox is selected.</li>
+                                <li>Click <strong>Send Closing Gift</strong>.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> System deducts $169.00 from credit balance atomically, saves GiftOrder, generates unique claim token, and emails claim link to client.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-RT-04: Gift History, Resend Link & Cancellation Refund</span>
+                        <span class="badge badge-realtor">Realtor</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/agent/gifts</code></div>
+                            <div><strong>Role Required:</strong> <code>Realtor</code></div>
+                            <div><strong>Prerequisites:</strong> Existing sent gift orders</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open Gift History at <code>/agent/gifts</code>.</li>
+                                <li>Locate an unclaimed gift with status <code>Sent</code>.</li>
+                                <li>Test Action A: Click <strong>Resend Link</strong>. Verify confirmation message that claim email was resent.</li>
+                                <li>Test Action B: Click <strong>Cancel Gift</strong>. Verify gift status changes to <code>Cancelled</code> and $169.00 credit is refunded back to agent balance.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Resend re-fires notification; Cancellation invalidates claim link and restores agent credit balance with ledger entry.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. CUSTOMER TEST CASES -->
+            <div id="sec-customer" class="role-section">
+                <h3 style="margin-bottom: 1rem; color: var(--badge-customer);">5. Customer (Direct Renter) Test Cases</h3>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-CU-01: Customer Dashboard & Active Rental Monitoring</span>
+                        <span class="badge badge-customer">Customer</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/dashboard</code></div>
+                            <div><strong>Role Required:</strong> <code>Customer</code> (or Authenticated Renter)</div>
+                            <div><strong>Prerequisites:</strong> Signed in as <code>customer@example.com</code></div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Log in and navigate to <code>/dashboard</code>.</li>
+                                <li>Verify active rental card displaying Order Number, Bundle Name, Delivery Date, Pickup Date, and Status.</li>
+                                <li>Inspect saved payment method badge (e.g., Visa ending in 4242).</li>
+                                <li>Click <strong>View Rental Details</strong> to access order detail page at <code>/dashboard/order/{id}</code>.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Renter dashboard clearly distinguishes active rentals from past rental history.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-CU-02: Self-Service Weekly Rental Extension</span>
+                        <span class="badge badge-customer">Customer</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/dashboard/order/{id}</code></div>
+                            <div><strong>Role Required:</strong> <code>Customer</code></div>
+                            <div><strong>Prerequisites:</strong> Active rental in confirmed/delivered state</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open detail view for an active rental.</li>
+                                <li>Locate "Extend Your Rental" section displaying weekly extension rate (e.g. $85.00 / week).</li>
+                                <li>Select <strong>+1 Week Extension</strong>.</li>
+                                <li>Click <strong>Extend & Charge Card</strong>.</li>
+                                <li>Verify Stripe off-session charge is executed against card on file and scheduled Pickup Date shifts out by 7 days.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Card on file is billed for extra week rate, new pickup date is saved, and confirmation banner is displayed.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-CU-03: Online Order Cancellation & Cutoff Rule Enforcement</span>
+                        <span class="badge badge-customer">Customer</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/dashboard/order/{id}/cancel</code></div>
+                            <div><strong>Role Required:</strong> <code>Customer</code></div>
+                            <div><strong>Prerequisites:</strong> Order in Confirmed state</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Test Scenario A (Outside 48h Cutoff): Order delivery is 5 days away. Click <strong>Cancel Rental</strong>. System cancels order, logs reason, and triggers refund instruction.</li>
+                                <li>Test Scenario B (Inside 48h Cutoff): Order delivery is tomorrow. Attempt online cancellation.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Outside cutoff cancels successfully online. Inside 48h cutoff blocks self-service cancellation and instructs customer to call support due to route planning constraints.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-CU-04: Card on File Replacement via Embedded Stripe Setup</span>
+                        <span class="badge badge-customer">Customer</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/dashboard/payment-method</code></div>
+                            <div><strong>Role Required:</strong> <code>Customer</code></div>
+                            <div><strong>Prerequisites:</strong> Signed in user</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>On dashboard, click <strong>Update Payment Method</strong>.</li>
+                                <li>Verify embedded Stripe SetupIntent modal renders.</li>
+                                <li>Enter new card credentials.</li>
+                                <li>Complete setup and return to dashboard.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Stripe saves new default payment method to customer object and webhook updates local last4/brand details.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. PUBLIC & BOOKING TEST CASES -->
+            <div id="sec-public" class="role-section">
+                <h3 style="margin-bottom: 1rem; color: var(--badge-public);">6. Anonymous Public Visitor & D2C Booking Flow</h3>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-PUB-01: Public Landing Pages, ZIP Lookup & Zone Surcharge Resolution</span>
+                        <span class="badge badge-public">Anonymous</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/</code> and <code>/booking</code></div>
+                            <div><strong>Role Required:</strong> Unauthenticated</div>
+                            <div><strong>Prerequisites:</strong> None</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Visit homepage at <code>/</code>. Enter ZIP code <code>85201</code> (Zone A - Free Delivery). Verify redirected to package selection.</li>
+                                <li>Enter ZIP code <code>85122</code> (Casa Grande - Zone B Surcharge). Verify $25 delivery surcharge notification.</li>
+                                <li>Enter invalid/out-of-area ZIP code <code>90210</code>. Verify clear coverage error message explaining area is not served.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Dynamic AJAX ZIP lookup resolves correct region and delivery zone surcharge before user enters booking wizard.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-PUB-02: D2C Complete Booking Wizard & Terms Acceptance</span>
+                        <span class="badge badge-public">Anonymous / Customer</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/booking/schedule</code></div>
+                            <div><strong>Role Required:</strong> Public Visitor</div>
+                            <div><strong>Prerequisites:</strong> None</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Select "2-3 Bedroom Bundle" (50 crates, 2 dollies, $169.00).</li>
+                                <li>Choose delivery date & window (e.g., 8am-12pm). Select 1-week rental duration.</li>
+                                <li>Add optional extras: +10 Extra Crates ($25), Wardrobe Crates ($15).</li>
+                                <li>Enter delivery address, customer name, email, and phone number.</li>
+                                <li>Proceed to Review page (<code>/booking/review</code>). Verify quote calculation breakdown.</li>
+                                <li>Check the required <strong>Accept Rental Terms of Service</strong> checkbox ($40 crate damage fee, $95 dolly fee, extension terms).</li>
+                                <li>Submit to Stripe Checkout and complete payment with test card.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Order created in <code>PendingPayment</code>, transitioned to <code>Confirmed</code> upon Stripe webhook callback, terms acceptance recorded with IP/UserAgent, and account setup link emailed.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-case">
+                    <div class="test-case-header">
+                        <span class="test-case-title">TC-PUB-03: B2B Realtor Gift Claim & Package Upgrade Upsell Flow</span>
+                        <span class="badge badge-public">Anonymous / Gift Recipient</span>
+                    </div>
+                    <div class="test-case-body">
+                        <div class="test-case-meta">
+                            <div><strong>Entry Point:</strong> <code>/gift/claim/{token}</code></div>
+                            <div><strong>Role Required:</strong> Public Visitor / Homebuyer</div>
+                            <div><strong>Prerequisites:</strong> Valid claim token generated by Realtor</div>
+                        </div>
+                        <div class="test-steps">
+                            <strong>Execution Steps:</strong>
+                            <ol>
+                                <li>Open Realtor gift link (e.g. <code>/gift/claim/abc123xyz</code>).</li>
+                                <li>Verify welcome banner: "[Agent Name] sent you a $169.00 moving crate gift credit!".</li>
+                                <li>Option A (100% Covered): Choose 2-3 Bedroom bundle ($169 base). Total due = $0.00. System enters Stripe Setup Session to save card on file for damage/extension agreement.</li>
+                                <li>Option B (Upgrade Upsell): Upgrade to 4-5 Bedroom bundle ($299 base). System auto-applies $169 credit discount, leaving remaining balance of $130.00 due today via Stripe Checkout.</li>
+                            </ol>
+                        </div>
+                        <div class="expected-result">
+                            <strong>Expected Result:</strong> Gift credit is applied seamlessly as a discount; user can upgrade bundle tier by paying the difference; card on file saved for rental agreement.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const sections = document.querySelectorAll('.role-section');
+            if (tab === 'all') {
+                sections.forEach(sec => sec.style.display = 'block');
+            } else {
+                sections.forEach(sec => sec.style.display = 'none');
+                const target = document.getElementById('sec-' + tab);
+                if (target) {
+                    target.style.display = 'block';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
