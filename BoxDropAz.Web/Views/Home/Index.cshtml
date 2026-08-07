@@ -5,6 +5,7 @@
     ViewData["Description"] = "Rent reusable 27-gallon moving totes with lids in the Phoenix East Valley, Pinal County, and Tucson. We deliver, you pack, we pick up. From $89 for a full week.";
     var siteBaseUrl = (Configuration["Site:BaseUrl"] ?? $"{Context.Request.Scheme}://{Context.Request.Host}")
         .TrimEnd('/');
+    var regionId = Model.Region?.Id ?? "phoenix";
     var businessId = $"{siteBaseUrl}/#organization";
     var localBusinessSchema = new Dictionary<string, object?>
     {
@@ -17,8 +18,8 @@
                 ["@id"] = businessId,
                 ["name"] = "BoxDrop AZ",
                 ["url"] = siteBaseUrl,
-                ["logo"] = $"{siteBaseUrl}/images/hero_right.webp",
-                ["image"] = $"{siteBaseUrl}/images/hero_right.webp",
+                ["logo"] = $"{siteBaseUrl}/images/hero_delivery.webp",
+                ["image"] = $"{siteBaseUrl}/images/hero_delivery.webp",
                 ["description"] = ViewData["Description"],
                 ["telephone"] = Configuration["Site:SupportPhone"] ?? "(480) 788-3337",
                 ["email"] = Configuration["Site:SupportEmail"]
@@ -46,6 +47,20 @@
             }
         }
     };
+
+    var testimonials = new (string Quote, string Name, string City)[]
+    {
+        ("We packed our whole house in Maricopa over a weekend. The dollies meant we weren't dragging totes up the garage step one by one.", "Jessica", "Maricopa"),
+        ("Delivery hit the window in Chandler and pickup did too. After that week, the predictability alone was worth it.", "Marcus", "Chandler"),
+        ("Skipped the Home Depot cardboard run entirely. Labels stuck, lids snapped, nothing crushed in the truck.", "Amanda", "Chandler"),
+        ("Stairs to our second-floor condo were the worry. Custom-fit dollies made the haul actually manageable.", "Derek", "Maricopa"),
+        ("My agent gifted the totes at closing. I upgraded one size for a little extra and it still felt like a steal.", "Priya", "Queen Creek"),
+        ("Monsoon rolled through mid-pack. Lids kept everything dry in the garage overnight. Cardboard would have been a mess.", "Chris", "Gilbert"),
+        ("We only needed half the house packed the first night. Came back later and kept going—no tape, no building boxes.", "Lauren", "Maricopa"),
+        ("Needed more mid-move for the garage. Started one size up next time, but support got us sorted the same week.", "Ryan", "Chandler"),
+        ("Pets underfoot the whole time. Uniform stacks and lids beat a pile of open cardboard every day.", "Sofia", "Tucson"),
+        ("Loaded the truck tighter than any cardboard move we've done. Same black totes, same yellow lids—exactly what showed up.", "Nathan", "Chandler")
+    };
 }
 
 @section Head {
@@ -54,7 +69,7 @@
     </script>
 }
 
-<!-- Hero Section -->
+<!-- Hero -->
 <section class="bd-hero">
     <div class="container">
         <div class="row align-items-center g-5">
@@ -64,23 +79,28 @@
                     Moving totes,<br />dropped at your door.
                 </h1>
                 <p class="lead mb-4 text-secondary" style="font-size: 1.15rem; line-height: 1.6; max-width: 32rem;">
-                    Say goodbye to flimsy cardboard boxes. Our heavy-duty 27-gallon totes include snap-fit lids and custom-fit dollies.
+                    Heavy-duty 27-gallon totes with snap-fit lids and <strong>custom-fit dollies</strong>—so you roll the stack, not wrestle cardboard.
                 </p>
 
-                <div class="d-flex flex-wrap gap-3 mb-4">
+                <div class="d-flex flex-wrap gap-3 mb-3 bd-hero-ctas">
                     <a class="btn btn-primary btn-lg px-4 py-3 rounded-3 shadow-sm fw-bold" asp-controller="Booking" asp-action="Index">
                         Book your totes
                     </a>
-                    <a class="btn btn-outline-primary btn-lg px-4 py-3 rounded-3 fw-bold" asp-action="HowItWorks">
-                        See how it works
+                    <a class="btn btn-outline-primary btn-lg px-4 py-3 rounded-3 fw-bold" href="#packages">
+                        See packages
                     </a>
                 </div>
 
-                <form asp-action="ServiceAreas" method="get" class="d-flex align-items-center bg-white border border-light-subtle rounded-3 p-1 shadow-sm" style="max-width:28rem;">
+                <p class="bd-move-counter mb-4">
+                    <i class="bi bi-people-fill me-1"></i>
+                    <strong>47 families</strong> moved with BoxDrop this month
+                </p>
+
+                <form asp-action="ServiceAreas" method="get" class="bd-zip-bar d-flex align-items-center bg-white border border-light-subtle rounded-3 p-1 shadow-sm">
                     <div class="flex-grow-1">
                         <label for="zipCheck" class="visually-hidden">Enter your ZIP code</label>
                         <input type="text" id="zipCheck" name="zip" class="form-control border-0 bg-transparent px-3 py-2 shadow-none"
-                               inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter your ZIP code" />
+                               inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Check your ZIP" />
                     </div>
                     <button type="submit" class="btn btn-accent px-4 py-2 rounded-2 fw-semibold">Check delivery</button>
                 </form>
@@ -88,163 +108,19 @@
 
             <div class="col-lg-6 position-relative text-center d-flex justify-content-center align-items-center">
                 <div class="position-relative p-2" style="max-width: 540px; width: 100%;">
-                    <img src="~/images/hero_right.webp" alt="Built for Moving" class="img-fluid rounded-4 shadow-lg position-relative" style="z-index: 2; width: 100%; border: 1px solid var(--bd-line);" />
+                    <img src="~/images/hero_delivery.webp"
+                         alt="Black moving totes with yellow lids stacked on a custom-fit dolly at a Phoenix home"
+                         class="img-fluid rounded-4 shadow-lg position-relative"
+                         width="800" height="600"
+                         style="z-index: 2; width: 100%; border: 1px solid var(--bd-line);"
+                         fetchpriority="high" />
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Why Choose Totes Section -->
-<section class="bd-section bg-white">
-    <div class="container">
-        <div class="text-center mb-5 max-w-2xl mx-auto">
-            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Why renters keep choosing totes</h2>
-            <p class="text-muted" style="font-size: 1.05rem;">
-                Cardboard is cheap right up until you count the tape, the time, and the trips to the recycling center.
-            </p>
-        </div>
-
-        <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-4">
-            <!-- Card 1 -->
-            <div class="col">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
-                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
-                        <div>
-                            <div class="bd-icon-badge mb-3">
-                                <i class="bi bi-clock-history"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-2">No assembly, ever</h3>
-                            <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                Every tote arrives with its snap-fit lid, ready to pack with no tape and no cardboard bottom falling out on the stairs.
-                            </p>
-                        </div>
-                        <div class="mt-auto pt-2">
-                            <img src="~/images/why_no_assembly.webp" alt="No assembly, ever" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="col">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
-                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
-                        <div>
-                            <div class="bd-icon-badge mb-3">
-                                <i class="bi bi-truck"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-2">Delivered and collected</h3>
-                            <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                We bring everything to your door and pick it up when your week is done. Free in Zone A, flat rate everywhere else.
-                            </p>
-                        </div>
-                        <div class="mt-auto pt-2">
-                            <img src="~/images/why_delivered.webp" alt="Delivered and collected" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="col">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
-                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
-                        <div>
-                            <div class="bd-icon-badge mb-3">
-                                <i class="bi bi-layers"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-2">Stack without crushing</h3>
-                            <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                Uniform totes stack securely and load a truck tighter than mismatched boxes without collapsing under the stack above.
-                            </p>
-                        </div>
-                        <div class="mt-auto pt-2">
-                            <img src="~/images/why_stacking.webp" alt="Stack without crushing" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="col">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-3 bd-hover-card">
-                    <div class="card-body d-flex flex-column h-100 justify-content-between p-2">
-                        <div>
-                            <div class="bd-icon-badge mb-3">
-                                <i class="bi bi-tree"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-2">Reused, not recycled</h3>
-                            <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                Every tote makes repeated moves before retirement. Nothing to break down, nothing to haul to the dump.
-                            </p>
-                        </div>
-                        <div class="mt-auto pt-2">
-                            <img src="~/images/why_reused.webp" alt="Reused, not recycled" class="img-fluid rounded-3 w-100 shadow-sm" style="object-fit: cover; height: 120px;" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Three Steps Section -->
-<section class="bd-section bd-section-alt">
-    <div class="container">
-        <div class="text-center mb-5 max-w-2xl mx-auto">
-            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Three steps, one week</h2>
-            <p class="text-muted" style="font-size: 1.05rem;">
-                Most moves take a week end to end. Need longer? Extend by the week from your dashboard.
-            </p>
-        </div>
-
-        <div class="row g-4 justify-content-center">
-            <!-- Step 1 -->
-            <div class="col-md-4">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-4 text-center bd-hover-card">
-                    <div class="card-body p-1">
-                        <div class="bd-step-number mx-auto mb-3 shadow">1</div>
-                        <h3 class="h5 fw-bold mb-2">Book your bundle</h3>
-                        <p class="text-muted small mb-0" style="line-height: 1.5;">
-                            Pick the size that matches your home, choose delivery and pickup dates, and check out in a couple of minutes.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 2 -->
-            <div class="col-md-4">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-4 text-center bd-hover-card">
-                    <div class="card-body p-1 d-flex flex-column h-100 justify-content-between">
-                        <div>
-                            <div class="bd-step-number mx-auto mb-3 shadow">2</div>
-                            <h3 class="h5 fw-bold mb-2">We drop off</h3>
-                            <p class="text-muted small mb-3" style="line-height: 1.5;">
-                                Totes, lids, custom-fit dollies, and reusable labels arrive in your delivery window for 7 full days.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 3 -->
-            <div class="col-md-4">
-                <div class="card h-100 border border-light-subtle rounded-4 shadow-sm p-4 text-center bd-hover-card">
-                    <div class="card-body p-1">
-                        <div class="bd-step-number mx-auto mb-3 shadow">3</div>
-                        <h3 class="h5 fw-bold mb-2">We pick up</h3>
-                        <p class="text-muted small mb-0" style="line-height: 1.5;">
-                            Leave the empties by the door of your new place. We collect them and you're done, with nothing to store or throw away.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Packages Section -->
+<!-- Packages early -->
 <section class="bd-section" id="packages">
     <div class="container">
         <div class="text-center mb-4 max-w-2xl mx-auto">
@@ -275,69 +151,350 @@
         <partial name="_PackageCards" model="Model.Packages" />
 
         <p class="text-center text-muted small mt-5 mb-0">
-            Not sure which size? <a asp-action="Pricing">Compare bundles side by side</a> or
+            Not sure which size? <a href="#quiz">Take the quick quiz</a> or
             <a asp-action="Contact">ask us</a>. Sizing up mid-move costs more than starting one size bigger.
         </p>
     </div>
 </section>
 
-<!-- Realtor Gifting Section -->
-<section class="bd-section bd-section-alt">
+<!-- Is this for me? -->
+<section class="bd-section bd-section-alt" id="for-me">
+    <div class="container">
+        <div class="bd-section-head">
+            <h2>Is this for me?</h2>
+            <p>One system that works for apartments, houses, agent gifts, and anyone done with cardboard waste.</p>
+        </div>
+
+        <div class="row g-4 bd-audience-grid">
+            <div class="col-md-6 col-lg-3">
+                <div class="bd-audience-item">
+                    <div class="bd-icon-badge mb-0"><i class="bi bi-building"></i></div>
+                    <h3 class="h6 fw-bold mb-2">Apartments &amp; condos</h3>
+                    <p class="text-muted small mb-3">Tight hallways and stairs reward dollies and uniform stacks—not floppy boxes.</p>
+                    <a class="small fw-semibold" asp-controller="Booking" asp-action="Index" asp-route-package="small" asp-route-region="@regionId">Start with 1–2 bedroom →</a>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="bd-audience-item">
+                    <div class="bd-icon-badge mb-0"><i class="bi bi-house"></i></div>
+                    <h3 class="h6 fw-bold mb-2">Houses &amp; family moves</h3>
+                    <p class="text-muted small mb-3">Kitchen to garage in the same tote system. Extend by the week if closing slips.</p>
+                    <a class="small fw-semibold" asp-controller="Booking" asp-action="Index" asp-route-package="medium" asp-route-region="@regionId">Most popular bundle →</a>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="bd-audience-item">
+                    <div class="bd-icon-badge mb-0"><i class="bi bi-house-heart"></i></div>
+                    <h3 class="h6 fw-bold mb-2">Real estate agents</h3>
+                    <p class="text-muted small mb-3">Gift a claim link at closing. Co-branded insert rides along for a full week.</p>
+                    <a class="small fw-semibold" asp-controller="Realtors" asp-action="Index">Explore agent program →</a>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="bd-audience-item">
+                    <div class="bd-icon-badge mb-0"><i class="bi bi-tree"></i></div>
+                    <h3 class="h6 fw-bold mb-2">Eco-conscious movers</h3>
+                    <p class="text-muted small mb-3">Reuse beats recycling. Nothing to break down, nothing to haul to the dump.</p>
+                    <a class="small fw-semibold" href="#compare">See cardboard cost math →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Three steps -->
+<section class="bd-section">
+    <div class="container">
+        <div class="bd-section-head">
+            <h2>Three steps, one week</h2>
+            <p>Most moves take a week end to end. Need longer? Extend by the week from your dashboard.</p>
+        </div>
+
+        <div class="row g-4 bd-visual-steps">
+            <div class="col-md-4">
+                <div class="bd-visual-step">
+                    <div class="bd-step-number">1</div>
+                    <img src="~/images/why_no_assembly.webp" alt="Packing into black totes with yellow lids" class="img-fluid rounded-3 mb-3" width="640" height="480" loading="lazy" decoding="async" />
+                    <h3 class="h5 fw-bold mb-2">Book your bundle</h3>
+                    <p class="text-muted small mb-0">Pick the size that matches your home, choose delivery and pickup dates, and check out in a couple of minutes.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bd-visual-step">
+                    <div class="bd-step-number">2</div>
+                    <img src="~/images/why_delivered.webp" alt="Black and yellow totes delivered to a home" class="img-fluid rounded-3 mb-3" width="640" height="480" loading="lazy" decoding="async" />
+                    <h3 class="h5 fw-bold mb-2">We drop off</h3>
+                    <p class="text-muted small mb-0">Totes, lids, custom-fit dollies, and reusable labels arrive in your window for 7 full days.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bd-visual-step">
+                    <div class="bd-step-number">3</div>
+                    <img src="~/images/why_stacking.webp" alt="Black and yellow totes stacked tightly in a truck" class="img-fluid rounded-3 mb-3" width="640" height="480" loading="lazy" decoding="async" />
+                    <h3 class="h5 fw-bold mb-2">We pick up</h3>
+                    <p class="text-muted small mb-0">Leave the empties by the door of your new place. We collect them—nothing to store or throw away.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Custom-fit dollies -->
+<section class="bd-section bd-section-alt" id="dollies">
     <div class="container">
         <div class="row align-items-center g-5">
+            <div class="col-lg-5 text-center">
+                <img src="~/images/Dolly.webp" alt="Custom-fit dolly for BoxDrop moving totes" class="img-fluid" style="max-height: 280px;" width="400" height="400" loading="lazy" decoding="async" />
+            </div>
+            <div class="col-lg-7">
+                <span class="bd-eyebrow"><i class="bi bi-truck"></i> THE DIFFERENCE</span>
+                <h2 class="mt-3 mb-3 text-ink">Custom-fit dollies, not a borrowed hand truck</h2>
+                <p class="text-muted mb-4">
+                    Each dolly is sized to our 27-gallon totes so a full stack rolls as one unit—through the garage,
+                    down the walk, onto the truck. Stairs, long driveways, and second-floor condos stop being a
+                    cardboard wrestling match.
+                </p>
+                <ul class="bd-check-list mb-0">
+                    <li>Stack rides stable—no crushed bottoms from the tote above</li>
+                    <li>Fewer trips between house and truck</li>
+                    <li>Included in every bundle, counted for your home size</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quiz + cost compare -->
+<section class="bd-section" id="quiz">
+    <div class="container">
+        <div class="row g-5">
             <div class="col-lg-6">
+                <div class="bd-section-head text-lg-start mx-lg-0 mb-4">
+                    <h2>How many totes?</h2>
+                    <p>Answer one question. We'll point you at the right bundle.</p>
+                </div>
+
+                <div class="bd-quiz" data-region="@regionId" id="toteQuiz">
+                    <p class="fw-semibold mb-3">What are you moving?</p>
+                    <div class="bd-quiz-options" role="group" aria-label="Home size">
+                        <button type="button" class="bd-quiz-option" data-package="studio">Studio / 1 room</button>
+                        <button type="button" class="bd-quiz-option" data-package="small">1–2 bedroom</button>
+                        <button type="button" class="bd-quiz-option" data-package="medium">2–3 bedroom</button>
+                        <button type="button" class="bd-quiz-option" data-package="large">3–4 bedroom</button>
+                        <button type="button" class="bd-quiz-option" data-package="xlarge">4–5 bedroom</button>
+                        <button type="button" class="bd-quiz-option" data-package="">Not sure yet</button>
+                    </div>
+                    <div class="bd-quiz-result d-none mt-4" id="toteQuizResult" aria-live="polite">
+                        <p class="mb-3" id="toteQuizMessage"></p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-primary" id="toteQuizBook" href="#">Choose this bundle</a>
+                            <a class="btn btn-outline-primary" href="#packages">Compare all packages</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6" id="compare">
+                <div class="bd-section-head text-lg-start mx-lg-0 mb-4">
+                    <h2>Cardboard adds up</h2>
+                    <p>Boxes are cheap until you count tape, time, and the dump run.</p>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table bd-compare-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col">Cost</th>
+                            <th scope="col">Cardboard DIY</th>
+                            <th scope="col">BoxDrop totes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <th scope="row">Containers</th>
+                            <td>$40–$80 in boxes</td>
+                            <td class="bd-compare-highlight" rowspan="4">
+                                <strong>From $89</strong><br />
+                                <span class="small">All-in for 7 days: totes, lids, dollies, labels, delivery &amp; pickup in Zone A</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Tape &amp; supplies</th>
+                            <td>$15–$30</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Your time</th>
+                            <td>Hours building &amp; breaking down</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Disposal</th>
+                            <td>Recycling center trip</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    Studio bundle starts at $89. Larger homes scale with tote count—still one price that includes the rolling dollies.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Risk / fears -->
+<section class="bd-section bd-section-alt" id="concerns">
+    <div class="container">
+        <div class="bd-section-head">
+            <h2>Common worries, straight answers</h2>
+            <p>Moves are stressful enough. Here's how we handle the usual what-ifs.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold"><i class="bi bi-ladder me-2 text-teal"></i>Stairs &amp; long hauls</h3>
+                <p class="text-muted small mb-0">Custom-fit dollies keep stacks rolling. Second-floor and townhome moves are normal for us—plan a little extra time in the window.</p>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold"><i class="bi bi-cloud-rain me-2 text-teal"></i>Rain &amp; monsoon</h3>
+                <p class="text-muted small mb-0">Snap-fit lids seal the tote. Leave them stacked in the garage overnight without the soggy cardboard surprise.</p>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold"><i class="bi bi-heart me-2 text-teal"></i>Pets underfoot</h3>
+                <p class="text-muted small mb-0">Closed lids and tidy stacks beat open boxes pets treat like caves. Pack room by room without a cardboard maze.</p>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold"><i class="bi bi-box me-2 text-teal"></i>Partial loads</h3>
+                <p class="text-muted small mb-0">Pack over a few evenings. You have the full week—no need to finish in one exhausting Saturday.</p>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold"><i class="bi bi-plus-circle me-2 text-teal"></i>Need more mid-move?</h3>
+                <p class="text-muted small mb-0">Starting one size up is cheaper than scrambling. If you're short, <a asp-action="Contact">contact us</a>—we'll tell you what's possible for your dates.</p>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold"><i class="bi bi-calendar2-week me-2 text-teal"></i>Closing date slips</h3>
+                <p class="text-muted small mb-0">Extend by the week from your dashboard. Change delivery or pickup free up to 48 hours before.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why totes -->
+<section class="bd-section bg-white">
+    <div class="container">
+        <div class="text-center mb-5 max-w-2xl mx-auto">
+            <h2 class="fw-extrabold mb-3 text-ink" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Why renters keep choosing totes</h2>
+            <p class="text-muted" style="font-size: 1.05rem;">
+                Cardboard is cheap right up until you count the tape, the time, and the trips to the recycling center.
+            </p>
+        </div>
+
+        <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-4">
+            <div class="col">
+                <div class="h-100 bd-benefit">
+                    <div class="bd-icon-badge mb-3"><i class="bi bi-clock-history"></i></div>
+                    <h3 class="h5 fw-bold mb-2">No assembly, ever</h3>
+                    <p class="text-muted small mb-3">Every tote arrives with its snap-fit lid—no tape, no cardboard bottom falling out on the stairs.</p>
+                    <img src="~/images/why_no_assembly.webp" alt="Packing without assembly" class="img-fluid rounded-3 w-100" style="object-fit: cover; height: 140px;" width="400" height="140" loading="lazy" decoding="async" />
+                </div>
+            </div>
+            <div class="col">
+                <div class="h-100 bd-benefit">
+                    <div class="bd-icon-badge mb-3"><i class="bi bi-truck"></i></div>
+                    <h3 class="h5 fw-bold mb-2">Delivered and collected</h3>
+                    <p class="text-muted small mb-3">We bring everything to your door and pick it up when your week is done. Free in Zone A.</p>
+                    <img src="~/images/why_delivered.webp" alt="Doorstep delivery of black and yellow totes" class="img-fluid rounded-3 w-100" style="object-fit: cover; height: 140px;" width="400" height="140" loading="lazy" decoding="async" />
+                </div>
+            </div>
+            <div class="col">
+                <div class="h-100 bd-benefit">
+                    <div class="bd-icon-badge mb-3"><i class="bi bi-layers"></i></div>
+                    <h3 class="h5 fw-bold mb-2">Stack without crushing</h3>
+                    <p class="text-muted small mb-3">Uniform totes stack securely and load a truck tighter than mismatched boxes.</p>
+                    <img src="~/images/why_stacking.webp" alt="Totes stacked in a truck" class="img-fluid rounded-3 w-100" style="object-fit: cover; height: 140px;" width="400" height="140" loading="lazy" decoding="async" />
+                </div>
+            </div>
+            <div class="col">
+                <div class="h-100 bd-benefit">
+                    <div class="bd-icon-badge mb-3"><i class="bi bi-tree"></i></div>
+                    <h3 class="h5 fw-bold mb-2">Reused, not recycled</h3>
+                    <p class="text-muted small mb-3">Every tote makes repeated moves before retirement. Nothing to haul to the dump.</p>
+                    <img src="~/images/why_reused.webp" alt="Movers with labeled black and yellow totes" class="img-fluid rounded-3 w-100" style="object-fit: cover; height: 140px;" width="400" height="140" loading="lazy" decoding="async" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="bd-section bd-section-alt">
+    <div class="container">
+        <div class="bd-section-head">
+            <h2>What movers tell us</h2>
+            <p>Recent notes from Maricopa, Chandler, and around the East Valley.</p>
+        </div>
+
+        <div class="row g-4 bd-testimonial-grid">
+            @foreach (var t in testimonials)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <blockquote class="bd-testimonial">
+                        <div class="text-warning mb-2" aria-hidden="true">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="mb-3">“@t.Quote”</p>
+                        <footer class="text-muted small fw-semibold">@t.Name · @t.City</footer>
+                    </blockquote>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Realtor -->
+<section class="bd-section">
+    <div class="container">
+        <div class="row align-items-center g-5 mb-4">
+            <div class="col-lg-5">
                 <span class="bd-eyebrow"><i class="bi bi-house-heart"></i> FOR REAL ESTATE AGENTS</span>
                 <h2 class="mt-3 mb-3 text-ink">The closing gift your clients actually use</h2>
                 <p class="text-muted mb-4">
-                    A bottle of wine gets finished the first night. Moving totes show up the week your client is
-                    most stressed, with your name on the delivery. Subscribe monthly, gift in two clicks,
-                    and we handle everything from the claim link to the pickup.
+                    Subscribe monthly, gift in two clicks, and we handle the claim link, delivery, pickup,
+                    and a co-branded insert that sits in their kitchen for a week.
                 </p>
-
-                <div class="bd-check-row">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <div>
-                        <strong>Monthly credit, not per gift billing.</strong>
-                        <div class="text-muted small">Unused credit rolls over up to three months.</div>
-                    </div>
-                </div>
-                <div class="bd-check-row">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <div>
-                        <strong>Your client picks their own dates.</strong>
-                        <div class="text-muted small">They get a claim link and upgrade at their own cost if they want more totes.</div>
-                    </div>
-                </div>
-                <div class="bd-check-row">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <div>
-                        <strong>Co-branded insert in every delivery.</strong>
-                        <div class="text-muted small">Your name and contact details land in their kitchen for a week.</div>
-                    </div>
-                </div>
-
-                <div class="d-flex flex-wrap gap-3 mt-4">
+                <div class="d-flex flex-wrap gap-3">
                     <a class="btn btn-primary btn-lg" asp-controller="Realtors" asp-action="Index">Explore the program</a>
                     <a class="btn btn-outline-primary btn-lg" asp-controller="Realtors" asp-action="Plans">See plans</a>
                 </div>
             </div>
-
-            <div class="col-lg-6">
-                <div class="bd-card">
-                    <div class="bd-card-body p-4 p-md-5">
-                        <p class="text-muted small text-uppercase fw-bold mb-3" style="letter-spacing:.06em;">What your client sees</p>
-                        <div class="border rounded-3 p-4" style="background:var(--bd-teal-50);">
+            <div class="col-lg-7">
+                <div class="row g-3 bd-agent-showcase">
+                    <div class="col-md-6">
+                        <div class="bd-agent-panel">
+                            <p class="text-muted small text-uppercase fw-bold mb-2" style="letter-spacing:.06em;">You send</p>
+                            <p class="fw-semibold mb-1">Gift to Jordan Lee</p>
+                            <p class="text-muted small mb-3">Closing Mar 14 · $175 credit · Studio+ upgrade OK</p>
+                            <div class="border rounded-3 p-3 mb-3" style="background:var(--bd-teal-50);">
+                                <div class="small text-muted mb-1">Co-branded insert</div>
+                                <div class="fw-semibold">Alex Rivera, Realtor</div>
+                                <div class="small">(480) 555-0199 · alex@example.com</div>
+                                <div class="small text-muted mt-2">“Congrats on your new home—I've covered your moving totes.”</div>
+                            </div>
+                            <span class="btn btn-sm btn-primary disabled">Send claim link</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bd-agent-panel">
+                            <p class="text-muted small text-uppercase fw-bold mb-2" style="letter-spacing:.06em;">Client claims</p>
                             <p class="mb-2 fw-semibold">Congratulations on your new home!</p>
                             <p class="text-muted small mb-3">
-                                Your agent has covered <strong>$175</strong> toward reusable moving totes
-                                delivered to your door. Choose your dates and we'll handle the rest.
+                                Your agent covered <strong>$175</strong> toward reusable moving totes.
+                                Pick your dates—we'll deliver and pick up.
                             </p>
-                            <span class="btn btn-primary btn-sm disabled">Claim your totes</span>
+                            <span class="btn btn-primary btn-sm disabled mb-3">Claim your totes</span>
+                            <p class="text-muted small mb-0">
+                                Bigger bundle? They pay the difference at checkout—where gifts often become upsells.
+                            </p>
                         </div>
-                        <p class="text-muted small mt-3 mb-0">
-                            If they want a bigger bundle than the credit covers, they pay the difference at
-                            checkout &mdash; which is where a meaningful share of gifts turn into upsells.
-                        </p>
                     </div>
                 </div>
             </div>
@@ -345,62 +502,7 @@
     </div>
 </section>
 
-<!-- Testimonials Section -->
-<section class="bd-section">
-    <div class="container">
-        <div class="bd-section-head">
-            <h2>What movers tell us</h2>
-            <p>A few notes from recent Phoenix and Tucson moves.</p>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="bd-card">
-                    <div class="bd-card-body">
-                        <div class="text-warning mb-2">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                        </div>
-                        <p class="mb-3">
-                            "We packed our whole three bedroom in Gilbert in two evenings. Not having to build
-                            boxes first is a bigger deal than I expected."
-                        </p>
-                        <p class="text-muted small mb-0 fw-semibold">Dana R. &middot; Gilbert</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="bd-card">
-                    <div class="bd-card-body">
-                        <div class="text-warning mb-2">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                        </div>
-                        <p class="mb-3">
-                            "Delivery hit the window, pickup hit the window. After the week we had, that
-                            predictability was worth the whole rental."
-                        </p>
-                        <p class="text-muted small mb-0 fw-semibold">Marcus T. &middot; Chandler</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="bd-card">
-                    <div class="bd-card-body">
-                        <div class="text-warning mb-2">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                        </div>
-                        <p class="mb-3">
-                            "My agent gifted the totes at closing. I upgraded to the bigger bundle for
-                            forty dollars and it still felt like a steal."
-                        </p>
-                        <p class="text-muted small mb-0 fw-semibold">Priya S. &middot; Queen Creek</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Final CTA Section -->
+<!-- Final CTA -->
 <section class="bd-section-tight" style="background:var(--bd-teal);">
     <div class="container text-center text-white py-3">
         <h2 class="text-white mb-3">Ready to move without the cardboard?</h2>
@@ -408,4 +510,3 @@
         <a class="btn btn-light btn-lg fw-semibold" asp-controller="Booking" asp-action="Index">Book your totes</a>
     </div>
 </section>
-

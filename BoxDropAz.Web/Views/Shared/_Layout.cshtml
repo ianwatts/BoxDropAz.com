@@ -12,7 +12,7 @@
         ? $"{Context.Request.Scheme}://{Context.Request.Host}"
         : configuredBaseUrl;
     var canonical = $"{siteBaseUrl}{Context.Request.Path}";
-    var socialImage = $"{siteBaseUrl}/images/hero_right.webp";
+    var socialImage = $"{siteBaseUrl}/images/hero_delivery.webp";
     var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
     var googleSiteVerification = Configuration["Seo:GoogleSiteVerification"];

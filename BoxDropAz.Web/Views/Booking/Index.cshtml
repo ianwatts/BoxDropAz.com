@@ -35,10 +35,10 @@
         {
             <p class="text-muted text-center mb-4">
                 Every bundle is a 7 day rental including delivery and pickup.
-                Not sure? <a asp-controller="Home" asp-action="Faq">See the sizing guide</a>.
+                Not sure? <a asp-controller="Home" asp-action="Index" asp-fragment="quiz">Take the sizing quiz</a>.
             </p>
 
-            <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3 justify-content-center">
+            <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3 justify-content-center bd-booking-select">
                 @foreach (var package in Model.Packages)
                 {
                     <div class="col">

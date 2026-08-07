@@ -914,6 +914,41 @@ a:hover {
 @media (max-width: 767.98px) {
     .bd-section { padding: 3rem 0; }
     .bd-hero { padding: 3rem 0 2.5rem; }
+
+    .bd-hero-ctas {
+        flex-direction: column;
+    }
+
+    .bd-hero-ctas .btn {
+        width: 100%;
+    }
+
+    .bd-zip-bar {
+        max-width: none;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: .35rem;
+        padding: .5rem !important;
+    }
+
+    .bd-zip-bar .btn {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    .bd-zip-bar .form-control {
+        min-height: 48px;
+        font-size: 1rem;
+    }
+
+    .bd-quiz-option {
+        min-height: 48px;
+    }
+
+    .bd-price-card .btn {
+        min-height: 48px;
+        font-size: 1rem;
+    }
 }
 
 @media print {
@@ -946,5 +981,176 @@ a:hover {
 }
 .border-light-subtle {
     border-color: #f1f5f9 !important;
+}
+
+/* ---------- Homepage conversion sections ---------- */
+
+.bd-move-counter {
+    color: var(--bd-slate);
+    font-size: .95rem;
+}
+
+.bd-zip-bar {
+    max-width: 28rem;
+}
+
+.bd-audience-item {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    padding: 1.35rem 1.25rem;
+    height: 100%;
+}
+
+.bd-visual-step {
+    text-align: left;
+}
+
+.bd-visual-step .bd-step-number {
+    margin-bottom: .85rem;
+}
+
+.bd-visual-step img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--bd-line);
+}
+
+.bd-check-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bd-check-list li {
+    position: relative;
+    padding-left: 1.6rem;
+    margin-bottom: .65rem;
+    color: var(--bd-slate);
+}
+
+.bd-check-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .35rem;
+    width: .85rem;
+    height: .85rem;
+    border-radius: 50%;
+    background: var(--bd-teal);
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 1px var(--bd-teal);
+}
+
+.bd-quiz-options {
+    display: grid;
+    gap: .65rem;
+}
+
+.bd-quiz-option {
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    font-weight: 600;
+    color: var(--bd-ink);
+    transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+
+.bd-quiz-option:hover {
+    border-color: var(--bd-teal-light);
+    background: var(--bd-teal-50);
+}
+
+.bd-quiz-option.is-selected {
+    border-color: var(--bd-teal);
+    background: var(--bd-teal-50);
+    box-shadow: 0 0 0 1px var(--bd-teal);
+}
+
+.bd-quiz-result {
+    background: var(--bd-teal-50);
+    border: 1px solid var(--bd-teal-100);
+    border-radius: var(--bd-radius);
+    padding: 1.1rem 1.15rem;
+}
+
+.bd-compare-table {
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    overflow: hidden;
+    background: #fff;
+}
+
+.bd-compare-table thead th {
+    background: var(--bd-surface);
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--bd-muted);
+    border-bottom-width: 1px;
+}
+
+.bd-compare-table th,
+.bd-compare-table td {
+    padding: .85rem 1rem;
+    vertical-align: top;
+}
+
+.bd-compare-highlight {
+    background: var(--bd-teal-50);
+    color: var(--bd-ink);
+    border-left: 2px solid var(--bd-teal);
+}
+
+.bd-benefit {
+    padding: .25rem;
+}
+
+.text-teal {
+    color: var(--bd-teal) !important;
+}
+
+.bd-testimonial {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    padding: 1.35rem 1.25rem;
+    height: 100%;
+    margin: 0;
+}
+
+.bd-testimonial p {
+    color: var(--bd-ink);
+    line-height: 1.55;
+}
+
+.bd-agent-panel {
+    background: #fff;
+    border: 1px solid var(--bd-line);
+    border-radius: var(--bd-radius);
+    box-shadow: var(--bd-shadow-sm);
+    padding: 1.35rem 1.25rem;
+    height: 100%;
+}
+
+.bd-reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity .45s ease, transform .45s ease;
+}
+
+.bd-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+.bd-booking-select .btn {
+    min-height: 48px;
+}
+
+.bd-app-header + .bd-section .btn-lg.w-100 {
+    min-height: 52px;
 }
 
