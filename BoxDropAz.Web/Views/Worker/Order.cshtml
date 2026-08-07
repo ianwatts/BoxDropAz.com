@@ -4,12 +4,16 @@
     ViewData["Title"] = order.OrderNumber;
     var fees = Model.Region?.DamageFees;
     var dateString = Model.ManifestDate.ToString("yyyy-MM-dd");
+    var viewMode = ManifestViewModes.Normalize(Model.ViewMode);
 }
 
 <div class="bd-app-header">
     <div class="container">
         <a class="text-muted small text-decoration-none"
-           asp-action="Index" asp-route-date="@dateString" asp-route-region="@order.RegionId">
+           asp-action="Index"
+           asp-route-date="@dateString"
+           asp-route-view="@viewMode"
+           asp-route-region="@order.RegionId">
             <i class="bi bi-arrow-left me-1"></i>Back to manifest
         </a>
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mt-1">
@@ -173,6 +177,7 @@
                                   class="mb-2" data-submit-once>
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="date" value="@dateString" />
+                                <input type="hidden" name="view" value="@viewMode" />
                                 <button type="submit" class="btn btn-primary w-100">Mark delivered</button>
                             </form>
                         }
@@ -189,6 +194,7 @@
                             <form asp-action="MarkPickedUp" asp-route-id="@order.OrderId" method="post" data-submit-once>
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="date" value="@dateString" />
+                                <input type="hidden" name="view" value="@viewMode" />
                                 <label class="form-label small" for="cratesReturned">Totes with lids returned</label>
                                 <input type="number" name="cratesReturned" id="cratesReturned" class="form-control mb-2"
                                        value="@order.CrateCount" min="0" max="@order.CrateCount" />

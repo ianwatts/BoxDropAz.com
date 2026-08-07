@@ -7,16 +7,24 @@
     var city = Model.IsPickup ? order.PickupCity : order.DeliveryCity;
     var zip = Model.IsPickup ? order.PickupZip : order.DeliveryZip;
     var window = Model.IsPickup ? order.PickupWindow : order.DeliveryWindow;
+    var stopDate = Model.IsPickup ? order.PickupDate : order.DeliveryDate;
     var mapQuery = Uri.EscapeDataString($"{line1}, {city}, AZ {zip}");
     var driverNote = order.Notes.FirstOrDefault();
     var dateString = Model.ManifestDate.ToString("yyyy-MM-dd");
+    var viewMode = ManifestViewModes.Normalize(Model.ViewMode);
 }
 
 <div class="bd-card h-100 @(done ? "bd-stop-done" : "")">
     <div class="bd-card-body">
         <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
-                <div class="text-muted small">@order.OrderNumber &middot; @window</div>
+                <div class="text-muted small">
+                    @order.OrderNumber &middot; @window
+                    @if (Model.ShowStopDate && !string.IsNullOrWhiteSpace(stopDate))
+                    {
+                        <text> &middot; @stopDate</text>
+                    }
+                </div>
                 <h3 class="h6 fw-bold mb-0">@order.CustomerName</h3>
             </div>
             @if (done)
@@ -77,6 +85,7 @@
                 <form asp-action="MarkPickedUp" asp-route-id="@order.OrderId" method="post" data-submit-once>
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="date" value="@dateString" />
+                    <input type="hidden" name="view" value="@viewMode" />
                     <div class="row g-2 align-items-end">
                         <div class="col-4">
                             <label class="form-label small" for="crates-@order.OrderId">Totes back</label>
@@ -99,6 +108,7 @@
                 <form asp-action="MarkDelivered" asp-route-id="@order.OrderId" method="post" data-submit-once>
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="date" value="@dateString" />
+                    <input type="hidden" name="view" value="@viewMode" />
                     <button type="submit" class="btn btn-primary w-100">Mark delivered</button>
                 </form>
             }
@@ -107,7 +117,8 @@
         <a class="btn btn-outline-secondary w-100 mt-2"
            asp-action="Order" asp-route-id="@order.OrderId"
            asp-route-pickup="@Model.IsPickup.ToString().ToLowerInvariant()"
-           asp-route-date="@dateString">
+           asp-route-date="@dateString"
+           asp-route-view="@viewMode">
             Details@(order.Damages.Count > 0 ? $" ({order.Damages.Count} reported)" : "")
         </a>
     </div>

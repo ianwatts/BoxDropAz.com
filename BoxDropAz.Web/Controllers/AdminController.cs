@@ -547,6 +547,11 @@ public sealed class AdminController : Controller
         await _orders.SaveAsync(order, ct);
         await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
 
+        if (previous != status)
+        {
+            await _notifier.NotifyStaffStatusChangedAsync(order, previous, status, admin.DisplayName, ct);
+        }
+
         TempData["Success"] = $"Status set to {StatusBadge.LabelFor(status)}.";
         return RedirectToAction(nameof(Order), new { id });
     }
@@ -587,6 +592,8 @@ public sealed class AdminController : Controller
         {
             await _notifier.SendCancellationAsync(order, explanation, ct);
         }
+
+        await _notifier.NotifyStaffCancellationAsync(order, explanation, ct);
 
         // Refunds go through Stripe by hand: a partial refund is a judgement call, not a rule.
         TempData["Success"] = order.AmountPaidCents > 0
@@ -685,9 +692,99 @@ public sealed class AdminController : Controller
         });
 
         await _orders.SaveAsync(order, ct);
+        await _notifier.NotifyStaffDamagePendingAsync(order, order.Damages[^1], ct);
 
         TempData["Success"] = "Charge queued. Approve it below to put it on the card.";
         return RedirectToAction(nameof(Order), new { id });
+    }
+
+    // ---------- notifications ----------
+
+    [HttpGet("notifications")]
+    public async Task<IActionResult> Notifications(string? region, CancellationToken ct)
+    {
+        ViewData["Title"] = "Notifications";
+
+        var (scoped, canSwitch) = await ResolveRegionAsync(region, ct);
+        var model = new AdminNotificationsViewModel
+        {
+            Region = scoped,
+            AllRegions = await _regions.GetAllAsync(ct),
+            CanSwitchRegion = canSwitch
+        };
+
+        if (scoped is null)
+        {
+            return View(model);
+        }
+
+        var settings = scoped.Notifications;
+        if (settings is null || settings.Subscriptions.Count == 0)
+        {
+            settings = RegionNotificationSettings.CreateDefaults();
+        }
+
+        model.Types = NotificationTypes.All.Select(info =>
+        {
+            var sub = settings.For(info.Type);
+            return new AdminNotificationTypeRow
+            {
+                Type = info.Type,
+                Label = info.Label,
+                Description = info.Description,
+                NotifySaaSAdmin = sub.NotifySaaSAdmin,
+                NotifyRegionalAdmin = sub.NotifyRegionalAdmin,
+                NotifyWorker = sub.NotifyWorker,
+                ExtraUserIds = sub.ExtraUserIds.ToList()
+            };
+        }).ToList();
+
+        model.Staff = await LoadStaffOptionsAsync(scoped.Id, ct);
+        return View(model);
+    }
+
+    [HttpPost("notifications")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveNotifications(
+        string region,
+        List<AdminNotificationTypeRow>? types,
+        CancellationToken ct)
+    {
+        var (scoped, _) = await ResolveRegionAsync(region, ct);
+        if (scoped is null)
+        {
+            return NotFound();
+        }
+
+        var settings = new RegionNotificationSettings
+        {
+            Subscriptions = (types ?? new List<AdminNotificationTypeRow>())
+                .Where(t => !string.IsNullOrWhiteSpace(t.Type))
+                .Select(t => new NotificationSubscription
+                {
+                    Type = t.Type.Trim(),
+                    NotifySaaSAdmin = t.NotifySaaSAdmin,
+                    NotifyRegionalAdmin = t.NotifyRegionalAdmin,
+                    NotifyWorker = t.NotifyWorker,
+                    ExtraUserIds = (t.ExtraUserIds ?? new List<string>())
+                        .Where(id => !string.IsNullOrWhiteSpace(id))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList()
+                })
+                .ToList()
+        };
+
+        // Keep any known types the form omitted (shouldn't happen) so defaults aren't wiped.
+        foreach (var info in NotificationTypes.All)
+        {
+            settings.For(info.Type);
+        }
+
+        scoped.Notifications = settings;
+        await _regions.SaveAsync(scoped, ct);
+
+        TempData["Success"] = "Notification recipients saved.";
+        return RedirectToAction(nameof(Notifications), new { region = scoped.Id });
     }
 
     // ---------- users ----------
@@ -904,6 +1001,52 @@ public sealed class AdminController : Controller
             : await _regions.GetByIdAsync(admin.RegionId, ct);
 
         return (own, false);
+    }
+
+    private async Task<List<AdminStaffOption>> LoadStaffOptionsAsync(string regionId, CancellationToken ct)
+    {
+        var staffRoles = new[] { Roles.SaaSAdmin, Roles.RegionalAdmin, Roles.Worker };
+        var byId = new Dictionary<string, AdminStaffOption>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var role in staffRoles)
+        {
+            var users = await _userManager.GetUsersInRoleAsync(role);
+            foreach (var user in users)
+            {
+                if (user.IsDisabled || string.IsNullOrWhiteSpace(user.Email))
+                {
+                    continue;
+                }
+
+                // SaaS admins are always selectable; regional staff must belong to this market.
+                if (!string.Equals(role, Roles.SaaSAdmin, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(user.RegionId, regionId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!byId.TryGetValue(user.Id, out var option))
+                {
+                    option = new AdminStaffOption
+                    {
+                        UserId = user.Id,
+                        DisplayName = user.DisplayName,
+                        Email = user.Email!
+                    };
+                    byId[user.Id] = option;
+                }
+
+                if (!option.Roles.Contains(role, StringComparer.OrdinalIgnoreCase))
+                {
+                    option.Roles.Add(role);
+                }
+            }
+        }
+
+        return byId.Values
+            .OrderBy(u => u.DisplayName)
+            .ThenBy(u => u.Email)
+            .ToList();
     }
 
     private async Task<RentalOrder?> LoadInScopeAsync(string orderId, CancellationToken ct)

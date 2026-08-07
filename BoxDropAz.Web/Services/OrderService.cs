@@ -69,6 +69,16 @@ public sealed class OrderService : IOrderService
     public Task<List<RentalOrder>> GetPickupsAsync(string regionId, DateOnly date, CancellationToken ct = default)
         => QueryByDateAsync(regionId, date, DynamoDbTableNames.RentalOrderByRegionAndPickupDateIndex, ct);
 
+    public Task<List<RentalOrder>> GetDeliveriesBetweenAsync(
+        string regionId, DateOnly fromInclusive, DateOnly toInclusive, CancellationToken ct = default)
+        => QueryByDateRangeAsync(
+            regionId, fromInclusive, toInclusive, DynamoDbTableNames.RentalOrderByRegionAndDeliveryDateIndex, ct);
+
+    public Task<List<RentalOrder>> GetPickupsBetweenAsync(
+        string regionId, DateOnly fromInclusive, DateOnly toInclusive, CancellationToken ct = default)
+        => QueryByDateRangeAsync(
+            regionId, fromInclusive, toInclusive, DynamoDbTableNames.RentalOrderByRegionAndPickupDateIndex, ct);
+
     public async Task<List<RentalOrder>> GetCreatedBetweenAsync(string regionId, DateTime fromUtc, DateTime toUtc, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(regionId))
@@ -129,6 +139,37 @@ public sealed class OrderService : IOrderService
             .GetRemainingAsync(ct);
 
         return orders;
+    }
+
+    private async Task<List<RentalOrder>> QueryByDateRangeAsync(
+        string regionId,
+        DateOnly fromInclusive,
+        DateOnly toInclusive,
+        string indexName,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(regionId))
+        {
+            return new List<RentalOrder>();
+        }
+
+        if (toInclusive < fromInclusive)
+        {
+            (fromInclusive, toInclusive) = (toInclusive, fromInclusive);
+        }
+
+        if (fromInclusive == toInclusive)
+        {
+            return await QueryByDateAsync(regionId, fromInclusive, indexName, ct);
+        }
+
+        using var ctx = _data.CreateContext();
+        return await ctx.QueryAsync<RentalOrder>(
+            regionId,
+            QueryOperator.Between,
+            new object[] { fromInclusive.ToString("yyyy-MM-dd"), toInclusive.ToString("yyyy-MM-dd") },
+            new QueryConfig { IndexName = indexName })
+            .GetRemainingAsync(ct);
     }
 
     private static void RequireIndexKey(string? value, string name)

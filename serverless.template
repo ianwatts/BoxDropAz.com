@@ -27,7 +27,7 @@ Parameters:
     Default: "support@boxdropaz.com"
   SupportPhone:
     Type: String
-    Default: "(480) 555-0142"
+    Default: "(480) 788-3337"
   SesFromEmail:
     Type: String
     Default: "support@boxdropaz.com"

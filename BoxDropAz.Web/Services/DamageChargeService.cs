@@ -143,6 +143,8 @@ public sealed class DamageChargeService
                 $"Charged {Money.Format(totalCents)} and emailed the renter a breakdown.", totalCents);
         }
 
+        await _notifier.NotifyStaffDamageChargeFailedAsync(order, totalCents, failure, ct);
+
         return new DamageChargeResult(false,
             $"The card was declined: {failure} The lines are marked failed so you can follow up.", 0);
     }

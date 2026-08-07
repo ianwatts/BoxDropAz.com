@@ -238,3 +238,44 @@ public sealed class AdminUserListViewModel
 
     public IReadOnlyList<string> AssignableRoles { get; set; } = Array.Empty<string>();
 }
+
+public sealed class AdminNotificationsViewModel
+{
+    public Region? Region { get; set; }
+
+    public List<Region> AllRegions { get; set; } = new();
+
+    public bool CanSwitchRegion { get; set; }
+
+    public List<AdminNotificationTypeRow> Types { get; set; } = new();
+
+    public List<AdminStaffOption> Staff { get; set; } = new();
+}
+
+public sealed class AdminNotificationTypeRow
+{
+    public required string Type { get; set; }
+
+    public required string Label { get; set; }
+
+    public required string Description { get; set; }
+
+    public bool NotifySaaSAdmin { get; set; }
+
+    public bool NotifyRegionalAdmin { get; set; }
+
+    public bool NotifyWorker { get; set; }
+
+    public List<string> ExtraUserIds { get; set; } = new();
+}
+
+public sealed class AdminStaffOption
+{
+    public required string UserId { get; set; }
+
+    public required string DisplayName { get; set; }
+
+    public required string Email { get; set; }
+
+    public List<string> Roles { get; set; } = new();
+}

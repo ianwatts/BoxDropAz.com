@@ -15,20 +15,20 @@ public sealed class HomeController : Controller
 {
     private readonly IRegionService _regions;
     private readonly ICatalogService _catalog;
-    private readonly IEmailService _email;
+    private readonly StaffNotifier _staff;
     private readonly IConfiguration _config;
     private readonly ILogger<HomeController> _logger;
 
     public HomeController(
         IRegionService regions,
         ICatalogService catalog,
-        IEmailService email,
+        StaffNotifier staff,
         IConfiguration config,
         ILogger<HomeController> logger)
     {
         _regions = regions;
         _catalog = catalog;
-        _email = email;
+        _staff = staff;
         _config = config;
         _logger = logger;
     }
@@ -169,23 +169,19 @@ public sealed class HomeController : Controller
             return View(model);
         }
 
-        var adminEmail = _config["Site:AdminEmail"] ?? _config["Site:SupportEmail"];
-        if (!string.IsNullOrWhiteSpace(adminEmail))
-        {
-            var body = EmailTemplates.Wrap(
-                "New website enquiry",
-                EmailTemplates.DetailRows(
-                    ("Name", model.Name),
-                    ("Email", model.Email),
-                    ("Phone", model.Phone ?? "-"))
-                + $"<p style=\"white-space:pre-wrap;\">{WebUtility.HtmlEncode(model.Message)}</p>");
+        var body = EmailTemplates.Wrap(
+            "New website enquiry",
+            EmailTemplates.DetailRows(
+                ("Name", model.Name),
+                ("Email", model.Email),
+                ("Phone", model.Phone ?? "-"))
+            + $"<p style=\"white-space:pre-wrap;\">{WebUtility.HtmlEncode(model.Message)}</p>");
 
-            await _email.SendAsync(adminEmail, $"Website enquiry from {model.Name}", body, ct);
-        }
-        else
-        {
-            _logger.LogInformation("Contact form submitted by {Email} but no admin address is configured", model.Email);
-        }
+        await _staff.NotifyGlobalAsync(
+            NotificationTypes.ContactForm,
+            $"Website enquiry from {model.Name}",
+            body,
+            ct);
 
         TempData["Success"] = "Thanks for reaching out. We'll get back to you within one business day.";
         return RedirectToAction(nameof(Contact));

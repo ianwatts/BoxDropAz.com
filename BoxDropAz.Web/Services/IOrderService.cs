@@ -17,6 +17,14 @@ public interface IOrderService
     /// <summary>Orders being collected on a date, for the worker manifest.</summary>
     Task<List<RentalOrder>> GetPickupsAsync(string regionId, DateOnly date, CancellationToken ct = default);
 
+    /// <summary>Orders being delivered in an inclusive date range.</summary>
+    Task<List<RentalOrder>> GetDeliveriesBetweenAsync(
+        string regionId, DateOnly fromInclusive, DateOnly toInclusive, CancellationToken ct = default);
+
+    /// <summary>Orders being collected in an inclusive date range.</summary>
+    Task<List<RentalOrder>> GetPickupsBetweenAsync(
+        string regionId, DateOnly fromInclusive, DateOnly toInclusive, CancellationToken ct = default);
+
     /// <summary>Orders created inside a window, for admin revenue reporting.</summary>
     Task<List<RentalOrder>> GetCreatedBetweenAsync(string regionId, DateTime fromUtc, DateTime toUtc, CancellationToken ct = default);
 

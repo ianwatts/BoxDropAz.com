@@ -158,9 +158,9 @@
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i>Admin</a></li>
                     }
-                    @if (User.IsInRole(Roles.Worker))
+                    @if (User.IsInRole(Roles.Worker) || User.IsInRole(Roles.RegionalAdmin) || User.IsInRole(Roles.SaaSAdmin))
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Worker" asp-action="Index"><i class="bi bi-clipboard-check me-1"></i>Manifest</a></li>
+                        <li class="nav-item"><a class="@NavClass("Worker")" asp-controller="Worker" asp-action="Index"><i class="bi bi-clipboard-check me-1"></i>Manifest</a></li>
                     }
                     @if (User.IsInRole(Roles.Realtor))
                     {

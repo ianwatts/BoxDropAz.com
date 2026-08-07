@@ -142,6 +142,7 @@ public sealed class Startup
         services.AddScoped<ISubscriptionService, SubscriptionService>();
         services.AddScoped<IStripeGateway, StripeGateway>();
         services.AddScoped<IStripeEventStore, StripeEventStore>();
+        services.AddScoped<StaffNotifier>();
         services.AddScoped<OrderNotifier>();
         services.AddScoped<GiftNotifier>();
         services.AddScoped<OrderCheckoutService>();

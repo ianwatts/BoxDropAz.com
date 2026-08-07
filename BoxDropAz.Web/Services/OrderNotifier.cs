@@ -1,4 +1,5 @@
 using BoxDropAz.Core.Models.Orders;
+using BoxDropAz.Core.Models.Regions;
 using BoxDropAz.Core.Services;
 
 namespace BoxDropAz.Web.Services;
@@ -11,12 +12,14 @@ namespace BoxDropAz.Web.Services;
 public sealed class OrderNotifier
 {
     private readonly IEmailService _email;
-    private readonly IConfiguration _config;
+    private readonly StaffNotifier _staff;
+    private readonly SiteUrls _urls;
 
-    public OrderNotifier(IEmailService email, IConfiguration config)
+    public OrderNotifier(IEmailService email, StaffNotifier staff, SiteUrls urls)
     {
         _email = email;
-        _config = config;
+        _staff = staff;
+        _urls = urls;
     }
 
     public async Task SendOrderConfirmationAsync(RentalOrder order, string? dashboardUrl, CancellationToken ct = default)
@@ -45,9 +48,15 @@ public sealed class OrderNotifier
             dashboardUrl);
 
         await _email.SendAsync(order.CustomerEmail, $"Booking confirmed - {order.OrderNumber}", body, ct);
-        await NotifyAdminAsync(
+        await _staff.NotifyRegionAsync(
+            order.RegionId,
+            NotificationTypes.NewBooking,
             $"New booking {order.OrderNumber} ({Money.Format(order.AmountPaidCents)})",
-            EmailTemplates.Wrap("New booking", rows),
+            EmailTemplates.Wrap(
+                "New booking",
+                rows,
+                "Open in admin",
+                _urls.AdminOrder(order.OrderId)),
             ct);
     }
 
@@ -95,6 +104,97 @@ public sealed class OrderNotifier
         await _email.SendAsync(order.CustomerEmail, $"Booking cancelled - {order.OrderNumber}", body, ct);
     }
 
+    public async Task NotifyStaffCancellationAsync(RentalOrder order, string reason, CancellationToken ct = default)
+    {
+        await _staff.NotifyRegionAsync(
+            order.RegionId,
+            NotificationTypes.OrderCancelled,
+            $"Order cancelled {order.OrderNumber}",
+            EmailTemplates.Wrap(
+                "Order cancelled",
+                EmailTemplates.DetailRows(
+                    ("Order", order.OrderNumber),
+                    ("Customer", order.CustomerName),
+                    ("Email", order.CustomerEmail),
+                    ("Reason", reason),
+                    ("Delivery", $"{FormatDate(order.DeliveryDate)}, {order.DeliveryWindow}"),
+                    ("Amount paid", Money.Format(order.AmountPaidCents))),
+                "Open in admin",
+                _urls.AdminOrder(order.OrderId)),
+            ct);
+    }
+
+    public async Task NotifyStaffStatusChangedAsync(
+        RentalOrder order,
+        OrderStatus previous,
+        OrderStatus current,
+        string changedBy,
+        CancellationToken ct = default)
+    {
+        await _staff.NotifyRegionAsync(
+            order.RegionId,
+            NotificationTypes.OrderStatusChanged,
+            $"{order.OrderNumber}: {StatusBadge.LabelFor(previous)} → {StatusBadge.LabelFor(current)}",
+            EmailTemplates.Wrap(
+                "Pickup / drop-off update",
+                EmailTemplates.DetailRows(
+                    ("Order", order.OrderNumber),
+                    ("Customer", order.CustomerName),
+                    ("Previous", StatusBadge.LabelFor(previous)),
+                    ("Now", StatusBadge.LabelFor(current)),
+                    ("Updated by", changedBy),
+                    ("Delivery", $"{FormatDate(order.DeliveryDate)}, {order.DeliveryWindow}"),
+                    ("Pickup", $"{FormatDate(order.PickupDate)}, {order.PickupWindow}")),
+                "Open in admin",
+                _urls.AdminOrder(order.OrderId)),
+            ct);
+    }
+
+    public async Task NotifyStaffDamagePendingAsync(
+        RentalOrder order,
+        DamageLine damage,
+        CancellationToken ct = default)
+    {
+        await _staff.NotifyRegionAsync(
+            order.RegionId,
+            NotificationTypes.DamagePending,
+            $"Damage pending review — {order.OrderNumber}",
+            EmailTemplates.Wrap(
+                "Damage pending review",
+                EmailTemplates.DetailRows(
+                    ("Order", order.OrderNumber),
+                    ("Customer", order.CustomerName),
+                    ("Item", $"{damage.Quantity} × {damage.Kind}"),
+                    ("Amount", Money.Format(damage.TotalCents)),
+                    ("Reported by", damage.ReportedByName),
+                    ("Notes", damage.Description)),
+                "Open in admin",
+                _urls.AdminOrder(order.OrderId)),
+            ct);
+    }
+
+    public async Task NotifyStaffDamageChargeFailedAsync(
+        RentalOrder order,
+        int totalCents,
+        string? failure,
+        CancellationToken ct = default)
+    {
+        await _staff.NotifyRegionAsync(
+            order.RegionId,
+            NotificationTypes.DamageChargeFailed,
+            $"Damage charge failed — {order.OrderNumber}",
+            EmailTemplates.Wrap(
+                "Damage charge failed",
+                EmailTemplates.DetailRows(
+                    ("Order", order.OrderNumber),
+                    ("Customer", order.CustomerName),
+                    ("Amount", Money.Format(totalCents)),
+                    ("Failure", failure ?? "Unknown error")),
+                "Open in admin",
+                _urls.AdminOrder(order.OrderId)),
+            ct);
+    }
+
     public async Task SendAccountSetupAsync(string email, string fullName, string setPasswordUrl, CancellationToken ct = default)
     {
         var body = EmailTemplates.Wrap(
@@ -105,15 +205,6 @@ public sealed class OrderNotifier
             setPasswordUrl);
 
         await _email.SendAsync(email, "Set your BoxDrop AZ password", body, ct);
-    }
-
-    private async Task NotifyAdminAsync(string subject, string body, CancellationToken ct)
-    {
-        var adminEmail = _config["Site:AdminEmail"];
-        if (!string.IsNullOrWhiteSpace(adminEmail))
-        {
-            await _email.SendAsync(adminEmail, subject, body, ct);
-        }
     }
 
     private static string FormatDate(string isoDate)

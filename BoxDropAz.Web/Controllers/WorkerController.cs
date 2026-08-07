@@ -22,6 +22,7 @@ public sealed class WorkerController : Controller
     private readonly IRegionService _regions;
     private readonly InventoryService _inventory;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly OrderNotifier _notifier;
     private readonly ILogger<WorkerController> _logger;
 
     public WorkerController(
@@ -29,59 +30,77 @@ public sealed class WorkerController : Controller
         IRegionService regions,
         InventoryService inventory,
         UserManager<ApplicationUser> userManager,
+        OrderNotifier notifier,
         ILogger<WorkerController> logger)
     {
         _orders = orders;
         _regions = regions;
         _inventory = inventory;
         _userManager = userManager;
+        _notifier = notifier;
         _logger = logger;
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(string? date, string? region, CancellationToken ct)
+    public async Task<IActionResult> Index(string? date, string? region, string? view, CancellationToken ct)
     {
-        ViewData["Title"] = "Today's manifest";
+        var viewMode = ManifestViewModes.Normalize(view);
+        var anchorDate = ParseDate(date);
+        var (startDate, endDate) = ResolveRange(anchorDate, viewMode);
 
-        var manifestDate = ParseDate(date);
+        ViewData["Title"] = viewMode switch
+        {
+            ManifestViewModes.Week => "Weekly manifest",
+            ManifestViewModes.Month => "Monthly manifest",
+            _ => "Today's manifest"
+        };
+
         var (scopedRegion, canSwitch) = await ResolveRegionAsync(region, ct);
 
         if (scopedRegion is null)
         {
             return View(new ManifestViewModel
             {
-                Date = manifestDate,
+                Date = anchorDate,
+                StartDate = startDate,
+                EndDate = endDate,
+                ViewMode = viewMode,
                 AllRegions = await _regions.GetActiveAsync(ct),
                 CanSwitchRegion = canSwitch
             });
         }
 
-        var deliveries = await _orders.GetDeliveriesAsync(scopedRegion.Id, manifestDate, ct);
-        var pickups = await _orders.GetPickupsAsync(scopedRegion.Id, manifestDate, ct);
+        var deliveries = await _orders.GetDeliveriesBetweenAsync(scopedRegion.Id, startDate, endDate, ct);
+        var pickups = await _orders.GetPickupsBetweenAsync(scopedRegion.Id, startDate, endDate, ct);
 
         return View(new ManifestViewModel
         {
-            Date = manifestDate,
+            Date = anchorDate,
+            StartDate = startDate,
+            EndDate = endDate,
+            ViewMode = viewMode,
             Region = scopedRegion,
             AllRegions = await _regions.GetActiveAsync(ct),
             CanSwitchRegion = canSwitch,
             // An unpaid order isn't a real stop, and a cancelled one must not be driven to.
             Deliveries = deliveries
                 .Where(o => o.Status is OrderStatus.Confirmed or OrderStatus.OutForDelivery or OrderStatus.Delivered)
-                .OrderBy(o => o.DeliveryWindow)
+                .OrderBy(o => o.DeliveryDate)
+                .ThenBy(o => o.DeliveryWindow)
                 .ThenBy(o => o.DeliveryZip)
                 .ToList(),
             Pickups = pickups
                 .Where(o => o.Status is OrderStatus.Delivered or OrderStatus.OutForPickup or OrderStatus.Completed)
-                .OrderBy(o => o.PickupWindow)
+                .OrderBy(o => o.PickupDate)
+                .ThenBy(o => o.PickupWindow)
                 .ThenBy(o => o.PickupZip)
                 .ToList(),
-            RestockTasks = await _inventory.GetRestockTasksAsync(scopedRegion.Id, manifestDate, ct)
+            RestockTasks = await _inventory.GetRestockTasksAsync(scopedRegion.Id, endDate, ct)
         });
     }
 
     [HttpGet("order/{id}")]
-    public async Task<IActionResult> Order(string id, bool pickup, string? date, CancellationToken ct)
+    public async Task<IActionResult> Order(string id, bool pickup, string? date, string? view, CancellationToken ct)
     {
         var order = await LoadInScopeAsync(id, ct);
         if (order is null)
@@ -96,13 +115,14 @@ public sealed class WorkerController : Controller
             Order = order,
             Region = await _regions.GetByIdAsync(order.RegionId, ct),
             IsPickup = pickup,
-            ManifestDate = ParseDate(date)
+            ManifestDate = ParseDate(date),
+            ViewMode = ManifestViewModes.Normalize(view)
         });
     }
 
     [HttpPost("order/{id}/delivered")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkDelivered(string id, string? date, CancellationToken ct)
+    public async Task<IActionResult> MarkDelivered(string id, string? date, string? view, CancellationToken ct)
     {
         var order = await LoadInScopeAsync(id, ct);
         if (order is null)
@@ -113,7 +133,7 @@ public sealed class WorkerController : Controller
         if (order.DeliveredAtUtc is not null)
         {
             TempData["Info"] = $"{order.OrderNumber} was already marked delivered.";
-            return RedirectToAction(nameof(Index), new { date });
+            return RedirectToManifest(date, view);
         }
 
         var user = await RequireUserAsync();
@@ -124,12 +144,13 @@ public sealed class WorkerController : Controller
             {
                 TempData["Error"] =
                     $"Need at least {InventoryService.IndexCardsPerPack} colored index cards (1 pack) in inventory before delivery.";
-                return RedirectToAction(nameof(Index), new { date });
+                return RedirectToManifest(date, view);
             }
 
             order.IndexCardIssuedAtUtc = DateTime.UtcNow;
         }
 
+        var previous = order.Status;
         order.Status = OrderStatus.Delivered;
         order.DeliveredAtUtc = DateTime.UtcNow;
         order.Notes.Add(new OrderNote
@@ -143,9 +164,10 @@ public sealed class WorkerController : Controller
         });
 
         await _orders.SaveAsync(order, ct);
+        await _notifier.NotifyStaffStatusChangedAsync(order, previous, OrderStatus.Delivered, user.DisplayName, ct);
 
         TempData["Success"] = $"{order.OrderNumber} marked delivered.";
-        return RedirectToAction(nameof(Index), new { date });
+        return RedirectToManifest(date, view);
     }
 
     [HttpPost("order/{id}/picked-up")]
@@ -155,6 +177,7 @@ public sealed class WorkerController : Controller
         int cratesReturned,
         int dolliesReturned,
         string? date,
+        string? view,
         CancellationToken ct)
     {
         var order = await LoadInScopeAsync(id, ct);
@@ -166,12 +189,13 @@ public sealed class WorkerController : Controller
         if (order.PickedUpAtUtc is not null)
         {
             TempData["Info"] = $"{order.OrderNumber} was already marked collected.";
-            return RedirectToAction(nameof(Index), new { date });
+            return RedirectToManifest(date, view);
         }
 
         var user = await RequireUserAsync();
         var returned = Math.Clamp(cratesReturned, 0, order.CrateCount);
         var returnedDollies = Math.Clamp(dolliesReturned, 0, order.DollyCount);
+        var previous = order.Status;
 
         order.Status = OrderStatus.Completed;
         order.PickedUpAtUtc = DateTime.UtcNow;
@@ -189,13 +213,14 @@ public sealed class WorkerController : Controller
         // remember to file it separately.
         var missing = order.CrateCount - returned;
         var missingDollies = order.DollyCount - returnedDollies;
+        var newDamages = new List<DamageLine>();
         if (missing > 0)
         {
             var region = await _regions.GetByIdAsync(order.RegionId, ct);
             var unit = DamageKinds.UnitAmountCents(
                 DamageKinds.Crate, order.Terms, region?.DamageFees ?? new DamageFeeSchedule());
 
-            order.Damages.Add(new DamageLine
+            var line = new DamageLine
             {
                 Kind = DamageKinds.Crate,
                 Quantity = missing,
@@ -204,7 +229,9 @@ public sealed class WorkerController : Controller
                 Status = DamageChargeStatus.PendingReview,
                 ReportedByUserId = user.Id,
                 ReportedByName = user.DisplayName
-            });
+            };
+            order.Damages.Add(line);
+            newDamages.Add(line);
         }
 
         if (missingDollies > 0)
@@ -213,7 +240,7 @@ public sealed class WorkerController : Controller
             var unit = DamageKinds.UnitAmountCents(
                 DamageKinds.Dolly, order.Terms, region?.DamageFees ?? new DamageFeeSchedule());
 
-            order.Damages.Add(new DamageLine
+            var line = new DamageLine
             {
                 Kind = DamageKinds.Dolly,
                 Quantity = missingDollies,
@@ -222,17 +249,25 @@ public sealed class WorkerController : Controller
                 Status = DamageChargeStatus.PendingReview,
                 ReportedByUserId = user.Id,
                 ReportedByName = user.DisplayName
-            });
+            };
+            order.Damages.Add(line);
+            newDamages.Add(line);
         }
 
         await _orders.SaveAsync(order, ct);
         await _inventory.RecordMissingAssetsAsync(order.RegionId, missing, missingDollies, ct);
+        await _notifier.NotifyStaffStatusChangedAsync(order, previous, OrderStatus.Completed, user.DisplayName, ct);
+
+        foreach (var damage in newDamages)
+        {
+            await _notifier.NotifyStaffDamagePendingAsync(order, damage, ct);
+        }
 
         TempData["Success"] = missing > 0 || missingDollies > 0
             ? $"{order.OrderNumber} collected. Missing assets were queued for admin review and inventory replenishment."
             : $"{order.OrderNumber} collected, all totes, lids, and dollies accounted for.";
 
-        return RedirectToAction(nameof(Index), new { date });
+        return RedirectToManifest(date, view);
     }
 
     /// <summary>
@@ -280,6 +315,7 @@ public sealed class WorkerController : Controller
         });
 
         await _orders.SaveAsync(order, ct);
+        await _notifier.NotifyStaffDamagePendingAsync(order, order.Damages[^1], ct);
 
         _logger.LogInformation(
             "{Worker} reported {Quantity} x {Kind} on order {OrderNumber}",
@@ -301,6 +337,7 @@ public sealed class WorkerController : Controller
         int cardHolderPacksReceived,
         int cardPacksReceived,
         string? date,
+        string? view,
         CancellationToken ct)
     {
         var (region, _) = await ResolveRegionAsync(regionId, ct);
@@ -326,13 +363,46 @@ public sealed class WorkerController : Controller
               $"{Math.Max(0, cardHolderPacksReceived)} holder pack(s), and {Math.Max(0, cardPacksReceived)} card pack(s). " +
               "Only totes equipped with holders were added to usable stock."
             : "That inventory task was already completed or cancelled.";
-        return RedirectToAction(nameof(Index), new { date, region = regionId });
+        return RedirectToManifest(date, view, regionId);
     }
 
     // ---------- helpers ----------
 
+    private IActionResult RedirectToManifest(string? date, string? view, string? region = null)
+        => RedirectToAction(nameof(Index), new
+        {
+            date,
+            view = ManifestViewModes.Normalize(view),
+            region
+        });
+
     private static DateOnly ParseDate(string? value)
         => DateOnly.TryParse(value, out var parsed) ? parsed : DeliveryWindows.TodayInArizona();
+
+    private static (DateOnly Start, DateOnly End) ResolveRange(DateOnly anchor, string viewMode)
+    {
+        return viewMode switch
+        {
+            ManifestViewModes.Week =>
+            (
+                StartOfWeek(anchor),
+                StartOfWeek(anchor).AddDays(6)
+            ),
+            ManifestViewModes.Month =>
+            (
+                new DateOnly(anchor.Year, anchor.Month, 1),
+                new DateOnly(anchor.Year, anchor.Month, 1).AddMonths(1).AddDays(-1)
+            ),
+            _ => (anchor, anchor)
+        };
+    }
+
+    /// <summary>Monday-start week, matching typical operations planning.</summary>
+    private static DateOnly StartOfWeek(DateOnly date)
+    {
+        var offset = ((int)date.DayOfWeek + 6) % 7;
+        return date.AddDays(-offset);
+    }
 
     /// <summary>
     /// Workers see only their own region; admins can page through any of them.
@@ -366,7 +436,7 @@ public sealed class WorkerController : Controller
             return null;
         }
 
-        if (User.IsInRole(Roles.SaaSAdmin))
+        if (User.IsInRole(Roles.SaaSAdmin) || User.IsInRole(Roles.RegionalAdmin))
         {
             return order;
         }

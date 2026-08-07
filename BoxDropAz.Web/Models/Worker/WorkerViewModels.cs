@@ -4,9 +4,33 @@ using BoxDropAz.Core.Models.Regions;
 
 namespace BoxDropAz.Web.Models.Worker;
 
+public static class ManifestViewModes
+{
+    public const string Day = "day";
+    public const string Week = "week";
+    public const string Month = "month";
+
+    public static string Normalize(string? value)
+        => value?.Trim().ToLowerInvariant() switch
+        {
+            Week => Week,
+            Month => Month,
+            _ => Day
+        };
+}
+
 public sealed class ManifestViewModel
 {
     public DateOnly Date { get; set; }
+
+    /// <summary>Inclusive start of the visible range (same as Date for day view).</summary>
+    public DateOnly StartDate { get; set; }
+
+    /// <summary>Inclusive end of the visible range (same as Date for day view).</summary>
+    public DateOnly EndDate { get; set; }
+
+    /// <summary>day, week, or month.</summary>
+    public string ViewMode { get; set; } = ManifestViewModes.Day;
 
     public Region? Region { get; set; }
 
@@ -20,6 +44,8 @@ public sealed class ManifestViewModel
 
     public bool CanSwitchRegion { get; set; }
 
+    public bool IsMultiDay => StartDate != EndDate;
+
     public int TotalTotes => Deliveries.Sum(o => o.CrateCount);
 
     public int TotalDollies => Deliveries.Sum(o => o.DollyCount);
@@ -27,6 +53,13 @@ public sealed class ManifestViewModel
     public int DeliveriesRemaining => Deliveries.Count(o => o.DeliveredAtUtc is null);
 
     public int PickupsRemaining => Pickups.Count(o => o.PickedUpAtUtc is null);
+
+    public string RangeLabel => ViewMode switch
+    {
+        ManifestViewModes.Week => $"{StartDate:MMM d} – {EndDate:MMM d, yyyy}",
+        ManifestViewModes.Month => StartDate.ToString("MMMM yyyy"),
+        _ => Date.ToString("dddd, MMMM d")
+    };
 }
 
 public sealed class WorkerOrderViewModel
@@ -39,4 +72,8 @@ public sealed class WorkerOrderViewModel
     public bool IsPickup { get; set; }
 
     public DateOnly ManifestDate { get; set; }
+
+    public string ViewMode { get; set; } = ManifestViewModes.Day;
+
+    public bool ShowStopDate { get; set; }
 }

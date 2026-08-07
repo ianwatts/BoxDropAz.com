@@ -19,8 +19,15 @@
     <a class="@Tab("Schedule")" asp-controller="Admin" asp-action="Schedule" asp-route-region="@regionId">
         <i class="bi bi-calendar-week me-1"></i>Schedule
     </a>
+    <a class="bd-tab @(string.Equals(ViewContext.RouteData.Values["controller"] as string, "Worker", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+       asp-controller="Worker" asp-action="Index" asp-route-region="@regionId">
+        <i class="bi bi-clipboard-check me-1"></i>Manifest
+    </a>
     <a class="@Tab("Users")" asp-controller="Admin" asp-action="Users" asp-route-region="@regionId">
         <i class="bi bi-people me-1"></i>Users
+    </a>
+    <a class="@Tab("Notifications")" asp-controller="Admin" asp-action="Notifications" asp-route-region="@regionId">
+        <i class="bi bi-bell me-1"></i>Notifications
     </a>
     @if (User.IsInRole(Roles.SaaSAdmin))
     {

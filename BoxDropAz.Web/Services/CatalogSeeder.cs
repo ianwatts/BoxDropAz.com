@@ -51,7 +51,7 @@ public static class CatalogSeeder
             Slug = "phoenix",
             Description = "Serving the East Valley, Casa Grande, and Pinal County with free delivery and pickup in our core zone.",
             TimeZoneId = "US/Arizona",
-            SupportPhone = "(480) 555-0142",
+            SupportPhone = "(480) 788-3337",
             IsActive = true,
             DamageFees = new DamageFeeSchedule(),
             DeliveryZones = new List<DeliveryZone>

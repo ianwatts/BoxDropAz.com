@@ -143,6 +143,7 @@ public sealed class DashboardController : Controller
         await _orders.SaveAsync(order, ct);
         await _inventory.GetAssessmentAsync(order.RegionId, reconcileTasks: true, ct);
         await _notifier.SendCancellationAsync(order, order.CancellationReason, ct);
+        await _notifier.NotifyStaffCancellationAsync(order, order.CancellationReason, ct);
 
         TempData["Success"] =
             "Your rental is cancelled. Any refund due will land back on your card within 5 to 10 business days.";

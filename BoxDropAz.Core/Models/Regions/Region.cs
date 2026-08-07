@@ -39,6 +39,9 @@ public sealed class Region
     [DynamoDBProperty(typeof(JsonPropertyConverter<SchedulingSettings>))]
     public SchedulingSettings Scheduling { get; set; } = new();
 
+    [DynamoDBProperty(typeof(JsonPropertyConverter<RegionNotificationSettings>))]
+    public RegionNotificationSettings Notifications { get; set; } = RegionNotificationSettings.CreateDefaults();
+
     [DynamoDBProperty("CreatedAtUtc")]
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 

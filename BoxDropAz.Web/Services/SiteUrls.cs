@@ -19,6 +19,10 @@ public sealed class SiteUrls
 
     public string OrderDetail(string orderId) => Absolute($"dashboard/order/{orderId}");
 
+    public string AdminOrder(string orderId) => Absolute($"admin/orders/{orderId}");
+
+    public string AdminInventory(string regionId) => Absolute($"admin/inventory?region={regionId}");
+
     public string GiftClaim(string claimToken) => Absolute($"gift/claim/{claimToken}");
 
     public string AgentDashboard() => Absolute("agent/dashboard");

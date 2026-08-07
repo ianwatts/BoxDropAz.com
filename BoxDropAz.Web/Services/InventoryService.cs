@@ -2,6 +2,7 @@ using Amazon.DynamoDBv2.DataModel;
 using BoxDropAz.Core.Data;
 using BoxDropAz.Core.Models.Inventory;
 using BoxDropAz.Core.Models.Orders;
+using BoxDropAz.Core.Models.Regions;
 using BoxDropAz.Core.Services;
 using BoxDropAz.Web.Data;
 
@@ -57,17 +58,23 @@ public sealed class InventoryService
     private readonly DynamoDbDataHelper _data;
     private readonly IOrderService _orders;
     private readonly IRegionService _regions;
+    private readonly StaffNotifier _staff;
+    private readonly SiteUrls _urls;
     private readonly ILogger<InventoryService> _logger;
 
     public InventoryService(
         DynamoDbDataHelper data,
         IOrderService orders,
         IRegionService regions,
+        StaffNotifier staff,
+        SiteUrls urls,
         ILogger<InventoryService> logger)
     {
         _data = data;
         _orders = orders;
         _regions = regions;
+        _staff = staff;
+        _urls = urls;
         _logger = logger;
     }
 
@@ -411,6 +418,7 @@ public sealed class InventoryService
         }
 
         var taskToUpdate = assessment.OpenRestockTasks.FirstOrDefault();
+        var isNewTask = taskToUpdate is null;
         if (taskToUpdate is null)
         {
             taskToUpdate = new InventoryRecord
@@ -456,6 +464,27 @@ public sealed class InventoryService
             requiredDollies,
             requiredCardPacks,
             taskToUpdate.NeededByDate);
+
+        if (isNewTask)
+        {
+            await _staff.NotifyRegionAsync(
+                assessment.Inventory.RegionId,
+                NotificationTypes.InventoryRestock,
+                $"Inventory restock needed — {assessment.Inventory.RegionId}",
+                EmailTemplates.Wrap(
+                    "Inventory restock needed",
+                    EmailTemplates.DetailRows(
+                        ("Region", assessment.Inventory.RegionId),
+                        ("Totes", requiredTotes.ToString()),
+                        ("Dollies", requiredDollies.ToString()),
+                        ("Card holder packs", requiredCardHolderPacks.ToString()),
+                        ("Index-card packs", requiredCardPacks.ToString()),
+                        ("Needed by", taskToUpdate.NeededByDate),
+                        ("Act by", taskToUpdate.ActionByDate ?? string.Empty)),
+                    "Open inventory",
+                    _urls.AdminInventory(assessment.Inventory.RegionId)),
+                ct);
+        }
     }
 
     private static InventoryRecord NewSummary(string regionId) => new()

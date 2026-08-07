@@ -20,7 +20,7 @@
                 ["logo"] = $"{siteBaseUrl}/images/hero_right.webp",
                 ["image"] = $"{siteBaseUrl}/images/hero_right.webp",
                 ["description"] = ViewData["Description"],
-                ["telephone"] = Configuration["Site:SupportPhone"],
+                ["telephone"] = Configuration["Site:SupportPhone"] ?? "(480) 788-3337",
                 ["email"] = Configuration["Site:SupportEmail"]
             },
             new Dictionary<string, object?>

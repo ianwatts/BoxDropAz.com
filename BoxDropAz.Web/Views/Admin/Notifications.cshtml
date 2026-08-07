@@ -1,0 +1,128 @@
+@model BoxDropAz.Web.Models.Admin.AdminNotificationsViewModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="bd-app-header">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Notifications</h1>
+                <p class="text-muted mb-0">
+                    Choose which staff roles and people get email when something happens
+                    @if (Model.Region is not null)
+                    {
+                        <span>in @Model.Region.Name</span>
+                    }
+                </p>
+            </div>
+            @await Html.PartialAsync("_RegionSwitcher", (Model.Region, Model.AllRegions, Model.CanSwitchRegion))
+        </div>
+        @await Html.PartialAsync("_AdminNav", Model.Region)
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (Model.Region is null)
+    {
+        <div class="bd-empty">
+            <i class="bi bi-bell"></i>
+            <p class="mb-0">Pick a region to configure notification recipients.</p>
+        </div>
+    }
+    else
+    {
+        <form asp-action="SaveNotifications" method="post" data-submit-once>
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="region" value="@Model.Region.Id" />
+
+            <div class="bd-panel mb-3">
+                <p class="mb-0 text-muted small">
+                    Role checkboxes include everyone in that role
+                    @(Model.CanSwitchRegion ? "(SaaS admins are platform-wide; regional admins and workers must match this region)" : "for this region").
+                    You can also tick specific staff below each type.
+                </p>
+            </div>
+
+            @for (var i = 0; i < Model.Types.Count; i++)
+            {
+                var row = Model.Types[i];
+                <div class="bd-panel mb-3">
+                    <input type="hidden" name="Types[@i].Type" value="@row.Type" />
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">@row.Label</h2>
+                            <p class="text-muted small mb-0">@row.Description</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="Types[@i].NotifySaaSAdmin" value="true"
+                                       id="saas-@row.Type"
+                                       @(row.NotifySaaSAdmin ? "checked" : null) />
+                                <label class="form-check-label" for="saas-@row.Type">SaaSAdmin</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="Types[@i].NotifyRegionalAdmin" value="true"
+                                       id="admin-@row.Type"
+                                       @(row.NotifyRegionalAdmin ? "checked" : null) />
+                                <label class="form-check-label" for="admin-@row.Type">RegionalAdmin</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="Types[@i].NotifyWorker" value="true"
+                                       id="worker-@row.Type"
+                                       @(row.NotifyWorker ? "checked" : null) />
+                                <label class="form-check-label" for="worker-@row.Type">Worker</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.Staff.Count > 0)
+                    {
+                        <div class="border-top pt-3">
+                            <div class="form-label small text-muted mb-2">Additional staff</div>
+                            <div class="row g-2">
+                                @foreach (var person in Model.Staff)
+                                {
+                                    var selected = row.ExtraUserIds.Contains(person.UserId, StringComparer.OrdinalIgnoreCase);
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="Types[@i].ExtraUserIds" value="@person.UserId"
+                                                   id="extra-@row.Type-@person.UserId"
+                                                   @(selected ? "checked" : null) />
+                                            <label class="form-check-label" for="extra-@row.Type-@person.UserId">
+                                                <span class="fw-semibold">@person.DisplayName</span>
+                                                <span class="d-block small text-muted">
+                                                    @person.Email
+                                                    @if (person.Roles.Count > 0)
+                                                    {
+                                                        <span>· @string.Join(", ", person.Roles)</span>
+                                                    }
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save notification settings</button>
+                <a class="btn btn-outline-secondary" asp-action="Notifications" asp-route-region="@Model.Region.Id">Reset</a>
+            </div>
+        </form>
+    }
+</div>
