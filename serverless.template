@@ -51,6 +51,10 @@ Parameters:
   StripeRealtorBrokerageMonthlyPriceId:
     Type: String
     Default: ""
+  StripeCollectTax:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
   SeedAdminEmail:
     Type: String
     Default: ""
@@ -505,6 +509,11 @@ Resources:
           AWS__S3__DataProtectionBucket: !Ref DataProtectionBucket
           AWS__SES__FromEmail: !Ref SesFromEmail
           Site__BaseUrl: !Ref SiteBaseUrl
+          Site__LegalName: "Mastador Ventures, LLC"
+          Site__AddressLine1: "44560 W Venture Ln"
+          Site__AddressCity: "Maricopa"
+          Site__AddressState: "AZ"
+          Site__AddressPostalCode: "85139"
           Site__SupportEmail: !Ref SupportEmail
           Site__AdminEmail: !Ref AdminEmail
           Site__SupportPhone: !Ref SupportPhone
@@ -516,6 +525,7 @@ Resources:
           STRIPE_REALTORSTARTERMONTHLYPRICEID: !Ref StripeRealtorStarterMonthlyPriceId
           STRIPE_REALTORPROFESSIONALMONTHLYPRICEID: !Ref StripeRealtorProfessionalMonthlyPriceId
           STRIPE_REALTORBROKERAGEMONTHLYPRICEID: !Ref StripeRealtorBrokerageMonthlyPriceId
+          STRIPE_COLLECTTAX: !Ref StripeCollectTax
           SEED_ADMIN_EMAIL: !Ref SeedAdminEmail
           SEED_ADMIN_PASSWORD: !Ref SeedAdminPassword
           SEED_REGIONALADMIN_EMAIL: !Ref SeedRegionalAdminEmail

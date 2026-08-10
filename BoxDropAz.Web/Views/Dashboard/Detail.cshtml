@@ -223,6 +223,13 @@
                                 <span>@Money.Format(order.ZoneSurchargeCents)</span>
                             </div>
                         }
+                        @if (order.PickupZoneSurchargeCents > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Pickup surcharge</span>
+                                <span>@Money.Format(order.PickupZoneSurchargeCents)</span>
+                            </div>
+                        }
                         @foreach (var addOn in order.AddOns)
                         {
                             <div class="d-flex justify-content-between mb-2">
@@ -237,6 +244,13 @@
                                     Gift credit@(string.IsNullOrWhiteSpace(order.GiftingRealtorName) ? "" : $" from {order.GiftingRealtorName}")
                                 </span>
                                 <span class="bd-credit">-@Money.Format(order.GiftCreditAppliedCents)</span>
+                            </div>
+                        }
+                        @if (order.TaxCents > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Arizona tax</span>
+                                <span>@Money.Format(order.TaxCents)</span>
                             </div>
                         }
 

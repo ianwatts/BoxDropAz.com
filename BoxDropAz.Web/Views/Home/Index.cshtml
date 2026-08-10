@@ -17,12 +17,22 @@
                 ["@type"] = "Organization",
                 ["@id"] = businessId,
                 ["name"] = "BoxDrop AZ",
+                ["legalName"] = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC",
                 ["url"] = siteBaseUrl,
                 ["logo"] = $"{siteBaseUrl}/images/hero_delivery.webp",
                 ["image"] = $"{siteBaseUrl}/images/hero_delivery.webp",
                 ["description"] = ViewData["Description"],
                 ["telephone"] = Configuration["Site:SupportPhone"] ?? "(480) 788-3337",
-                ["email"] = Configuration["Site:SupportEmail"]
+                ["email"] = Configuration["Site:SupportEmail"],
+                ["address"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "PostalAddress",
+                    ["streetAddress"] = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln",
+                    ["addressLocality"] = Configuration["Site:AddressCity"] ?? "Maricopa",
+                    ["addressRegion"] = Configuration["Site:AddressState"] ?? "AZ",
+                    ["postalCode"] = Configuration["Site:AddressPostalCode"] ?? "85139",
+                    ["addressCountry"] = "US"
+                }
             },
             new Dictionary<string, object?>
             {

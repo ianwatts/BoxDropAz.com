@@ -63,6 +63,7 @@ public sealed class OrderCheckoutService
         order.CardLast4 = last4;
         // A setup-mode session has no amount; the gift covered the whole thing.
         order.AmountPaidCents = (int)(session.AmountTotal ?? 0);
+        order.TaxCents = (int)(session.TotalDetails?.AmountTax ?? 0);
         order.ConfirmedAtUtc = DateTime.UtcNow;
 
         await _orders.SaveAsync(order, ct);

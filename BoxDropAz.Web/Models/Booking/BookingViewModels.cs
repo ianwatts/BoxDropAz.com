@@ -193,6 +193,9 @@ public sealed class ReviewViewModel
     public string? GiftingAgentName { get; set; }
 
     public bool StripeConfigured { get; set; } = true;
+
+    /// <summary>When true, copy mentions Arizona tax calculated at checkout.</summary>
+    public bool CollectTax { get; set; }
 }
 
 public sealed class BookingCompleteViewModel

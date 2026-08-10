@@ -69,6 +69,10 @@
                             <div>@order.PickupAddressLine2</div>
                         }
                         <div>@order.PickupCity, @order.PickupState @order.PickupZip</div>
+                        @if (!string.IsNullOrWhiteSpace(order.PickupZoneName))
+                        {
+                            <div class="text-muted">@order.PickupZoneName</div>
+                        }
                         <div class="text-muted">@order.RentalWeeks week@(order.RentalWeeks == 1 ? "" : "s")</div>
                     </div>
                     <div class="col-sm-6">
@@ -357,6 +361,11 @@
                         <dt class="col-6 fw-normal text-muted">Zone surcharge</dt>
                         <dd class="col-6 text-end">@Money.Format(order.ZoneSurchargeCents)</dd>
                     }
+                    @if (order.PickupZoneSurchargeCents > 0)
+                    {
+                        <dt class="col-6 fw-normal text-muted">Pickup zone surcharge</dt>
+                        <dd class="col-6 text-end">@Money.Format(order.PickupZoneSurchargeCents)</dd>
+                    }
                     @if (order.AddOnsCents > 0)
                     {
                         <dt class="col-6 fw-normal text-muted">Add-ons</dt>
@@ -366,6 +375,11 @@
                     {
                         <dt class="col-6 fw-normal text-muted">Gift credit</dt>
                         <dd class="col-6 text-end text-success">-@Money.Format(order.GiftCreditAppliedCents)</dd>
+                    }
+                    @if (order.TaxCents > 0)
+                    {
+                        <dt class="col-6 fw-normal text-muted">Arizona tax</dt>
+                        <dd class="col-6 text-end">@Money.Format(order.TaxCents)</dd>
                     }
                     <dt class="col-6 border-top pt-2">Charged</dt>
                     <dd class="col-6 text-end border-top pt-2 fw-bold">@Money.Format(order.AmountPaidCents)</dd>

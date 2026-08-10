@@ -44,6 +44,7 @@ config in every case, following these names:
 
 - `AWS_REGION`, `DYNAMODB_TABLE_PREFIX`, `DATA_PROTECTION_BUCKET`
 - `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_COLLECTTAX` (`true` / `false`; defaults to paused / `false`)
 - `STRIPE_REALTORSTARTERMONTHLYPRICEID` and the other `STRIPE_<KEY>` price id overrides
 - `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` and the other `SEED_*` pairs
 

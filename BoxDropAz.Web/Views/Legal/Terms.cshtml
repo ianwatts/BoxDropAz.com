@@ -1,0 +1,117 @@
+@inject IConfiguration Configuration
+@{
+    var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
+    var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+    var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
+    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
+    var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
+    var addressState = Configuration["Site:AddressState"] ?? "AZ";
+    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
+}
+
+<section class="bd-section">
+    <div class="container">
+        <div class="bd-legal mx-auto">
+            <h1 class="h2 fw-bold mb-2">Terms of Service</h1>
+            <p class="text-muted">Last updated @DateTime.Now.ToString("MMMM yyyy")</p>
+
+            <p>
+                These Terms of Service govern your use of the BoxDrop AZ website and related online
+                services operated by <strong>@legalName</strong> (&ldquo;BoxDrop AZ,&rdquo; &ldquo;we,&rdquo;
+                &ldquo;us,&rdquo; or &ldquo;our&rdquo;), doing business as BoxDrop AZ.
+            </p>
+            <p>
+                @legalName<br />
+                @addressLine1<br />
+                @addressCity, @addressState @addressPostal<br />
+                <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">@supportPhone</a>
+                &middot;
+                <a href="mailto:@supportEmail">@supportEmail</a>
+            </p>
+
+            <h2>1. Acceptance</h2>
+            <p>
+                By accessing or using this website, creating an account, or submitting a booking or
+                contact request, you agree to these Terms of Service and our
+                <a asp-action="Privacy">Privacy Policy</a>. If you do not agree, do not use the site.
+            </p>
+
+            <h2>2. Our services</h2>
+            <p>
+                BoxDrop AZ rents reusable moving totes and related equipment and delivers and picks them
+                up in the service areas we publish. Product details, pricing, and availability may change
+                and are confirmed at checkout.
+            </p>
+
+            <h2>3. Rental agreement</h2>
+            <p>
+                When you book a rental, you must also accept our
+                <a asp-action="RentalTerms">Moving tote rental agreement</a>. That agreement covers the
+                rental period, delivery and pickup, payment authorization, damage and replacement fees,
+                cancellations, and related rental-specific terms. If there is a conflict between these
+                Terms of Service and the rental agreement for a booked rental, the rental agreement
+                controls for that rental.
+            </p>
+
+            <h2>4. Accounts and accuracy</h2>
+            <p>
+                You are responsible for the accuracy of the information you provide (including delivery
+                addresses and contact details) and for keeping your login credentials secure. You must
+                be at least 18 years old to create an account or place an order.
+            </p>
+
+            <h2>5. Payments</h2>
+            <p>
+                Payments are processed by Stripe. By checking out, you authorize the charges described
+                at checkout and in the rental agreement, including authorized extensions and equipment
+                fees. Prices are shown in U.S. dollars.
+            </p>
+
+            <h2>6. Acceptable use of the website</h2>
+            <ul>
+                <li>Do not misuse the site, attempt unauthorized access, or interfere with its operation.</li>
+                <li>Do not use the site for unlawful, fraudulent, or abusive purposes.</li>
+                <li>Do not scrape, harvest, or copy content except as allowed by ordinary browser use.</li>
+            </ul>
+
+            <h2>7. Intellectual property</h2>
+            <p>
+                The BoxDrop AZ name, branding, website content, and related materials are owned by
+                @legalName or its licensors. You may not use them without our prior written permission,
+                except to the extent needed to use the site as intended.
+            </p>
+
+            <h2>8. Disclaimers</h2>
+            <p>
+                The website is provided on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis.
+                We do not warrant that the site will be uninterrupted or error-free. To the fullest
+                extent permitted by law, we disclaim warranties not expressly stated in these terms or
+                in a rental agreement you accept.
+            </p>
+
+            <h2>9. Limitation of liability</h2>
+            <p>
+                To the fullest extent permitted by law, @legalName&rsquo;s total liability arising out of
+                your use of the website (apart from a booked rental, which is governed by the rental
+                agreement) is limited to the greater of fifty U.S. dollars ($50) or the amount you paid
+                us for website-related services in the three months before the claim.
+            </p>
+
+            <h2>10. Changes</h2>
+            <p>
+                We may update these Terms of Service from time to time. The &ldquo;Last updated&rdquo;
+                date at the top of this page will change when we do. Continued use of the site after
+                an update means you accept the revised terms.
+            </p>
+
+            <h2>11. Contact</h2>
+            <p>
+                Questions about these terms?
+                <a asp-controller="Home" asp-action="Contact">Contact us</a>,
+                email <a href="mailto:@supportEmail">@supportEmail</a>,
+                or call
+                <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">@supportPhone</a>.
+            </p>
+        </div>
+    </div>
+</section>

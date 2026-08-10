@@ -216,6 +216,14 @@
                                 </div>
                             }
 
+                            @if (quote.PickupZoneSurchargeCents > 0)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Pickup surcharge (@form.PickupZip)</span>
+                                    <span>@Money.Format(quote.PickupZoneSurchargeCents)</span>
+                                </div>
+                            }
+
                             @foreach (var addOn in quote.AddOns)
                             {
                                 <div class="d-flex justify-content-between mb-2">
@@ -244,10 +252,24 @@
                                 </div>
                             }
 
-                            <div class="d-flex justify-content-between align-items-baseline mb-3">
+                            <div class="d-flex justify-content-between align-items-baseline mb-1">
                                 <span class="fw-bold">Total due today</span>
                                 <span class="fw-bold fs-3">@Money.Format(quote.TotalDueCents)</span>
                             </div>
+                            <p class="text-muted small mb-3">
+                                @if (Model.CollectTax)
+                                {
+                                    <text>
+                                        Arizona transaction privilege tax is calculated at checkout from your
+                                        delivery address (destination sourcing). Delivery surcharges are taxed
+                                        separately as freight.
+                                    </text>
+                                }
+                                else
+                                {
+                                    <text>You will pay this amount at checkout. Sales tax is not collected online at this time.</text>
+                                }
+                            </p>
 
                             @if (quote.UnusedCreditCents > 0)
                             {

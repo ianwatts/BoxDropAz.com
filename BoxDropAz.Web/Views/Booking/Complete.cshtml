@@ -83,7 +83,12 @@
                 <div class="bd-review-row">
                     <span class="bd-review-label">Paid today</span>
                     <span class="bd-review-value">
-                        @Money.Format(order.TotalDueCents)
+                        @Money.Format(order.AmountPaidCents)
+                        @if (order.TaxCents > 0)
+                        {
+                            <br />
+                            <span class="text-muted small fw-normal">includes @Money.Format(order.TaxCents) Arizona tax</span>
+                        }
                         @if (!string.IsNullOrWhiteSpace(order.CardLast4))
                         {
                             <br />

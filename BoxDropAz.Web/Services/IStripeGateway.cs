@@ -14,26 +14,54 @@ public static class CheckoutKind
     public const string PaymentMethodUpdate = "payment_method_update";
 }
 
-public sealed record CheckoutLine(string Name, string? Description, int UnitAmountCents, int Quantity);
+public sealed record CheckoutLine(
+    string Name,
+    string? Description,
+    int UnitAmountCents,
+    int Quantity,
+    CheckoutLineKind Kind = CheckoutLineKind.Rental)
+{
+    /// <summary>Stripe PTC applied to this line.</summary>
+    public string TaxCode => Kind switch
+    {
+        CheckoutLineKind.Shipping => StripeTaxCodes.Shipping,
+        _ => StripeTaxCodes.TangiblePersonalProperty
+    };
+}
 
 public interface IStripeGateway
 {
     /// <summary>False when no secret key is configured, so callers can degrade instead of throwing.</summary>
     bool IsConfigured { get; }
 
+    /// <summary>
+    /// When true, Checkout enables Stripe Tax (Arizona destination sourcing).
+    /// Defaults to false so tax can be paused without a code change — set <c>Stripe:CollectTax</c>.
+    /// </summary>
+    bool IsCollectTaxEnabled { get; }
+
     /// <summary>Returns the user's Stripe customer id, creating one on first use.</summary>
     Task<string> EnsureCustomerAsync(ApplicationUser user, CancellationToken ct = default);
 
     /// <summary>
-    /// Embedded Checkout in payment mode. Retains the card off-session so extensions and damage
-    /// fees can be charged later without the customer present.
+    /// Embedded Checkout in payment mode. When <see cref="IsCollectTaxEnabled"/>, calculates
+    /// Arizona TPT from the delivery address; otherwise charges the quoted amount only.
+    /// Retains the card off-session so extensions and damage fees can be charged later.
     /// </summary>
+    /// <param name="destinationAddress">
+    /// Customer delivery address — becomes Stripe Customer shipping so Tax uses destination sourcing
+    /// when tax collection is enabled.
+    /// </param>
+    /// <exception cref="StripeTaxAddressException">
+    /// Stripe Tax could not map the delivery address; prompt the customer to fix it.
+    /// </exception>
     Task<Session> CreatePaymentSessionAsync(
         string customerId,
         string clientReferenceId,
         IReadOnlyList<CheckoutLine> lines,
         string returnUrl,
         IDictionary<string, string> metadata,
+        CheckoutTaxAddress destinationAddress,
         CancellationToken ct = default);
 
     /// <summary>

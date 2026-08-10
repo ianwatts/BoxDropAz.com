@@ -72,6 +72,20 @@ $templateParams = @(
     "SiteBaseUrl=$siteBaseUrl"
 )
 
+# Site contact info — always pass explicitly so stack updates don't keep a stale SupportPhone
+# (CloudFormation retains existing parameter values when omitted from deploy parameters).
+$siteSettingsFile = if (Test-Path "BoxDropAz.Web/appsettings.json") {
+    "BoxDropAz.Web/appsettings.json"
+} else {
+    "appsettings.example.json"
+}
+if (Test-Path $siteSettingsFile) {
+    $site = (Get-Content $siteSettingsFile -Raw | ConvertFrom-Json).Site
+    if ($site.SupportPhone) { $templateParams += "SupportPhone=$($site.SupportPhone)" }
+    if ($site.SupportEmail) { $templateParams += "SupportEmail=$($site.SupportEmail)" }
+    if ($site.AdminEmail) { $templateParams += "AdminEmail=$($site.AdminEmail)" }
+}
+
 # Seed accounts (optional). Prefer Seed section from appsettings.Development.json so both
 # environments get a known SaaS admin on first boot without committing secrets to the template.
 $seedFile = "BoxDropAz.Web/appsettings.Development.json"
@@ -101,6 +115,8 @@ if (Test-Path $stripeSettingsFile) {
     $templateParams += "StripeRealtorStarterMonthlyPriceId=$($stripe.RealtorStarterMonthlyPriceId)"
     $templateParams += "StripeRealtorProfessionalMonthlyPriceId=$($stripe.RealtorProfessionalMonthlyPriceId)"
     $templateParams += "StripeRealtorBrokerageMonthlyPriceId=$($stripe.RealtorBrokerageMonthlyPriceId)"
+    $collectTax = if ($null -ne $stripe.PSObject.Properties["CollectTax"] -and $stripe.CollectTax -eq $true) { "true" } else { "false" }
+    $templateParams += "StripeCollectTax=$collectTax"
 
     if ($Environment -eq "prod" -and $stripe.SecretKey -notmatch "^sk_live_") {
         throw "stripe-settings.prod.json must hold a live key (sk_live_...). Refusing to deploy prod against Stripe test mode."

@@ -42,4 +42,12 @@ public sealed class LegalController : Controller
         ViewData["Description"] = "How BoxDrop AZ collects, uses, and protects your personal information.";
         return View();
     }
+
+    [HttpGet("terms")]
+    public IActionResult Terms()
+    {
+        ViewData["Title"] = "Terms of Service";
+        ViewData["Description"] = "Terms of Service for the BoxDrop AZ website and online services operated by Mastador Ventures, LLC.";
+        return View();
+    }
 }

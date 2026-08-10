@@ -3,6 +3,11 @@
 @{
     var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+    var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
+    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
+    var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
+    var addressState = Configuration["Site:AddressState"] ?? "AZ";
+    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
 }
 
 <section class="bd-section">
@@ -17,23 +22,41 @@
                 </p>
 
                 <div class="bd-check-row">
+                    <i class="bi bi-building"></i>
+                    <div>
+                        <strong>@legalName</strong>
+                        <div class="text-muted small">Doing business as BoxDrop AZ</div>
+                    </div>
+                </div>
+                <div class="bd-check-row">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <div>
+                        <strong>@addressLine1</strong>
+                        <div class="text-muted small">@addressCity, @addressState @addressPostal</div>
+                    </div>
+                </div>
+                <div class="bd-check-row">
                     <i class="bi bi-telephone-fill"></i>
                     <div>
-                        <strong>@supportPhone</strong>
+                        <strong>
+                            <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">
+                                @supportPhone
+                            </a>
+                        </strong>
                         <div class="text-muted small">Monday to Saturday, 8am&ndash;6pm Arizona time</div>
                     </div>
                 </div>
                 <div class="bd-check-row">
                     <i class="bi bi-envelope-fill"></i>
                     <div>
-                        <strong>@supportEmail</strong>
+                        <strong><a href="mailto:@supportEmail">@supportEmail</a></strong>
                         <div class="text-muted small">Replies within one business day</div>
                     </div>
                 </div>
                 <div class="bd-check-row">
-                    <i class="bi bi-geo-alt-fill"></i>
+                    <i class="bi bi-truck"></i>
                     <div>
-                        <strong>Phoenix East Valley &amp; Tucson</strong>
+                        <strong>Service areas</strong>
                         <div class="text-muted small">
                             <a asp-action="ServiceAreas">Check whether we cover your ZIP</a>
                         </div>

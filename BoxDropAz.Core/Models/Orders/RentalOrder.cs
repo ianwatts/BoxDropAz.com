@@ -126,6 +126,14 @@ public sealed class RentalOrder
     [DynamoDBProperty("ZoneSurchargeCents")]
     public int ZoneSurchargeCents { get; set; }
 
+    /// <summary>Zone the totes are collected from, when pickup is a different address than delivery.</summary>
+    [DynamoDBProperty("PickupZoneName")]
+    public string PickupZoneName { get; set; } = string.Empty;
+
+    /// <summary>Extra trip surcharge when the pickup address falls in a different zone than delivery.</summary>
+    [DynamoDBProperty("PickupZoneSurchargeCents")]
+    public int PickupZoneSurchargeCents { get; set; }
+
     [DynamoDBProperty("AddOnsCents")]
     public int AddOnsCents { get; set; }
 
@@ -135,6 +143,10 @@ public sealed class RentalOrder
     /// <summary>What the customer actually paid at checkout, after the gift credit.</summary>
     [DynamoDBProperty("TotalDueCents")]
     public int TotalDueCents { get; set; }
+
+    /// <summary>Arizona TPT (and local) collected by Stripe Tax at checkout, based on delivery address.</summary>
+    [DynamoDBProperty("TaxCents")]
+    public int TaxCents { get; set; }
 
     [DynamoDBProperty("AmountPaidCents")]
     public int AmountPaidCents { get; set; }
@@ -222,7 +234,8 @@ public sealed class RentalOrder
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
     [DynamoDBIgnore]
-    public int SubtotalCents => PackageBaseCents + ExtraWeeksCents + ZoneSurchargeCents + AddOnsCents;
+    public int SubtotalCents =>
+        PackageBaseCents + ExtraWeeksCents + ZoneSurchargeCents + PickupZoneSurchargeCents + AddOnsCents;
 
     [DynamoDBIgnore]
     public int OutstandingDamageCents =>

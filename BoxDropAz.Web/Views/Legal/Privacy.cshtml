@@ -1,6 +1,12 @@
 @inject IConfiguration Configuration
 @{
+    var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+    var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
+    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
+    var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
+    var addressState = Configuration["Site:AddressState"] ?? "AZ";
+    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
 }
 
 <section class="bd-section">
@@ -9,12 +15,25 @@
             <h1 class="h2 fw-bold mb-2">Privacy policy</h1>
             <p class="text-muted">Last updated @DateTime.Now.ToString("MMMM yyyy")</p>
 
+            <p>
+                This Privacy Policy explains how <strong>@legalName</strong>, doing business as BoxDrop AZ
+                (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), collects, uses, and protects
+                personal information when you use our website and rental services.
+            </p>
+            <p>
+                @legalName<br />
+                @addressLine1<br />
+                @addressCity, @addressState @addressPostal
+            </p>
+
             <h2>What we collect</h2>
             <ul>
                 <li><strong>Account details</strong> &mdash; your name, email address, phone number, and for agents, your brokerage.</li>
                 <li><strong>Order details</strong> &mdash; delivery and pickup addresses, dates, time windows, and the bundle you chose.</li>
                 <li><strong>Payment details</strong> &mdash; handled entirely by Stripe. We store only a card brand, the last four digits, and Stripe's identifiers. Full card numbers never touch our servers.</li>
                 <li><strong>Agreement records</strong> &mdash; the version of the rental agreement you accepted, when, and the IP address it came from.</li>
+                <li><strong>Contact form messages</strong> &mdash; the name, email, phone, and message you submit when you reach out.</li>
+                <li><strong>Usage data</strong> &mdash; pages visited and basic device/browser information collected through analytics tools described below.</li>
             </ul>
 
             <h2>How we use it</h2>
@@ -23,13 +42,15 @@
                 <li>To send order confirmations, delivery reminders, and receipts.</li>
                 <li>To charge extensions and equipment fees you have authorized.</li>
                 <li>To answer your support questions.</li>
+                <li>To understand how the website is used and improve our services.</li>
             </ul>
 
             <h2>Who we share it with</h2>
             <p>
                 We do not sell your personal information. We share the minimum necessary with the services
                 that run the business: Stripe for payments, Amazon Web Services for hosting and email
-                delivery, and our own drivers, who see only the delivery details needed for that day's route.
+                delivery, Google Analytics for website measurement, and our own drivers, who see only the
+                delivery details needed for that day's route.
             </p>
             <p>
                 If a real estate agent gifted your rental, they can see that you claimed the gift, which
@@ -52,16 +73,29 @@
                 <li>Unsubscribe from marketing email at any time. Transactional email about an active rental will still be sent.</li>
             </ul>
 
-            <h2>Cookies</h2>
+            <h2>Cookies and analytics</h2>
             <p>
                 We use a session cookie to keep you signed in and an anti-forgery cookie to protect forms.
-                Both are required for the site to work and neither is used for advertising.
+                Both are required for the site to work.
+            </p>
+            <p>
+                On customer-facing pages we may also use Google Analytics to understand traffic and
+                improve the site. Google Analytics sets cookies or similar identifiers and receives
+                aggregated usage information. You can control cookies through your browser settings and,
+                where available, Google&rsquo;s analytics opt-out tools.
             </p>
 
             <h2>Contact</h2>
             <p>
-                Email <a href="mailto:@supportEmail">@supportEmail</a> with any privacy question and we'll
-                respond within 30 days.
+                Email <a href="mailto:@supportEmail">@supportEmail</a>
+                or call
+                <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">@supportPhone</a>
+                with any privacy question and we'll respond within 30 days.
+            </p>
+            <p class="mb-0">
+                @legalName<br />
+                @addressLine1<br />
+                @addressCity, @addressState @addressPostal
             </p>
         </div>
     </div>

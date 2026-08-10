@@ -242,7 +242,8 @@ public sealed class BookingController : Controller
             PickupDate = context.PickupDate,
             GiftCreditCents = context.GiftCreditCents,
             GiftingAgentName = context.Gift?.RealtorName,
-            StripeConfigured = _stripe.IsConfigured
+            StripeConfigured = _stripe.IsConfigured,
+            CollectTax = _stripe.IsCollectTaxEnabled
         });
     }
 
@@ -277,7 +278,8 @@ public sealed class BookingController : Controller
                 PickupDate = context.PickupDate,
                 GiftCreditCents = context.GiftCreditCents,
                 GiftingAgentName = context.Gift?.RealtorName,
-                StripeConfigured = _stripe.IsConfigured
+                StripeConfigured = _stripe.IsConfigured,
+                CollectTax = _stripe.IsCollectTaxEnabled
             });
         }
 
@@ -324,8 +326,22 @@ public sealed class BookingController : Controller
             }
             else
             {
+                var destination = new CheckoutTaxAddress(
+                    form.FullName,
+                    form.AddressLine1,
+                    form.AddressLine2,
+                    form.City,
+                    "AZ",
+                    form.Zip);
+
                 session = await _stripe.CreatePaymentSessionAsync(
-                    customerId, user.Id, BuildCheckoutLines(context), returnUrl, metadata, ct);
+                    customerId,
+                    user.Id,
+                    BuildCheckoutLines(context),
+                    returnUrl,
+                    metadata,
+                    destination,
+                    ct);
             }
 
             order.StripeCheckoutSessionId = session.Id;
@@ -342,12 +358,46 @@ public sealed class BookingController : Controller
                 SummaryTitle = "Due today",
                 SummaryText = context.Quote.IsFullyCoveredByCredit
                     ? "Your gift credit covers the rental. Stripe will securely save a card for extensions or agreement fees."
-                    : Money.Format(context.Quote.TotalDueCents)
+                    : _stripe.IsCollectTaxEnabled
+                        ? Money.Format(context.Quote.TotalDueCents) + " + Arizona tax (calculated at checkout from your delivery address)"
+                        : Money.Format(context.Quote.TotalDueCents)
             });
+        }
+        catch (StripeTaxAddressException ex)
+        {
+            _logger.LogWarning(ex, "Tax address rejected for order {OrderId}", order.OrderId);
+            ModelState.AddModelError(nameof(form.AddressLine1), ex.Message);
+            ModelState.AddModelError(nameof(form.Zip), "Confirm this ZIP matches the street address.");
+            return View(nameof(Review), new ReviewViewModel
+            {
+                Form = form,
+                Region = context.Region,
+                Package = context.Package,
+                Zone = context.Zone,
+                Quote = context.Quote,
+                DeliveryDate = context.DeliveryDate,
+                PickupDate = context.PickupDate,
+                GiftCreditCents = context.GiftCreditCents,
+                GiftingAgentName = context.Gift?.RealtorName,
+                StripeConfigured = _stripe.IsConfigured,
+                CollectTax = _stripe.IsCollectTaxEnabled
+            });
+        }
+        catch (Stripe.StripeException ex)
+        {
+            _logger.LogError(ex,
+                "Stripe rejected checkout for order {OrderId}: {StripeCode} {StripeMessage}",
+                order.OrderId,
+                ex.StripeError?.Code,
+                ex.StripeError?.Message ?? ex.Message);
+            TempData["Error"] =
+                "We couldn't start payment. " +
+                (ex.StripeError?.Message ?? "Please try again, or call us if it keeps happening.");
+            return RedirectToAction(nameof(Review));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Could not start checkout for order {OrderId}", order.OrderId);
+            _logger.LogError(ex, "Could not start checkout for order {OrderId}: {Message}", order.OrderId, ex.Message);
             TempData["Error"] = "We couldn't reach our payment provider. Nothing was charged. Please try again.";
             return RedirectToAction(nameof(Index));
         }
@@ -410,6 +460,8 @@ public sealed class BookingController : Controller
         public required CratePackage Package { get; init; }
         public required List<CratePackage> Packages { get; init; }
         public DeliveryZone? Zone { get; init; }
+        public DeliveryZone? PickupZone { get; init; }
+        public bool PickupInDifferentZone { get; init; }
         public required RentalQuote Quote { get; init; }
         public DateOnly DeliveryDate { get; init; }
         public DateOnly PickupDate { get; init; }
@@ -481,13 +533,41 @@ public sealed class BookingController : Controller
                 "That pickup window is unavailable. Choose another time or delivery date.");
         }
 
-        if (!form.PickupSameAsDelivery && string.IsNullOrWhiteSpace(form.PickupAddressLine1))
+        // Pickup can be a different address (a move), which may fall in another zone. Each leg is
+        // priced by its own zone, so we resolve and validate the pickup zone here.
+        DeliveryZone? pickupZone = null;
+        var pickupInDifferentZone = false;
+        if (!form.PickupSameAsDelivery)
         {
-            ModelState.AddModelError(nameof(form.PickupAddressLine1), "Enter the address we're collecting from.");
+            if (string.IsNullOrWhiteSpace(form.PickupAddressLine1))
+            {
+                ModelState.AddModelError(nameof(form.PickupAddressLine1), "Enter the address we're collecting from.");
+            }
+
+            var pickupZip = form.PickupZip?.Trim();
+            if (string.IsNullOrWhiteSpace(pickupZip))
+            {
+                ModelState.AddModelError(nameof(form.PickupZip), "Enter the ZIP we're collecting from.");
+            }
+            else
+            {
+                pickupZone = region.FindZoneForZip(pickupZip);
+                if (pickupZone is null)
+                {
+                    ModelState.AddModelError(nameof(form.PickupZip),
+                        $"We don't cover {pickupZip} for pickup yet. Try another ZIP or contact us.");
+                }
+                else if (!string.Equals(pickupZone.Name, zone?.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    pickupInDifferentZone = true;
+                }
+            }
         }
 
         var giftCredit = gift?.GiftAmountCents ?? 0;
-        var quote = _pricing.Quote(package, zone, form.RentalWeeks, form.ToAddOnLines(), giftCredit);
+        // Only charge a second leg when the pickup zone actually differs from delivery.
+        var chargeablePickupZone = pickupInDifferentZone ? pickupZone : null;
+        var quote = _pricing.Quote(package, zone, form.RentalWeeks, form.ToAddOnLines(), giftCredit, chargeablePickupZone);
 
         var resolvedDelivery = deliveryDate ?? SchedulingRules.EarliestDeliveryDate(region);
 
@@ -497,6 +577,8 @@ public sealed class BookingController : Controller
             Package = package,
             Packages = packages,
             Zone = zone,
+            PickupZone = form.PickupSameAsDelivery ? zone : pickupZone,
+            PickupInDifferentZone = pickupInDifferentZone,
             Quote = quote,
             DeliveryDate = resolvedDelivery,
             PickupDate = resolvedDelivery.AddDays(RentalTerms.BaseRentalDays * form.RentalWeeks),
@@ -536,6 +618,7 @@ public sealed class BookingController : Controller
             PickupDate = context.PickupDate.ToString("yyyy-MM-dd"),
             PickupWindow = form.PickupWindow,
             ZoneName = context.Zone?.Name ?? string.Empty,
+            PickupZoneName = context.PickupInDifferentZone ? context.PickupZone?.Name ?? string.Empty : string.Empty,
 
             PackageId = context.Package.PackageId,
             PackageName = context.Package.Name,
@@ -547,6 +630,7 @@ public sealed class BookingController : Controller
             PackageBaseCents = context.Quote.PackageBaseCents,
             ExtraWeeksCents = context.Quote.ExtraWeeksCents,
             ZoneSurchargeCents = context.Quote.ZoneSurchargeCents,
+            PickupZoneSurchargeCents = context.Quote.PickupZoneSurchargeCents,
             AddOnsCents = context.Quote.AddOnsCents,
             GiftCreditAppliedCents = context.Quote.GiftCreditAppliedCents,
             TotalDueCents = context.Quote.TotalDueCents,
@@ -591,7 +675,8 @@ public sealed class BookingController : Controller
                 $"{context.Package.Name} moving tote bundle",
                 $"{context.Package.CrateCount} totes with lids and {context.Package.DollyCount} custom-fit dollies for {RentalTerms.BaseRentalDays} days",
                 context.Quote.PackageBaseCents,
-                1)
+                1,
+                CheckoutLineKind.Rental)
         };
 
         if (context.Quote.ExtraWeeksCents > 0)
@@ -601,21 +686,40 @@ public sealed class BookingController : Controller
                 $"{extraWeeks} additional week{(extraWeeks == 1 ? "" : "s")}",
                 "Extended rental period",
                 context.Quote.ExtraWeeksCents,
-                1));
+                1,
+                CheckoutLineKind.Rental));
         }
 
         if (context.Quote.ZoneSurchargeCents > 0)
         {
             lines.Add(new CheckoutLine(
                 $"Delivery surcharge ({context.Zone?.Name})",
-                "Round trip delivery and pickup outside Zone A",
+                context.PickupInDifferentZone
+                    ? "Delivery trip outside Zone A"
+                    : "Round trip delivery and pickup outside Zone A",
                 context.Quote.ZoneSurchargeCents,
-                1));
+                1,
+                CheckoutLineKind.Shipping));
+        }
+
+        if (context.Quote.PickupZoneSurchargeCents > 0)
+        {
+            lines.Add(new CheckoutLine(
+                $"Pickup surcharge ({context.PickupZone?.Name})",
+                "Collection trip from a different zone",
+                context.Quote.PickupZoneSurchargeCents,
+                1,
+                CheckoutLineKind.Shipping));
         }
 
         foreach (var addOn in context.Quote.AddOns)
         {
-            lines.Add(new CheckoutLine(addOn.Name, null, addOn.UnitAmountCents, addOn.Quantity));
+            lines.Add(new CheckoutLine(
+                addOn.Name,
+                null,
+                addOn.UnitAmountCents,
+                addOn.Quantity,
+                CheckoutLineKind.Rental));
         }
 
         return lines;

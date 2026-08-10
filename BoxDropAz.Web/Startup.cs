@@ -88,7 +88,8 @@ public sealed class Startup
             "WebhookSecret",
             "RealtorStarterMonthlyPriceId",
             "RealtorProfessionalMonthlyPriceId",
-            "RealtorBrokerageMonthlyPriceId"
+            "RealtorBrokerageMonthlyPriceId",
+            "CollectTax"
         };
         foreach (var key in stripeEnvKeys)
         {

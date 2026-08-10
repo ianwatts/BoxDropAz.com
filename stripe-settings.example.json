@@ -3,8 +3,10 @@
     "SecretKey": "sk_test_... or sk_live_... for prod",
     "PublishableKey": "pk_test_... or pk_live_... for prod",
     "WebhookSecret": "whsec_...",
+    "CollectTax": false,
     "RealtorStarterMonthlyPriceId": "price_...",
     "RealtorProfessionalMonthlyPriceId": "price_...",
     "RealtorBrokerageMonthlyPriceId": "price_..."
-  }
+  },
+  "_comment_tax": "Set CollectTax true only after Stripe Tax has an Arizona state_sales_tax registration (ADOR TPT). Checkout then uses AutomaticTax + Customer.Shipping (delivery address) for destination sourcing. Rental lines use txcd_99999999; delivery/pickup surcharges use ShippingOptions with txcd_92010001 (Shipping PTC cannot be set on line_items). Defaults to false so tax stays paused until re-enabled."
 }

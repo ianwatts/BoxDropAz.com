@@ -4,7 +4,7 @@ Environment: `https://dev.boxdropaz.com`
 
 ## Credentials
 
-Username: `agent@example.com`
+Username: `agent@boxdropaz.com`
 
 ```powershell
 $c = aws lambda get-function-configuration --function-name BoxDropAzWeb-dev --region us-west-2 --query Environment.Variables --output json | ConvertFrom-Json

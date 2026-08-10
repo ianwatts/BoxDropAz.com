@@ -135,6 +135,7 @@ public sealed class HomeController : Controller
             ("/Home/Contact", "yearly", 0.5m),
             ("/Realtors", "monthly", 0.7m),
             ("/Realtors/Plans", "monthly", 0.7m),
+            ("/legal/terms", "yearly", 0.3m),
             ("/legal/rental-terms", "yearly", 0.3m),
             ("/legal/privacy", "yearly", 0.3m)
         };

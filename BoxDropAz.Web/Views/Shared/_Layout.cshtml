@@ -15,6 +15,11 @@
     var socialImage = $"{siteBaseUrl}/images/hero_delivery.webp";
     var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
+    var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
+    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
+    var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
+    var addressState = Configuration["Site:AddressState"] ?? "AZ";
+    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
     var googleSiteVerification = Configuration["Seo:GoogleSiteVerification"];
     var bingSiteVerification = Configuration["Seo:BingSiteVerification"];
     var googleAnalyticsId = Configuration["Seo:GoogleAnalyticsMeasurementId"];
@@ -28,7 +33,7 @@
             "Index", "HowItWorks", "Pricing", "ServiceAreas", "Faq", "Contact"
         },
         ["Realtors"] = new(StringComparer.OrdinalIgnoreCase) { "Index", "Plans" },
-        ["Legal"] = new(StringComparer.OrdinalIgnoreCase) { "RentalTerms", "Privacy" }
+        ["Legal"] = new(StringComparer.OrdinalIgnoreCase) { "RentalTerms", "Privacy", "Terms" }
     };
     var isIndexable = indexableActions.TryGetValue(currentController, out var publicActions)
         && publicActions.Contains(currentAction);
@@ -228,12 +233,25 @@
                     <span class="brand-mark"><i class="bi bi-box-seam-fill"></i></span>
                     <span class="text-white fw-bold fs-5">BoxDrop AZ</span>
                 </div>
+                <p class="mb-2 text-white" style="font-size:.93rem;">@legalName</p>
                 <p class="mb-3" style="font-size:.93rem;max-width:22rem;">
                     Reusable moving totes with lids delivered to your door across the Phoenix East Valley,
                     Pinal County, and Tucson. Pack once, move once, and skip the cardboard entirely.
                 </p>
-                <p class="mb-1"><i class="bi bi-telephone me-2"></i>@supportPhone</p>
-                <p class="mb-0"><i class="bi bi-envelope me-2"></i>@supportEmail</p>
+                <p class="mb-1">
+                    <i class="bi bi-geo-alt me-2"></i>
+                    @addressLine1, @addressCity, @addressState @addressPostal
+                </p>
+                <p class="mb-1">
+                    <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">
+                        <i class="bi bi-telephone me-2"></i>@supportPhone
+                    </a>
+                </p>
+                <p class="mb-0">
+                    <a href="mailto:@supportEmail">
+                        <i class="bi bi-envelope me-2"></i>@supportEmail
+                    </a>
+                </p>
             </div>
 
             <div class="col-6 col-lg-2">
@@ -255,8 +273,9 @@
                 <h5>Company</h5>
                 <a asp-controller="Home" asp-action="Faq">FAQ</a>
                 <a asp-controller="Home" asp-action="Contact">Contact</a>
+                <a asp-controller="Legal" asp-action="Terms">Terms of Service</a>
+                <a asp-controller="Legal" asp-action="Privacy">Privacy Policy</a>
                 <a asp-controller="Legal" asp-action="RentalTerms">Rental terms</a>
-                <a asp-controller="Legal" asp-action="Privacy">Privacy policy</a>
             </div>
 
             <div class="col-6 col-lg-2">
@@ -268,7 +287,7 @@
         </div>
 
         <div class="bd-footer-bottom d-flex flex-wrap justify-content-between gap-2">
-            <span>&copy; @DateTime.Now.Year BoxDrop AZ. All rights reserved.</span>
+            <span>&copy; @DateTime.Now.Year @legalName d/b/a BoxDrop AZ. All rights reserved.</span>
             <span>Phoenix Metro &middot; Pinal County &middot; Tucson</span>
         </div>
     </div>

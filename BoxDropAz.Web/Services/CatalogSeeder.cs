@@ -59,33 +59,33 @@ public static class CatalogSeeder
                 new()
                 {
                     Name = "Zone A",
-                    Cities = "Maricopa, Casa Grande, Queen Creek, San Tan Valley, Gilbert, Chandler, Apache Junction, Florence, Coolidge",
+                    Cities = "Maricopa, Chandler, Ahwatukee",
                     SurchargeCents = 0,
                     ZipCodes = new List<string>
                     {
                         "85138", "85139", // Maricopa
-                        "85122", "85193", "85194", // Casa Grande
-                        "85140", "85142", // Queen Creek
-                        "85143", "85144", // San Tan Valley
-                        "85233", "85234", "85295", "85296", "85297", "85298", // Gilbert
                         "85224", "85225", "85226", "85248", "85249", "85286", // Chandler
-                        "85117", "85119", "85120", // Apache Junction
-                        "85132", // Florence
-                        "85128"  // Coolidge
+                        "85044", "85045", "85048"  // Ahwatukee
                     }
                 },
                 new()
                 {
                     Name = "Zone B",
-                    Cities = "Mesa, Tempe, Ahwatukee, Sun Lakes, Higley",
+                    Cities = "Gilbert, Queen Creek, San Tan Valley, Casa Grande, Mesa, Tempe, Sun Lakes, Higley, Apache Junction, Florence, Coolidge",
                     SurchargeCents = 2500,
                     ZipCodes = new List<string>
                     {
+                        "85233", "85234", "85295", "85296", "85297", "85298", // Gilbert
+                        "85140", "85142", // Queen Creek
+                        "85143", "85144", // San Tan Valley
+                        "85122", "85193", "85194", // Casa Grande
                         "85201", "85202", "85203", "85204", "85205", "85206", "85207", "85208", "85209", "85210",
                         "85212", "85213", "85215", // Mesa
                         "85281", "85282", "85283", "85284", // Tempe
-                        "85044", "85045", "85048", // Ahwatukee
-                        "85236", "85242" // Higley / Sun Lakes
+                        "85236", "85242", // Higley / Sun Lakes
+                        "85117", "85119", "85120", // Apache Junction
+                        "85132", // Florence
+                        "85128"  // Coolidge
                     }
                 },
                 new()

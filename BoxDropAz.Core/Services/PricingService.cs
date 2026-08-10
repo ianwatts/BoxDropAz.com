@@ -12,6 +12,9 @@ public sealed class RentalQuote
 
     public int ZoneSurchargeCents { get; init; }
 
+    /// <summary>Second trip surcharge when pickup is in a different zone than delivery. Zero otherwise.</summary>
+    public int PickupZoneSurchargeCents { get; init; }
+
     public int AddOnsCents { get; init; }
 
     public int GiftCreditAppliedCents { get; init; }
@@ -20,7 +23,8 @@ public sealed class RentalQuote
 
     public List<AddOnLine> AddOns { get; init; } = new();
 
-    public int SubtotalCents => PackageBaseCents + ExtraWeeksCents + ZoneSurchargeCents + AddOnsCents;
+    public int SubtotalCents =>
+        PackageBaseCents + ExtraWeeksCents + ZoneSurchargeCents + PickupZoneSurchargeCents + AddOnsCents;
 
     public int TotalDueCents => Math.Max(0, SubtotalCents - GiftCreditAppliedCents);
 
@@ -48,7 +52,8 @@ public sealed class PricingService
         DeliveryZone? zone,
         int rentalWeeks,
         IEnumerable<AddOnLine>? addOns = null,
-        int availableGiftCreditCents = 0)
+        int availableGiftCreditCents = 0,
+        DeliveryZone? pickupZone = null)
     {
         var weeks = ClampWeeks(rentalWeeks);
         var extraWeeks = weeks - 1;
@@ -56,9 +61,15 @@ public sealed class PricingService
         var lines = NormalizeAddOns(addOns);
         var addOnTotal = lines.Sum(l => l.TotalCents);
 
+        var deliverySurcharge = zone?.SurchargeCents ?? 0;
+        // A separate pickup zone is only supplied when collection is at a different address, so
+        // each leg carries its own zone fee (Zone A legs stay free).
+        var pickupSurcharge = pickupZone?.SurchargeCents ?? 0;
+
         var subtotal = package.BasePriceCents
                        + (extraWeeks * package.ExtraWeekPriceCents)
-                       + (zone?.SurchargeCents ?? 0)
+                       + deliverySurcharge
+                       + pickupSurcharge
                        + addOnTotal;
 
         // Credit never pays out as cash, so it is capped at the subtotal.
@@ -68,7 +79,8 @@ public sealed class PricingService
         {
             PackageBaseCents = package.BasePriceCents,
             ExtraWeeksCents = extraWeeks * package.ExtraWeekPriceCents,
-            ZoneSurchargeCents = zone?.SurchargeCents ?? 0,
+            ZoneSurchargeCents = deliverySurcharge,
+            PickupZoneSurchargeCents = pickupSurcharge,
             AddOnsCents = addOnTotal,
             GiftCreditAppliedCents = creditApplied,
             UnusedCreditCents = Math.Max(0, availableGiftCreditCents - creditApplied),

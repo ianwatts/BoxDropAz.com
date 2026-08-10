@@ -199,6 +199,10 @@
                                     <label class="form-label" for="pickupZip">Pickup ZIP</label>
                                     <input name="PickupZip" id="pickupZip" class="form-control" value="@form.PickupZip"
                                            inputmode="numeric" maxlength="5" />
+                                    @Html.ValidationMessage("PickupZip", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <div id="pickupZoneFeedback" class="small"></div>
                                 </div>
                             </div>
                         </div>
@@ -283,6 +287,10 @@
                                 <span class="text-muted">Delivery surcharge</span>
                                 <span id="sumZone">&mdash;</span>
                             </div>
+                            <div class="d-flex justify-content-between mb-2" id="sumPickupZoneRow" hidden>
+                                <span class="text-muted">Pickup surcharge</span>
+                                <span id="sumPickupZone">&mdash;</span>
+                            </div>
                             <div class="d-flex justify-content-between mb-2" id="sumAddOnsRow" hidden>
                                 <span class="text-muted">Extras</span>
                                 <span id="sumAddOns">&mdash;</span>
@@ -321,6 +329,10 @@
             var giftCreditCents = @Model.GiftCreditCents;
             var zoneSurchargeCents = @(Model.Zone?.SurchargeCents ?? 0);
             var zoneKnown = @((Model.Zone is not null).ToString().ToLowerInvariant());
+            var deliveryZoneName = @Html.Raw(Json.Serialize(Model.Zone?.Name ?? ""));
+            var pickupSurchargeCents = 0;
+            var pickupZoneName = '';
+            var pickupZoneKnown = false;
             var zoneLookupUrl = '@Url.Action("ZoneLookup", "Booking")';
             var availabilityUrl = '@Url.Action("Availability", "Booking")';
             var scheduleUrl = '@Url.Action("Schedule", "Booking")';
@@ -346,12 +358,15 @@
                 });
 
                 var surcharge = zoneKnown ? zoneSurchargeCents : 0;
-                var subtotal = base + extraWeeks + surcharge + addOns;
+                var pickupSame = document.getElementById('pickupSame').checked;
+                var pickupSurcharge = (!pickupSame && pickupZoneKnown) ? pickupSurchargeCents : 0;
+                var subtotal = base + extraWeeks + surcharge + pickupSurcharge + addOns;
                 var credit = Math.min(giftCreditCents, subtotal);
 
                 document.getElementById('sumBase').textContent = money(base);
                 setRow('sumWeeksRow', 'sumWeeks', extraWeeks);
                 setRow('sumZoneRow', 'sumZone', surcharge);
+                setRow('sumPickupZoneRow', 'sumPickupZone', pickupSurcharge);
                 setRow('sumAddOnsRow', 'sumAddOns', addOns);
 
                 document.getElementById('sumCreditRow').hidden = credit <= 0;
@@ -461,11 +476,59 @@
                         } else {
                             zoneKnown = true;
                             zoneSurchargeCents = data.surchargeCents;
+                            deliveryZoneName = data.zoneName;
                             feedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' +
                                 data.zoneName + ' \u2014 ' +
                                 (data.surchargeCents === 0
                                     ? 'delivery and pickup included'
                                     : 'adds ' + money(data.surchargeCents) + ' round trip') + '</span>';
+                        }
+                        // A changed delivery zone can flip whether the pickup zone counts as different.
+                        checkPickupZip();
+                        recalc();
+                    })
+                    .catch(function () { feedback.innerHTML = ''; });
+            }
+
+            function checkPickupZip() {
+                var feedback = document.getElementById('pickupZoneFeedback');
+                if (document.getElementById('pickupSame').checked) {
+                    feedback.innerHTML = '';
+                    pickupZoneKnown = false;
+                    recalc();
+                    return;
+                }
+
+                var zip = document.getElementById('pickupZip').value.trim();
+                if (!/^\d{5}$/.test(zip)) {
+                    feedback.innerHTML = '';
+                    pickupZoneKnown = false;
+                    recalc();
+                    return;
+                }
+
+                var regionId = document.getElementById('regionId').value;
+                var url = zoneLookupUrl + '?regionId=' + encodeURIComponent(regionId) + '&zip=' + encodeURIComponent(zip);
+
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data.covered || !data.inSelectedRegion) {
+                            pickupZoneKnown = false;
+                            feedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>' +
+                                'We don\'t cover ' + zip + ' for pickup yet.</span>';
+                        } else {
+                            pickupZoneKnown = true;
+                            pickupZoneName = data.zoneName;
+                            var differentZone = data.zoneName.toLowerCase() !== (deliveryZoneName || '').toLowerCase();
+                            pickupSurchargeCents = differentZone ? data.surchargeCents : 0;
+                            if (differentZone && data.surchargeCents > 0) {
+                                feedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' +
+                                    data.zoneName + ' \u2014 adds ' + money(data.surchargeCents) + ' for the pickup trip</span>';
+                            } else {
+                                feedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' +
+                                    data.zoneName + ' \u2014 no extra pickup charge</span>';
+                            }
                         }
                         recalc();
                     })
@@ -487,11 +550,19 @@
 
             document.getElementById('pickupSame').addEventListener('change', function () {
                 document.getElementById('pickupAddressFields').classList.toggle('d-none', this.checked);
+                checkPickupZip();
+            });
+
+            var pickupZipTimer;
+            document.getElementById('pickupZip').addEventListener('input', function () {
+                clearTimeout(pickupZipTimer);
+                pickupZipTimer = setTimeout(checkPickupZip, 350);
             });
 
             recalc();
             refreshAvailability();
             checkZip();
+            checkPickupZip();
         })();
     </script>
 }
