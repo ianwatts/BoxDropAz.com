@@ -23,6 +23,7 @@
     var googleSiteVerification = Configuration["Seo:GoogleSiteVerification"];
     var bingSiteVerification = Configuration["Seo:BingSiteVerification"];
     var googleAnalyticsId = Configuration["Seo:GoogleAnalyticsMeasurementId"];
+    var googleAdsId = Configuration["Seo:GoogleAdsId"];
     var isImpersonating = User.HasClaim("IsImpersonating", "true");
     var currentController = (ViewContext.RouteData.Values["controller"] as string) ?? "";
     var currentAction = (ViewContext.RouteData.Values["action"] as string) ?? "";
@@ -38,13 +39,14 @@
     var isIndexable = indexableActions.TryGetValue(currentController, out var publicActions)
         && publicActions.Contains(currentAction);
 
-    // GA only on customer-facing surfaces — not staff portals (Admin / SaaS / Worker / Agent).
+    // Google tags only on customer-facing surfaces — not staff portals (Admin / SaaS / Worker / Agent).
     var customerFacingControllers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "Home", "Booking", "Gift", "Legal", "Realtors", "Account", "Dashboard"
     };
-    var loadGoogleAnalytics = !string.IsNullOrWhiteSpace(googleAnalyticsId)
-        && customerFacingControllers.Contains(currentController);
+    var loadGoogleTag = customerFacingControllers.Contains(currentController)
+        && (!string.IsNullOrWhiteSpace(googleAnalyticsId) || !string.IsNullOrWhiteSpace(googleAdsId));
+    var googleTagLoaderId = !string.IsNullOrWhiteSpace(googleAnalyticsId) ? googleAnalyticsId : googleAdsId;
 
     string NavClass(params string[] controllers)
         => controllers.Contains(currentController, StringComparer.OrdinalIgnoreCase) ? "nav-link active" : "nav-link";
@@ -82,15 +84,22 @@
     {
         <meta name="msvalidate.01" content="@bingSiteVerification" />
     }
-    @if (loadGoogleAnalytics)
+    @if (loadGoogleTag)
     {
         <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=@googleAnalyticsId"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@googleTagLoaderId"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '@googleAnalyticsId');
+            @if (!string.IsNullOrWhiteSpace(googleAnalyticsId))
+            {
+                <text>gtag('config', '@googleAnalyticsId');</text>
+            }
+            @if (!string.IsNullOrWhiteSpace(googleAdsId))
+            {
+                <text>gtag('config', '@googleAdsId');</text>
+            }
         </script>
     }
 

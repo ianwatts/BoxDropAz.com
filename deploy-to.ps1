@@ -80,10 +80,14 @@ $siteSettingsFile = if (Test-Path "BoxDropAz.Web/appsettings.json") {
     "appsettings.example.json"
 }
 if (Test-Path $siteSettingsFile) {
-    $site = (Get-Content $siteSettingsFile -Raw | ConvertFrom-Json).Site
+    $appSettings = Get-Content $siteSettingsFile -Raw | ConvertFrom-Json
+    $site = $appSettings.Site
     if ($site.SupportPhone) { $templateParams += "SupportPhone=$($site.SupportPhone)" }
     if ($site.SupportEmail) { $templateParams += "SupportEmail=$($site.SupportEmail)" }
     if ($site.AdminEmail) { $templateParams += "AdminEmail=$($site.AdminEmail)" }
+    $seo = $appSettings.Seo
+    if ($seo -and $seo.GoogleAdsId) { $templateParams += "GoogleAdsId=$($seo.GoogleAdsId)" }
+    if ($seo -and $seo.GoogleAdsPurchaseLabel) { $templateParams += "GoogleAdsPurchaseLabel=$($seo.GoogleAdsPurchaseLabel)" }
 }
 
 # Seed accounts (optional). Prefer Seed section from appsettings.Development.json so both

@@ -47,6 +47,9 @@ config in every case, following these names:
 - `STRIPE_COLLECTTAX` (`true` / `false`; defaults to paused / `false`)
 - `STRIPE_REALTORSTARTERMONTHLYPRICEID` and the other `STRIPE_<KEY>` price id overrides
 - `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` and the other `SEED_*` pairs
+- `Seo:GoogleAnalyticsMeasurementId` (GA4). Optional `Seo:GoogleAdsId` (`AW-...`) and
+  `Seo:GoogleAdsPurchaseLabel` send the same confirmed booking to Google Ads. The confirmation
+  page fires a `purchase` event only after Stripe has confirmed payment.
 
 ### Stripe setup
 

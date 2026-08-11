@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BoxDropAz.Core.Models.Catalog;
+using BoxDropAz.Core.Models.Orders;
 using BoxDropAz.Core.Models.Regions;
 
 namespace BoxDropAz.Web.Models.Public;
@@ -61,4 +62,11 @@ public sealed class ContactViewModel
     [Display(Name = "How can we help?")]
     [StringLength(2000, MinimumLength = 10)]
     public string Message { get; set; } = string.Empty;
+}
+
+public sealed class ThankYouViewModel
+{
+    public RentalOrder? Order { get; set; }
+
+    public bool AccountCreated { get; set; }
 }

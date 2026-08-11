@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Xml.Linq;
 using BoxDropAz.Core.Models.Catalog;
+using BoxDropAz.Core.Models.Orders;
 using BoxDropAz.Core.Models.Regions;
 using BoxDropAz.Web.Models;
 using BoxDropAz.Web.Models.Public;
@@ -15,6 +16,7 @@ public sealed class HomeController : Controller
 {
     private readonly IRegionService _regions;
     private readonly ICatalogService _catalog;
+    private readonly IOrderService _orders;
     private readonly StaffNotifier _staff;
     private readonly IConfiguration _config;
     private readonly ILogger<HomeController> _logger;
@@ -22,12 +24,14 @@ public sealed class HomeController : Controller
     public HomeController(
         IRegionService regions,
         ICatalogService catalog,
+        IOrderService orders,
         StaffNotifier staff,
         IConfiguration config,
         ILogger<HomeController> logger)
     {
         _regions = regions;
         _catalog = catalog;
+        _orders = orders;
         _staff = staff;
         _config = config;
         _logger = logger;
@@ -89,6 +93,45 @@ public sealed class HomeController : Controller
         }
 
         return View(model);
+    }
+
+    [HttpGet("/thank-you")]
+    public async Task<IActionResult> ThankYou(string? package, string? orderId, bool accountCreated, CancellationToken ct)
+    {
+        ViewData["Title"] = "Thank you";
+        ViewData["Description"] = "Your BoxDrop AZ tote rental is booked.";
+
+        if (string.IsNullOrWhiteSpace(orderId))
+        {
+            return View(new ThankYouViewModel());
+        }
+
+        var order = await _orders.GetAsync(orderId, ct);
+        if (order is null || order.Status == OrderStatus.Cancelled)
+        {
+            return View(new ThankYouViewModel());
+        }
+
+        if (order.Status == OrderStatus.PendingPayment)
+        {
+            return RedirectToAction("Complete", "Booking", new { orderId, accountCreated });
+        }
+
+        if (!string.Equals(package, order.PackageId, StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction(nameof(ThankYou), new
+            {
+                package = order.PackageId,
+                orderId = order.OrderId,
+                accountCreated = accountCreated ? true : (bool?)null
+            });
+        }
+
+        return View(new ThankYouViewModel
+        {
+            Order = order,
+            AccountCreated = accountCreated
+        });
     }
 
     public IActionResult Faq()

@@ -1,124 +1,31 @@
 @model BoxDropAz.Web.Models.Booking.BookingCompleteViewModel
 @{
-    ViewData["Title"] = "Booking confirmed";
+    ViewData["Title"] = "Finishing up";
     var order = Model.Order;
-    var deliveryDate = DateOnly.TryParse(order.DeliveryDate, out var d) ? d.ToString("dddd, MMMM d") : order.DeliveryDate;
-    var pickupDate = DateOnly.TryParse(order.PickupDate, out var p) ? p.ToString("dddd, MMMM d") : order.PickupDate;
 }
 
 <section class="bd-section">
     <div class="container" style="max-width: 720px;">
         <div class="text-center mb-4">
-            @if (Model.PaymentConfirmed)
-            {
-                <div class="bd-success-mark"><i class="bi bi-check-lg"></i></div>
-                <h1 class="mt-3">You're booked</h1>
-                <p class="text-muted">
-                    Order <strong>@order.OrderNumber</strong>. We emailed a confirmation to @order.CustomerEmail.
-                </p>
-            }
-            else
-            {
-                <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Working</span></div>
-                <h1 class="mt-3">Finishing up</h1>
-                <p class="text-muted">
-                    Order <strong>@order.OrderNumber</strong> is being confirmed. Refresh in a moment, or watch
-                    your inbox &mdash; we'll email you the second it lands.
-                </p>
-            }
-        </div>
-
-        <div class="bd-card mb-4">
-            <div class="bd-card-body">
-                <h2 class="h5 fw-bold mb-3">What happens next</h2>
-                <ol class="bd-numbered-list">
-                    <li>
-                        <strong>We deliver @deliveryDate</strong> during your @order.DeliveryWindow window.
-                        You'll get a text that morning with a tighter arrival estimate.
-                    </li>
-                    <li>
-                        <strong>Pack, move, unpack.</strong> The totes, lids, and dollies are yours through @pickupDate.
-                        Need longer? Extend from your dashboard in a click.
-                    </li>
-                    <li>
-                        <strong>We collect @pickupDate</strong> during your @order.PickupWindow window.
-                        Leave them stacked by the door &mdash; no need to be home.
-                    </li>
-                </ol>
-            </div>
-        </div>
-
-        <div class="bd-card mb-4">
-            <div class="bd-card-body">
-                <h2 class="h5 fw-bold mb-3">Your order</h2>
-
-                <div class="bd-review-row">
-                    <span class="bd-review-label">Bundle</span>
-                    <span class="bd-review-value">
-                        @order.PackageName<br />
-                        <span class="text-muted small">@order.CrateCount totes with lids &middot; @order.DollyCount custom-fit dollies</span>
-                    </span>
-                </div>
-                <div class="bd-review-row">
-                    <span class="bd-review-label">Delivery address</span>
-                    <span class="bd-review-value">
-                        @order.DeliveryAddressLine1@(string.IsNullOrWhiteSpace(order.DeliveryAddressLine2) ? "" : ", " + order.DeliveryAddressLine2)<br />
-                        <span class="text-muted small">@order.DeliveryCity, AZ @order.DeliveryZip</span>
-                    </span>
-                </div>
-                @if (order.GiftCreditAppliedCents > 0)
-                {
-                    <div class="bd-review-row">
-                        <span class="bd-review-label">Gift credit</span>
-                        <span class="bd-review-value bd-credit">
-                            -@Money.Format(order.GiftCreditAppliedCents)
-                            @if (!string.IsNullOrWhiteSpace(order.GiftingRealtorName))
-                            {
-                                <br />
-                                <span class="text-muted small fw-normal">Courtesy of @order.GiftingRealtorName</span>
-                            }
-                        </span>
-                    </div>
-                }
-                <div class="bd-review-row">
-                    <span class="bd-review-label">Paid today</span>
-                    <span class="bd-review-value">
-                        @Money.Format(order.AmountPaidCents)
-                        @if (order.TaxCents > 0)
-                        {
-                            <br />
-                            <span class="text-muted small fw-normal">includes @Money.Format(order.TaxCents) Arizona tax</span>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(order.CardLast4))
-                        {
-                            <br />
-                            <span class="text-muted small fw-normal">@order.CardBrand ending @order.CardLast4</span>
-                        }
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        @if (Model.AccountCreated)
-        {
-            <div class="alert alert-info">
-                <strong>We set up an account for you.</strong> Check your email for a link to choose a password.
-                From there you can track this rental, extend it, or update your card.
-            </div>
-        }
-
-        <div class="d-flex flex-wrap gap-2 justify-content-center">
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <a class="btn btn-primary" asp-controller="Dashboard" asp-action="Detail" asp-route-id="@order.OrderId">
-                    View this rental
-                </a>
-            }
-            else
-            {
-                <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Sign in to your dashboard</a>
-            }
-            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Back to home</a>
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Working</span></div>
+            <h1 class="mt-3">Finishing up</h1>
+            <p class="text-muted">
+                Order <strong>@order.OrderNumber</strong> is being confirmed. Refresh in a moment, or watch
+                your inbox &mdash; we'll email you the second it lands.
+            </p>
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var key = 'bd_complete_wait';
+            var attempts = 0;
+            try { attempts = parseInt(sessionStorage.getItem(key) || '0', 10) || 0; } catch (e) { attempts = 0; }
+            if (attempts >= 8) return;
+            try { sessionStorage.setItem(key, String(attempts + 1)); } catch (e) { }
+            setTimeout(function () { window.location.reload(); }, 2500);
+        })();
+    </script>
+}

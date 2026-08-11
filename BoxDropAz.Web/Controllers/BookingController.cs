@@ -428,13 +428,26 @@ public sealed class BookingController : Controller
             }
         }
 
+        if (order.Status != OrderStatus.PendingPayment && order.Status != OrderStatus.Cancelled)
+        {
+            return RedirectToThankYou(order, accountCreated);
+        }
+
         return View(new BookingCompleteViewModel
         {
             Order = order,
-            PaymentConfirmed = order.Status != OrderStatus.PendingPayment,
+            PaymentConfirmed = false,
             AccountCreated = accountCreated
         });
     }
+
+    private RedirectToActionResult RedirectToThankYou(RentalOrder order, bool accountCreated)
+        => RedirectToAction("ThankYou", "Home", new
+        {
+            package = order.PackageId,
+            orderId = order.OrderId,
+            accountCreated = accountCreated ? true : (bool?)null
+        });
 
     [HttpGet]
     public async Task<IActionResult> Cancelled(string orderId, CancellationToken ct)
