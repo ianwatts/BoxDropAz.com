@@ -3,10 +3,8 @@
     var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
     var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
-    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
     var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
     var addressState = Configuration["Site:AddressState"] ?? "AZ";
-    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
 }
 
 <section class="bd-section">
@@ -22,8 +20,7 @@
             </p>
             <p>
                 @legalName<br />
-                @addressLine1<br />
-                @addressCity, @addressState @addressPostal
+                @addressCity, @addressState
             </p>
 
             <h2>What we collect</h2>
@@ -95,8 +92,7 @@
             </p>
             <p class="mb-0">
                 @legalName<br />
-                @addressLine1<br />
-                @addressCity, @addressState @addressPostal
+                @addressCity, @addressState
             </p>
         </div>
     </div>

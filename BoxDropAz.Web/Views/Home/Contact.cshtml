@@ -4,10 +4,8 @@
     var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
     var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
-    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
     var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
     var addressState = Configuration["Site:AddressState"] ?? "AZ";
-    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
 }
 
 <section class="bd-section">
@@ -31,8 +29,8 @@
                 <div class="bd-check-row">
                     <i class="bi bi-geo-alt-fill"></i>
                     <div>
-                        <strong>@addressLine1</strong>
-                        <div class="text-muted small">@addressCity, @addressState @addressPostal</div>
+                        <strong>Based in @addressCity, @addressState</strong>
+                        <div class="text-muted small">We deliver to your door &mdash; this is not a storefront</div>
                     </div>
                 </div>
                 <div class="bd-check-row">

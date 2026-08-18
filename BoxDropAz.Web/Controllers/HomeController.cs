@@ -68,8 +68,7 @@ public sealed class HomeController : Controller
             Region = selected,
             AllRegions = all,
             Packages = selected is null ? new List<CratePackage>() : await _catalog.GetPackagesAsync(selected.Id, ct),
-            AddOns = AddOnCatalog.All,
-            DamageFees = selected?.DamageFees ?? new DamageFeeSchedule()
+            AddOns = AddOnCatalog.All
         });
     }
 

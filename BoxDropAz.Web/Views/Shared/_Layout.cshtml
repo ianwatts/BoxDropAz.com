@@ -16,10 +16,8 @@
     var supportPhone = Configuration["Site:SupportPhone"] ?? "(480) 788-3337";
     var supportEmail = Configuration["Site:SupportEmail"] ?? "support@boxdropaz.com";
     var legalName = Configuration["Site:LegalName"] ?? "Mastador Ventures, LLC";
-    var addressLine1 = Configuration["Site:AddressLine1"] ?? "44560 W Venture Ln";
     var addressCity = Configuration["Site:AddressCity"] ?? "Maricopa";
     var addressState = Configuration["Site:AddressState"] ?? "AZ";
-    var addressPostal = Configuration["Site:AddressPostalCode"] ?? "85139";
     var googleSiteVerification = Configuration["Seo:GoogleSiteVerification"];
     var bingSiteVerification = Configuration["Seo:BingSiteVerification"];
     var googleAnalyticsId = Configuration["Seo:GoogleAnalyticsMeasurementId"];
@@ -249,7 +247,7 @@
                 </p>
                 <p class="mb-1">
                     <i class="bi bi-geo-alt me-2"></i>
-                    @addressLine1, @addressCity, @addressState @addressPostal
+                    @addressCity, @addressState
                 </p>
                 <p class="mb-1">
                     <a href="tel:@supportPhone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")">

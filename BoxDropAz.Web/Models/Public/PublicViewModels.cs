@@ -22,8 +22,6 @@ public sealed class PricingViewModel : RegionScopedViewModel
     public List<CratePackage> Packages { get; set; } = new();
 
     public IReadOnlyList<AddOnOption> AddOns { get; set; } = Array.Empty<AddOnOption>();
-
-    public DamageFeeSchedule DamageFees { get; set; } = new();
 }
 
 public sealed class ServiceAreasViewModel : RegionScopedViewModel

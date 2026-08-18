@@ -107,38 +107,10 @@
     <div class="container">
         <div class="row g-5">
             <div class="col-lg-6">
-                <h2 class="h4 fw-bold mb-3">If something doesn't come back</h2>
+                <h2 class="h4 fw-bold mb-3">A card on file</h2>
                 <p class="text-muted">
-                    We keep a card on file so missing equipment can be resolved without a debt collection call.
-                    These are the only charges that can hit it after your rental, and you see this exact
-                    schedule before you check out.
-                </p>
-
-                <div class="bd-table">
-                    <table class="table">
-                        <tbody>
-                        <tr>
-                            <td>Tote or matching lid not returned or damaged beyond reuse</td>
-                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.CrateReplacementCents) each</td>
-                        </tr>
-                        <tr>
-                            <td>Custom-fit dolly not returned or damaged</td>
-                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.DollyReplacementCents) each</td>
-                        </tr>
-                        <tr>
-                            <td>Totes need a deep clean</td>
-                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.DeepCleanPerCrateCents) per tote</td>
-                        </tr>
-                        <tr>
-                            <td>Nothing available at the scheduled pickup</td>
-                            <td class="text-end fw-semibold text-nowrap">@Money.FormatCompact(Model.DamageFees.MissedPickupCents)</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <p class="small text-muted mt-2">
-                    Every charge is reviewed by a human before it's applied. Full detail in the
+                    We keep a card on file in case of damages. Replacement and cleaning fees, if they ever
+                    apply, are in the
                     <a asp-controller="Legal" asp-action="RentalTerms">rental terms</a>.
                 </p>
             </div>
